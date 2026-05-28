@@ -13,7 +13,7 @@ from src.cv_agent import _parse_response, tailor_cv
 
 
 SAMPLE_RESPONSE = {
-    "tailored_cv": "# Uzair Qidwai\n\nTailored CV content here...",
+    "tailored_cv": "# Uzair Qidwai\n\nToronto, Canada\n\n## Summary\n\nFinance-trained AI/ML engineer with CFA, MBA, and MAS-CS at Penn. Founded DeFi protocols with $100M lifetime volume. Teaching Lead at Penn Engineering across OS, Algorithms, and ML courses.\n\n## Experience\n\n### Teaching Lead — Penn Engineering\n- Lead sections for 100+ graduate students across three courses\n\n## Skills\n\nPython, Solidity, SQL, PyTorch, FastAPI",
     "match_score": 0.82,
     "changes_made": (
         "Moved DeFi protocol experience to top of experience section. "
