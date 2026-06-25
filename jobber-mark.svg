@@ -1,0 +1,10 @@
+<svg width="120" height="120" viewBox="0 0 120 120" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Jobber mark</title>
+<desc>The Jobber icon: a rounded indigo square containing a stylized agent node.</desc>
+<rect x="0" y="0" width="120" height="120" rx="28" fill="#26215C"/>
+<circle cx="60" cy="42" r="13" fill="#AFA9EC"/>
+<circle cx="36" cy="86" r="11" fill="#7F77DD"/>
+<circle cx="84" cy="86" r="11" fill="#7F77DD"/>
+<path d="M60 55 L40 76" stroke="#CECBF6" stroke-width="4" stroke-linecap="round"/>
+<path d="M60 55 L80 76" stroke="#CECBF6" stroke-width="4" stroke-linecap="round"/>
+</svg>

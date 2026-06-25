@@ -1,0 +1,13 @@
+<svg width="680" height="260" viewBox="0 0 680 260" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Jobber logo</title>
+<desc>The Jobber wordmark: a rounded square mark containing a stylized agent node, next to the word jobber.</desc>
+<g transform="translate(232,70)">
+<rect x="0" y="0" width="120" height="120" rx="28" fill="#26215C"/>
+<circle cx="60" cy="42" r="13" fill="#AFA9EC"/>
+<circle cx="36" cy="86" r="11" fill="#7F77DD"/>
+<circle cx="84" cy="86" r="11" fill="#7F77DD"/>
+<path d="M60 55 L40 76" stroke="#CECBF6" stroke-width="4" stroke-linecap="round"/>
+<path d="M60 55 L80 76" stroke="#CECBF6" stroke-width="4" stroke-linecap="round"/>
+</g>
+<text x="372" y="170" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="84" font-weight="500" fill="#26215C" letter-spacing="-2">jobber</text>
+</svg>
