@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     )
 
     anthropic_api_key: str | None = Field(default=None, alias="ANTHROPIC_API_KEY")
+    anthropic_input_cost_per_mtok: float = Field(
+        default=0.0, ge=0.0, alias="ANTHROPIC_INPUT_COST_PER_MTOK"
+    )
+    anthropic_output_cost_per_mtok: float = Field(
+        default=0.0, ge=0.0, alias="ANTHROPIC_OUTPUT_COST_PER_MTOK"
+    )
     postgres_url: str | None = Field(default=None, alias="POSTGRES_URL")
 
     gmail_client_id: str | None = Field(default=None, alias="GMAIL_CLIENT_ID")
