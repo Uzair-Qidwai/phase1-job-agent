@@ -28,6 +28,7 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
     from src.eligibility import evaluate_eligibility
     from src.ranking import rank_job
     from src.scraper import SOURCE_NAMES, scrape_all
+    from src.semantic_ranking import rank_job_semantic
     from src.tracker import (
         PipelineAlreadyRunning,
         attach_cv_version,
@@ -155,11 +156,23 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
 
         stage = "ranking"
         update_pipeline_run(run_id, status=stage, current_stage=stage)
-        logger.info("Step 4/6 — Ranking %d eligible jobs …", len(eligible_jobs))
+        logger.info(
+            "Step 4/6 — Ranking %d eligible jobs with %s mode …",
+            len(eligible_jobs),
+            settings.ranking_mode,
+        )
         newly_shortlisted = 0
+        model_input_tokens = 0
+        model_output_tokens = 0
+        estimated_model_cost_usd = 0.0
+        ranker = (
+            rank_job_semantic
+            if settings.ranking_mode == "semantic"
+            else rank_job
+        )
 
         for job in eligible_jobs:
-            ranking = rank_job(
+            ranking = ranker(
                 title=job["title"],
                 company=job["company"],
                 location=job["location"],
@@ -167,6 +180,16 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                 profile=profile,
             )
             normalized_score = ranking.total_score / 100.0
+            ranking_usage = ranking.usage or {}
+            model_input_tokens += int(
+                ranking_usage.get("input_tokens", 0) or 0
+            )
+            model_output_tokens += int(
+                ranking_usage.get("output_tokens", 0) or 0
+            )
+            estimated_model_cost_usd += float(
+                ranking.estimated_cost_usd or 0.0
+            )
             job_id = str(job["id"])
             update_job_score(job_id, normalized_score)
 
@@ -191,6 +214,9 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                     "components": ranking.component_scores,
                     "ranking_version": ranking.ranking_version,
                     "profile_version": ranking.profile_version,
+                    "model": ranking.model,
+                    "usage": ranking.usage,
+                    "estimated_cost_usd": ranking.estimated_cost_usd,
                 },
             )
 
@@ -198,6 +224,9 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
             run_id,
             jobs_ranked=len(eligible_jobs),
             jobs_shortlisted=newly_shortlisted,
+            model_input_tokens=model_input_tokens,
+            model_output_tokens=model_output_tokens,
+            estimated_model_cost_usd=round(estimated_model_cost_usd, 6),
         )
         record_pipeline_event(
             run_id,
@@ -207,6 +236,12 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                 "jobs_ranked": len(eligible_jobs),
                 "jobs_shortlisted": newly_shortlisted,
                 "shortlist_threshold": settings.shortlist_threshold,
+                "ranking_mode": settings.ranking_mode,
+                "model_input_tokens": model_input_tokens,
+                "model_output_tokens": model_output_tokens,
+                "estimated_model_cost_usd": round(
+                    estimated_model_cost_usd, 6
+                ),
             },
         )
 
@@ -219,9 +254,6 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         )
 
         tailored_count = 0
-        model_input_tokens = 0
-        model_output_tokens = 0
-        estimated_model_cost_usd = 0.0
 
         for job in tailoring_jobs:
             job_id = str(job["id"])
