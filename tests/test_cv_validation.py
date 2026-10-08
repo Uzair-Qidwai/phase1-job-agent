@@ -44,3 +44,44 @@ def test_unsupported_numeric_claim_is_reported() -> None:
 
     assert validation.valid is False
     assert "15" in validation.unsupported_numeric_claims
+
+
+def test_numeric_magnitude_suffixes_are_compared() -> None:
+    supported = TailoredCVResult.model_validate(
+        {
+            "tailored_cv": (
+                "Engineer who helped build a protocol with $100M lifetime volume "
+                "and supported 100 students."
+            ),
+            "changes_made": "Rephrased existing metrics.",
+            "evidence_used": [
+                {
+                    "claim": "Protocol volume",
+                    "source": "master_cv",
+                    "source_text": "Reached $100M+ lifetime volume and taught 100+ students.",
+                }
+            ],
+        }
+    )
+    supported_validation = validate_tailored_cv(
+        supported,
+        master_cv="Reached $100M+ lifetime volume and taught 100+ students.",
+        candidate_profile_text="{}",
+    )
+    assert supported_validation.valid is True
+
+    invented = supported.model_copy(
+        update={
+            "tailored_cv": (
+                "Engineer who helped build a protocol with $250M lifetime volume "
+                "and supported 100 students."
+            )
+        }
+    )
+    invented_validation = validate_tailored_cv(
+        invented,
+        master_cv="Reached $100M+ lifetime volume and taught 100+ students.",
+        candidate_profile_text="{}",
+    )
+    assert invented_validation.valid is False
+    assert "250m" in invented_validation.unsupported_numeric_claims
