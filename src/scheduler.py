@@ -1,4 +1,4 @@
-"""APScheduler orchestrator with persisted Phase 2 run state."""
+"""APScheduler orchestrator with persisted Phase 2 run and job state."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ logger = logging.getLogger("scheduler")
 
 
 def run_pipeline(trigger: str = "scheduled") -> str | None:
-    """Run ingestion → filter → rank → tailor → notify with persisted state."""
+    """Run ingestion → filter → rank → tailor → notify with recoverable state."""
     from src.candidate_profile import load_candidate_profile
     from src.cv_agent import tailor_cv
     from src.emailer import send_digest
@@ -33,12 +33,14 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         attach_cv_version,
         complete_pipeline_run,
         fail_pipeline_run,
+        get_jobs_by_system_states,
         get_new_jobs_for_digest,
         mark_jobs_notified,
         record_pipeline_event,
         save_cv_version,
         start_pipeline_run,
         update_job_score,
+        update_job_system_state,
         update_pipeline_run,
         upsert_job,
     )
@@ -72,10 +74,10 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         stage = "persisting"
         update_pipeline_run(run_id, status=stage, current_stage=stage)
         logger.info("Step 2/6 — Persisting to DB …")
-        new_job_records: list[dict] = []
+        inserted_count = 0
 
         for raw_job in raw_jobs:
-            job_id, is_new = upsert_job(
+            _, is_new = upsert_job(
                 title=raw_job.title,
                 company=raw_job.company,
                 location=raw_job.location,
@@ -84,31 +86,27 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                 source=raw_job.source,
                 source_job_id=raw_job.source_job_id,
             )
-            if is_new:
-                new_job_records.append(
-                    {
-                        "id": job_id,
-                        "title": raw_job.title,
-                        "company": raw_job.company,
-                        "location": raw_job.location,
-                        "description": raw_job.description,
-                    }
-                )
+            inserted_count += int(is_new)
 
-        update_pipeline_run(run_id, jobs_inserted=len(new_job_records))
+        update_pipeline_run(run_id, jobs_inserted=inserted_count)
         record_pipeline_event(
             run_id,
             "persist_complete",
             stage=stage,
-            payload={"jobs_inserted": len(new_job_records)},
+            payload={"jobs_inserted": inserted_count},
         )
 
         stage = "filtering"
         update_pipeline_run(run_id, status=stage, current_stage=stage)
-        logger.info("Step 3/6 — Applying deterministic eligibility filters …")
+        discovered_jobs = get_jobs_by_system_states(["discovered"])
+        logger.info(
+            "Step 3/6 — Filtering %d discovered/backlog jobs …",
+            len(discovered_jobs),
+        )
         eligible_jobs: list[dict] = []
+        filtered_count = 0
 
-        for job in new_job_records:
+        for job in discovered_jobs:
             eligibility = evaluate_eligibility(
                 title=job["title"],
                 company=job["company"],
@@ -118,13 +116,15 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
             if eligibility.eligible:
                 eligible_jobs.append(job)
             else:
-                update_job_score(job["id"], 0.0)
+                update_job_score(str(job["id"]), 0.0)
+                update_job_system_state(str(job["id"]), "filtered_out")
+                filtered_count += 1
                 record_pipeline_event(
                     run_id,
                     "job_filtered_out",
                     stage=stage,
                     payload={
-                        "job_id": job["id"],
+                        "job_id": str(job["id"]),
                         "reasons": eligibility.hard_mismatch_reasons,
                     },
                 )
@@ -135,14 +135,14 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
             stage=stage,
             payload={
                 "eligible": len(eligible_jobs),
-                "filtered_out": len(new_job_records) - len(eligible_jobs),
+                "filtered_out": filtered_count,
             },
         )
 
         stage = "ranking"
         update_pipeline_run(run_id, status=stage, current_stage=stage)
         logger.info("Step 4/6 — Ranking %d eligible jobs …", len(eligible_jobs))
-        shortlisted_jobs: list[dict] = []
+        newly_shortlisted = 0
 
         for job in eligible_jobs:
             ranking = rank_job(
@@ -153,31 +153,37 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                 profile=profile,
             )
             normalized_score = ranking.total_score / 100.0
-            update_job_score(job["id"], normalized_score)
+            job_id = str(job["id"])
+            update_job_score(job_id, normalized_score)
+
+            shortlisted = (
+                not ranking.hard_mismatch
+                and normalized_score >= settings.shortlist_threshold
+            )
+            update_job_system_state(
+                job_id,
+                "shortlisted" if shortlisted else "ranked_out",
+            )
+            newly_shortlisted += int(shortlisted)
 
             record_pipeline_event(
                 run_id,
                 "job_ranked",
                 stage=stage,
                 payload={
-                    "job_id": job["id"],
+                    "job_id": job_id,
                     "score": normalized_score,
+                    "shortlisted": shortlisted,
                     "components": ranking.component_scores,
                     "ranking_version": ranking.ranking_version,
                     "profile_version": ranking.profile_version,
                 },
             )
 
-            if (
-                not ranking.hard_mismatch
-                and normalized_score >= settings.shortlist_threshold
-            ):
-                shortlisted_jobs.append(job)
-
         update_pipeline_run(
             run_id,
             jobs_ranked=len(eligible_jobs),
-            jobs_shortlisted=len(shortlisted_jobs),
+            jobs_shortlisted=newly_shortlisted,
         )
         record_pipeline_event(
             run_id,
@@ -185,20 +191,22 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
             stage=stage,
             payload={
                 "jobs_ranked": len(eligible_jobs),
-                "jobs_shortlisted": len(shortlisted_jobs),
+                "jobs_shortlisted": newly_shortlisted,
                 "shortlist_threshold": settings.shortlist_threshold,
             },
         )
 
         stage = "tailoring"
         update_pipeline_run(run_id, status=stage, current_stage=stage)
+        tailoring_jobs = get_jobs_by_system_states(["shortlisted"])
         logger.info(
-            "Step 5/6 — Tailoring CVs for %d shortlisted jobs …",
-            len(shortlisted_jobs),
+            "Step 5/6 — Tailoring %d shortlisted/backlog jobs …",
+            len(tailoring_jobs),
         )
 
         tailored_count = 0
-        for job in shortlisted_jobs:
+        for job in tailoring_jobs:
+            job_id = str(job["id"])
             try:
                 result = tailor_cv(
                     job_title=job["title"],
@@ -206,7 +214,7 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                     description=job["description"],
                 )
                 cv_id = save_cv_version(
-                    job_id=job["id"],
+                    job_id=job_id,
                     tailored_cv=result["tailored_cv"],
                     changes_made=result["changes_made"],
                     model=result["model"],
@@ -216,21 +224,23 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                     evidence=result["evidence_used"],
                     validation=result["validation"],
                 )
-                attach_cv_version(job["id"], cv_id)
+                attach_cv_version(job_id, cv_id)
+                update_job_system_state(job_id, "tailored")
                 tailored_count += 1
             except Exception as exc:
+                # Keep state as 'shortlisted' so the next run retries this job.
                 record_pipeline_event(
                     run_id,
                     "job_tailor_failed",
                     stage=stage,
                     level="error",
                     payload={
-                        "job_id": job["id"],
+                        "job_id": job_id,
                         "error_type": type(exc).__name__,
                         "error_message": str(exc)[:1000],
                     },
                 )
-                logger.exception("CV tailoring failed for job %s", job["id"])
+                logger.exception("CV tailoring failed for job %s", job_id)
 
         update_pipeline_run(run_id, jobs_tailored=tailored_count)
         record_pipeline_event(
@@ -248,6 +258,7 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         )
         sent = send_digest(digest_jobs)
         if not sent:
+            # Jobs remain 'tailored' and therefore eligible for the next digest.
             raise RuntimeError("Digest delivery failed")
 
         notified_count = mark_jobs_notified(
@@ -265,14 +276,15 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
             payload={"elapsed_seconds": round(elapsed, 3)},
         )
         logger.info(
-            "━━━ Pipeline %s complete in %.1fs | discovered=%d new=%d ranked=%d shortlisted=%d tailored=%d ━━━",
+            "━━━ Pipeline %s complete in %.1fs | discovered=%d new=%d ranked=%d shortlisted=%d tailored=%d notified=%d ━━━",
             run_id,
             elapsed,
             len(raw_jobs),
-            len(new_job_records),
+            inserted_count,
             len(eligible_jobs),
-            len(shortlisted_jobs),
+            newly_shortlisted,
             tailored_count,
+            notified_count,
         )
         return run_id
 
