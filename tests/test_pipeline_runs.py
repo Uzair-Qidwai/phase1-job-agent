@@ -15,6 +15,7 @@ from src.tracker import (
     save_cv_version,
     start_pipeline_run,
     update_job_score,
+    update_job_system_state,
     upsert_job,
 )
 
@@ -32,6 +33,17 @@ def clean_test_rows():
             cur.execute("DELETE FROM notifications")
             cur.execute("DELETE FROM pipeline_events")
             cur.execute("DELETE FROM pipeline_runs")
+            cur.execute(
+                "UPDATE jobs SET cv_version_id = NULL WHERE source = 'phase2-test'"
+            )
+            cur.execute(
+                """
+                DELETE FROM cv_versions
+                WHERE job_id IN (
+                    SELECT id FROM jobs WHERE source = 'phase2-test'
+                )
+                """
+            )
             cur.execute("DELETE FROM jobs WHERE source = 'phase2-test'")
     yield
     with get_conn() as conn:
@@ -156,6 +168,7 @@ def test_digest_notification_is_exactly_once() -> None:
         source_job_id="notify-once",
     )
     update_job_score(job_id, 0.95)
+    update_job_system_state(job_id, "tailored")
 
     first_digest = get_new_jobs_for_digest(min_score=0.65)
     assert any(str(job["id"]) == job_id for job in first_digest)
