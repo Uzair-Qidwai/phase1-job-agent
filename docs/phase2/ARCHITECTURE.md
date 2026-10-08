@@ -261,3 +261,29 @@ CV generation happens only after a shortlist threshold is met.
 - mobile application;
 - frontend rewrite;
 - conversational UI.
+
+
+## Recovery Semantics
+
+Failed runs retain their failed `current_stage`. A retry may reference the failed run through `retry_of_run_id`, creating an auditable lineage.
+
+Safe restart points are deliberately conservative:
+
+| Failed stage | Restart from | Reason |
+| --- | --- | --- |
+| created | scraping | no useful stage work has committed |
+| scraping | scraping | discovery results may be incomplete |
+| persisting | scraping | in-memory raw jobs may have been lost; dedupe makes re-ingestion safe |
+| filtering | filtering | persisted `discovered` jobs reconstruct remaining work |
+| ranking | filtering | partially ranked jobs have already transitioned state; remaining `discovered` jobs can be re-filtered |
+| tailoring | tailoring | only `shortlisted` jobs without a successful CV remain |
+| notifying | notifying | only `tailored`, undelivered jobs remain eligible |
+
+The orchestrator never relies on local variables from the failed process when resuming after filtering. Recovery is reconstructed from PostgreSQL job state.
+
+Two fault-injection acceptance cases enforce this behavior:
+
+1. ranking failure → resume from filtering without another scrape;
+2. notification failure → resume at notification without another scrape, ranking pass, or CV generation.
+
+The API exposes an authenticated retry action for failed run IDs. The retry is still protected by the same database-backed single-active-run constraint as scheduled and manual execution.
