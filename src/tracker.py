@@ -361,8 +361,6 @@ def start_pipeline_run(
             f"{sorted(VALID_PIPELINE_TRIGGERS)}"
         )
 
-    if trigger == "retry" and not retry_of_run_id:
-        raise ValueError("Retry pipeline runs must reference a failed run")
     if trigger != "retry" and retry_of_run_id is not None:
         raise ValueError("retry_of_run_id is only valid for retry runs")
 
