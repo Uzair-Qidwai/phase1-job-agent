@@ -13,6 +13,7 @@ import logging
 import re
 from dataclasses import dataclass
 from urllib.parse import quote_plus
+from typing import Protocol
 
 import httpx
 from bs4 import BeautifulSoup
@@ -32,6 +33,26 @@ class RawJob:
     description: str
     source: str
     source_job_id: str | None = None
+
+
+class JobSource(Protocol):
+    name: str
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        ...
+
+
+def validate_raw_job(job: RawJob) -> list[str]:
+    errors: list[str] = []
+    if not job.title.strip():
+        errors.append("title is required")
+    if not job.company.strip():
+        errors.append("company is required")
+    if not job.url.strip():
+        errors.append("url is required")
+    if not job.source.strip():
+        errors.append("source is required")
+    return errors
 
 
 async def _wait_and_text(page: Page, selector: str, timeout: int = 5000) -> str:
@@ -285,18 +306,55 @@ async def scrape_greenhouse(max_per_board: int = 20) -> list[RawJob]:
     return jobs
 
 
-async def scrape_all(headless: bool = True) -> list[RawJob]:
-    """Run all scrapers and return source-aware deduplicated RawJob records."""
+class LinkedInSource:
+    name = "linkedin"
 
-    greenhouse_jobs = await scrape_greenhouse()
+    async def discover(self, browser=None) -> list[RawJob]:
+        if browser is None:
+            raise ValueError("LinkedInSource requires a browser")
+        return await scrape_linkedin(browser)
+
+
+class IndeedSource:
+    name = "indeed"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        if browser is None:
+            raise ValueError("IndeedSource requires a browser")
+        return await scrape_indeed(browser)
+
+
+class GreenhouseSource:
+    name = "greenhouse"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        return await scrape_greenhouse()
+
+
+async def scrape_all(headless: bool = True) -> list[RawJob]:
+    """Run source adapters and return validated, source-aware unique jobs."""
+
+    greenhouse_source = GreenhouseSource()
+    linkedin_source = LinkedInSource()
+    indeed_source = IndeedSource()
+
+    greenhouse_jobs = await greenhouse_source.discover()
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=headless)
         linkedin_jobs, indeed_jobs = await asyncio.gather(
-            scrape_linkedin(browser),
-            scrape_indeed(browser),
+            linkedin_source.discover(browser),
+            indeed_source.discover(browser),
         )
         await browser.close()
+
+    source_batches = {
+        greenhouse_source.name: greenhouse_jobs,
+        linkedin_source.name: linkedin_jobs,
+        indeed_source.name: indeed_jobs,
+    }
+    for source_name, jobs in source_batches.items():
+        logger.info("[SourceHealth] %s discovered=%d", source_name, len(jobs))
 
     all_jobs = greenhouse_jobs + linkedin_jobs + indeed_jobs
 
@@ -304,6 +362,15 @@ async def scrape_all(headless: bool = True) -> list[RawJob]:
     unique: list[RawJob] = []
 
     for job in all_jobs:
+        validation_errors = validate_raw_job(job)
+        if validation_errors:
+            logger.warning(
+                "[SourceContract] dropping invalid %s job: %s",
+                job.source or "unknown",
+                "; ".join(validation_errors),
+            )
+            continue
+
         identity = build_job_identity(job.url, job.source)
         if not identity.canonical_url:
             continue
