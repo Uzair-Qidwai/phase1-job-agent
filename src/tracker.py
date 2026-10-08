@@ -26,6 +26,20 @@ VALID_SYSTEM_STATES = {
     "notified",
 }
 
+VALID_PIPELINE_TRIGGERS = {"scheduled", "manual", "retry"}
+VALID_PIPELINE_STATUSES = {
+    "created",
+    "scraping",
+    "persisting",
+    "filtering",
+    "ranking",
+    "tailoring",
+    "notifying",
+    "resuming",
+    "completed",
+    "failed",
+}
+
 
 class PipelineAlreadyRunning(RuntimeError):
     """Raised when a second process attempts to start an active pipeline."""
@@ -337,6 +351,12 @@ def save_cv_version(
 
 def start_pipeline_run(trigger: str) -> str:
     """Create a run and atomically acquire the cross-process active-run slot."""
+    if trigger not in VALID_PIPELINE_TRIGGERS:
+        raise ValueError(
+            f"Invalid pipeline trigger '{trigger}'. Must be one of "
+            f"{sorted(VALID_PIPELINE_TRIGGERS)}"
+        )
+
     try:
         with get_conn() as conn:
             with conn.cursor() as cur:
@@ -378,6 +398,29 @@ def update_pipeline_run(
     model_output_tokens: int | None = None,
     estimated_model_cost_usd: float | None = None,
 ) -> None:
+    if status is not None and status not in VALID_PIPELINE_STATUSES:
+        raise ValueError(
+            f"Invalid pipeline status '{status}'. Must be one of "
+            f"{sorted(VALID_PIPELINE_STATUSES)}"
+        )
+
+    counters = {
+        "jobs_discovered": jobs_discovered,
+        "jobs_inserted": jobs_inserted,
+        "jobs_ranked": jobs_ranked,
+        "jobs_shortlisted": jobs_shortlisted,
+        "jobs_tailored": jobs_tailored,
+        "jobs_notified": jobs_notified,
+        "model_input_tokens": model_input_tokens,
+        "model_output_tokens": model_output_tokens,
+        "estimated_model_cost_usd": estimated_model_cost_usd,
+    }
+    negative = [name for name, value in counters.items() if value is not None and value < 0]
+    if negative:
+        raise ValueError(
+            "Pipeline counters/cost must be non-negative: " + ", ".join(sorted(negative))
+        )
+
     fields: list[str] = []
     values: list[Any] = []
 
