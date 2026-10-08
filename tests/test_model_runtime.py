@@ -254,3 +254,24 @@ def test_multiple_tools_use_provider_compatible_parallel_setting(provider, tool_
     settings = Settings(_env_file=None, MODEL_PROVIDER=provider, MODEL_NAME="test-model")
     runtime = AgentRuntime(settings=settings, model_factory=lambda _: model)
     assert invoke(runtime, tools=[read_job, read_cv][:tool_count]).output.answer == "ok"
+
+
+def test_default_turn_budget_allows_four_evidence_reads_and_final_answer():
+    seen = []
+    @function_tool
+    def read_evidence(which: str) -> str:
+        """Read the requested synthetic evidence item."""
+        seen.append(which)
+        return "Verified synthetic evidence"
+
+    # A reviewer may read candidate, validation, job and preferences separately.
+    # Tool turns alone must not consume every turn before the final answer.
+    import json
+    outputs = [ResponseFunctionToolCall(type="function_call", call_id=f"call_{i}",
+               name="read_evidence", arguments=json.dumps({"which": name}))
+               for i, name in enumerate(("candidate", "validation", "job", "preferences"))]
+    model = FakeModel(outputs + [message({"answer": "review completed"})])
+    runtime = AgentRuntime(settings=config(), model_factory=lambda _: model)
+    assert invoke(runtime, tools=[read_evidence]).output.answer == "review completed"
+    assert seen == ["candidate", "validation", "job", "preferences"]
+    assert runtime.steps[0]["model_requests"] == 5

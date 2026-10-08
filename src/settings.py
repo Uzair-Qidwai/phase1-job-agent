@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     model_output_cost_per_mtok: float | None = Field(default=None, ge=0, allow_inf_nan=False, alias="MODEL_OUTPUT_COST_PER_MTOK")
     agent_models: dict[AgentRole, AgentModelConfig] = Field(default_factory=dict, alias="AGENT_MODELS")
     agent_workflow_enabled: bool = Field(default=False, alias="AGENT_WORKFLOW_ENABLED")
-    agent_max_turns: int = Field(default=4, ge=1, le=8, alias="AGENT_MAX_TURNS")
+    agent_max_turns: int = Field(default=6, ge=1, le=8, alias="AGENT_MAX_TURNS")
     agent_max_model_calls: int = Field(default=12, ge=1, le=32, alias="AGENT_MAX_MODEL_CALLS")
     agent_timeout_seconds: float = Field(default=90, gt=0, le=300, alias="AGENT_TIMEOUT_SECONDS")
     agent_max_revisions: int = Field(default=1, ge=0, le=2, alias="AGENT_MAX_REVISIONS")

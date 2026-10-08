@@ -105,3 +105,10 @@ runtime now omits that option for Gemini multi-tool agents; all exposed tools
 remain read-only and request/turn limits still apply. Other providers and Gemini
 single-tool requests retain the previous setting. Four regression cases cover
 these branches. Full workflow live acceptance remains pending rerun.
+
+Compatibility fix `e284e2f` passed CI #278 (179 tests). The next synthetic trial
+completed research, ranking and writing, but the reviewer consumed all four
+turns reading its four tools. Default turn allowance is now six so sequential
+reads can be followed by a final answer; request caps, timeouts and revision
+limits remain enforced. A regression test exercises four reads plus final output.
+This tuning follows observed tool behavior, not a relaxation of evidence checks.
