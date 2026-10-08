@@ -37,7 +37,7 @@ def _normalize_text(value: str) -> str:
 
 
 def _normalize_number(value: str) -> str:
-    return value.casefold().replace(",", "").replace("$", "").replace("€", "").replace("£", "")
+    return (\n        value.casefold()\n        .replace(",", "")\n        .replace("$", "")\n        .replace("€", "")\n        .replace("£", "")\n        .rstrip("+")\n    )
 
 
 def _material_numeric_tokens(value: str) -> set[str]:
