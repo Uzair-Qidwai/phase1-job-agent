@@ -309,9 +309,9 @@ def test_database_enforces_match_score_range() -> None:
                 )
 
 
-def test_retry_requires_failed_parent_run() -> None:
-    with pytest.raises(ValueError, match="must reference a failed run"):
-        start_pipeline_run("retry")
+def test_retry_parent_must_be_failed_when_lineage_is_supplied() -> None:
+    legacy_retry = start_pipeline_run("retry")
+    complete_pipeline_run(legacy_retry)
 
     completed = start_pipeline_run("manual")
     complete_pipeline_run(completed)
