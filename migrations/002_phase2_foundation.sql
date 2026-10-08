@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     finished_at     TIMESTAMPTZ,
     jobs_discovered INTEGER NOT NULL DEFAULT 0,
     jobs_inserted   INTEGER NOT NULL DEFAULT 0,
+    jobs_ranked     INTEGER NOT NULL DEFAULT 0,
+    jobs_shortlisted INTEGER NOT NULL DEFAULT 0,
     jobs_tailored   INTEGER NOT NULL DEFAULT 0,
     jobs_notified   INTEGER NOT NULL DEFAULT 0,
     error_type      TEXT,
