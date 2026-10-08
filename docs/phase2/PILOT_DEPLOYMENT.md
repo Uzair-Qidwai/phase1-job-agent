@@ -1,7 +1,9 @@
 # Deployment preparation before the pilot
 
-Current target is a **local Mac rehearsal**, not an installed production service.
-Hosting choice is still unconfirmed. No scheduler is installed or running.
+The user selected their **Mac** for the supervised pilot. A dedicated loopback
+database with a non-superuser application role is prepared; its backup/restore and
+protected API reads passed. One approved staged digest was sent. No persistent API
+service or scheduler is installed or running.
 
 ## Verified locally
 
@@ -36,7 +38,7 @@ Keep secrets in a private local environment/host secret store; never commit them
   Start with one small manually supervised run; quota errors must not trigger
   unlimited retries or an automatic vendor switch.
 - Configure sender OAuth, recipient, source availability and reviewed candidate
-  facts before a real run. The real CV/free-tier data-use choice remains pending.
+  facts before a real run. The user authorized real CV use with Gemini; reviewed private previews stay local.
 - The current schedule setting is 08:00 America/Toronto. Do not start
   `python -m src.scheduler` until the pilot decision; it installs the daily job
   in that process. A Mac must stay awake and connected for that schedule.

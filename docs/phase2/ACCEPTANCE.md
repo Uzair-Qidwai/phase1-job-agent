@@ -2,8 +2,8 @@
 
 Updated 2026-10-08. Branch `phase2-foundation`; PR #1 remains Draft.
 
-**Disposition: implementation and bounded synthetic/local checks pass so far.
-Real-candidate acceptance, hosting decision and pilot remain pending.
+**Disposition: one supervised staged pilot digest sent on the selected Mac host.
+Real-candidate model ranking failed promotion; CV tailoring utility remains limited.
 This is not permission to merge or enable unattended operation.**
 
 ## Current evidence
@@ -42,23 +42,23 @@ not guarantees of semantic truth or exactly-once external delivery.
 
 ## Remaining acceptance gates
 
-1. The initial synthetic CV suite passed 1/3 (41 requests). After diagnosing
-   unsupported rewrites and correcting review instructions, all 3/3 passed in
-   25 requests, including one revision. Original failures remain recorded.
-   Real-candidate evaluation and human CV approval remain pending.
-2. Review the newly provided private master CV and degree status; decide the
-   acceptable provider/data-use arrangement before transmitting personal evidence.
-   The actual-candidate ranking benchmark has not been promoted.
-3. Personal Gmail OAuth and the single authorized real digest passed, including
-   inbox confirmation by user screenshot. Resolve testing-mode token lifetime
-   before unattended production.
-4. Confirm the pilot host and its DB account, backups, monitoring/alerts and
-   recovery procedure. Local disposable rehearsal does not certify a remote host.
-5. Decide how to handle Indeed unavailability in the pilot; no access bypass.
-6. Approve and run a small supervised pilot, review every CV/digest, then decide
-   on scheduling and final PR review/merge. Neither has been started or approved.
+1. Confirm receipt of the one approved three-job pilot digest. Transport acknowledged
+   it and durable records suppress repeats; this does not itself prove inbox receipt.
+2. Review ranking quality and benchmark relevance without changing labels merely
+   to obtain a pass. Real-candidate model P@5 0.8/pairwise 0.96 regressed from 1.0/1.0.
+   Keep automatic model ranking off.
+3. Improve or accept CV tailoring utility: three actual-listing previews passed
+   factuality but retained unchanged factual claims. Preserve degree-in-progress
+   and missing-skill warnings; do not infer technical credentials.
+4. Configure off-host backup retention, independent alerts and OAuth lifetime
+   handling before unattended operation. Dedicated Mac DB, local restore and
+   authenticated reads passed; no persistent service or scheduler is installed.
+5. Resolve Indeed unavailability through approved access or accept reduced coverage.
+6. Review a fresh supervised pipeline run before deciding scheduling and final PR
+   approval. The completed pilot reused captured listings and reviewed CV previews;
+   it did not prove unattended end-to-end operation. Main remains unmerged.
 
-See [PILOT_DEPLOYMENT.md](PILOT_DEPLOYMENT.md), [GMAIL_SETUP.md](GMAIL_SETUP.md),
-[LIVE_TESTING.md](LIVE_TESTING.md) and [OPERATIONS.md](OPERATIONS.md).
-
-Full current evidence and remaining gates: [Checkpoint 5](CHECKPOINT_05.md).
+The user explicitly authorized real CV transmission to Gemini and the single pilot
+email. CVs were not attached; private evidence and credentials remain untracked.
+Full evidence: [Checkpoint 5](CHECKPOINT_05.md) and its sanitized reports.
+See also [PILOT_DEPLOYMENT.md](PILOT_DEPLOYMENT.md) and [OPERATIONS.md](OPERATIONS.md).

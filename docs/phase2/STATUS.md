@@ -21,7 +21,7 @@ Phase 2 exit approval is still pending. See [acceptance report](ACCEPTANCE.md).
 | Stage 1 filtering | explicit conservative hard filters | eligibility golden fixtures | Complete |
 | Stage 2 deterministic ranking | explainable baseline scorer | 30-job gold set, Precision@5, pairwise accuracy | Complete |
 | Semantic ranking implementation | model-backed component scoring behind same RankingResult contract | mocked contract/prompt-injection tests | Complete, disabled by default |
-| Semantic promotion gate | candidate-vs-baseline live evaluator | exits non-zero on Precision@5 or pairwise regression | Ready for live run |
+| Semantic promotion gate | candidate-vs-baseline live evaluator | exits non-zero on Precision@5 or pairwise regression | Live checks recorded in Checkpoint 5 |
 | Rank-before-generate | only shortlisted jobs receive CV generation | E2E acceptance test | Complete |
 | CV generation contract | typed result, no ranking responsibility, prompt-injection boundary | CV agent unit tests | Complete |
 | CV factuality | whole-output coverage, source quotes, numeric support, qualifiers, relationship order and section attribution | v3 adversarial factuality goldens, relationship order and section attribution | Deterministic gate passes; semantic limits remain |
@@ -34,7 +34,7 @@ Phase 2 exit approval is still pending. See [acceptance report](ACCEPTANCE.md).
 | End-to-end acceptance | mocked complete pipeline + failure injection | CI E2E harness | Automated checks pass; live acceptance pending |
 | Source health telemetry | per-source persisted counts and consecutive-zero warning events | DB integration tests | Complete |
 | Model usage/cost telemetry | ranking/CV tokens persisted per artifact and run; cost rates configurable | unit + DB integration assertions | Complete |
-| Live provider smoke | one semantic rank + one evidence-gated CV, no DB/email side effects | explicit opt-in command | Ready for live run |
+| Live provider smoke | one semantic rank + one evidence-gated CV, no DB/email side effects | explicit opt-in command | Live checks recorded in Checkpoint 5 |
 
 ## Checkpoint 3 specialist addition
 
@@ -117,23 +117,14 @@ if Precision@5 or pairwise preference accuracy regresses.
 
 ## Remaining external validation
 
-Phase 2 acceptance is not yet approved. Two provider-dependent checks are
-pending at the user’s request while credentials and cost rates are unavailable:
-
-1. run the controlled live-provider smoke with selected role/provider credentials;
-2. run the 30-job semantic promotion evaluation and inspect quality/cost before
-   enabling semantic ranking.
-
-Those checks require real provider credentials and incur real model calls, so
-they are deliberately excluded from automatic pull-request CI.
-
-Additional exit decisions: accept or remediate external email delivery ambiguity,
-CV semantic/context limitations, and private-network unauthenticated reads.
-Neither this status document nor passing CI constitutes approval to merge.
-
-Live execution checklist: [LIVE_TESTING.md](LIVE_TESTING.md). Runtime request/spend
-guards, bounded transient retry, partial CV failure reporting and optional read
-authentication are implemented. Production deployment/live acceptance is pending.
+Real-candidate smoke and ranking evaluation have run with explicit consent.
+The ranking promotion gate failed (Precision@5 0.8, pairwise 0.96 versus 1.0/1.0);
+model ranking and automatic specialist workflow remain disabled. Three reviewed
+CV previews passed factuality while retaining the source claims unchanged.
+One explicitly approved staged pilot digest was acknowledged by Gmail; inbox
+confirmation is pending. Production still needs quality acceptance, off-host
+backups, independent alerts, OAuth lifetime handling and a scheduling decision.
+Passing CI does not authorize a merge. See [Checkpoint 5](CHECKPOINT_05.md).
 
 ## Gemini live-smoke progress
 
@@ -145,12 +136,9 @@ passed. Two live-derived fictional CV fixtures bring the factuality dataset to
 28 cases. Representative ranking/CV quality, live sources, email and target-host
 acceptance remain pending. Automatic agent mode is still disabled.
 
-## Current pre-pilot checkpoint
+## Current pilot checkpoint
 
-[Checkpoint 5](CHECKPOINT_05.md) records the requested quality/source/email/deployment
-slice. Fictional ranking passed; the initial CV suite passed 1/3, then all 3/3
-passed after the observed reviewer/writer issue was corrected (one revision). Greenhouse/LinkedIn live checks passed; Indeed returned
-an explicit access block. Local backup/restore and protected API rehearsal passed.
-Real Gmail send and inbox receipt are confirmed; target-host acceptance remains
-pending and the pilot has not begun.
-Private PDF evidence is configured locally without committing or transmitting it.
+[Checkpoint 5](CHECKPOINT_05.md) now includes consented real-CV evaluation and one
+human-approved three-job staged digest. Mac database/restore/protected-read checks
+passed. Private CVs and credentials remain untracked. Model ranking failed its
+promotion gate; deterministic ranking remains configured. No scheduler or merge.

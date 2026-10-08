@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-08",
+  "scope": "Consented real-CV evaluation and human-approved staged pilot",
+  "provider": "gemini",
+  "model": "gemini-3.1-flash-lite",
+  "smoke": {
+    "passed": true,
+    "requests": 13
+  },
+  "ranking": {
+    "jobs": 30,
+    "requests": 164,
+    "continued_after_request_cap": true,
+    "precision_at_5": 0.8,
+    "pairwise_accuracy": 0.96,
+    "baseline_precision_at_5": 1.0,
+    "baseline_pairwise_accuracy": 1.0,
+    "promotion_passed": false,
+    "labels_changed": false
+  },
+  "cv_previews": {
+    "cases": 3,
+    "passed": 3,
+    "requests": 26,
+    "revisions": 0,
+    "factual_claim_sets_unchanged": true,
+    "limitation": "Conservative source fidelity; limited tailoring utility"
+  },
+  "host": {
+    "target": "Mac",
+    "dedicated_loopback_database": true,
+    "non_superuser_app_role": true,
+    "backup_restore_passed": true,
+    "protected_read_checks_passed": true
+  },
+  "delivery": {
+    "explicitly_authorized": true,
+    "email_messages": 1,
+    "jobs_notified": 3,
+    "status": "transport_acknowledged",
+    "durable_status": "sent",
+    "duplicate_candidates_after_send": 0,
+    "inbox_confirmation": "pending",
+    "fresh_scrape": false,
+    "new_model_calls": 0,
+    "cv_attachments": false
+  },
+  "automatic_model_ranking": false,
+  "scheduler_enabled": false,
+  "merge_authorized": false
+}
