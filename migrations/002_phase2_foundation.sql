@@ -170,3 +170,17 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 CREATE INDEX IF NOT EXISTS idx_notifications_sent_at
     ON notifications (sent_at DESC);
+
+
+CREATE TABLE IF NOT EXISTS source_health (
+    id              BIGSERIAL PRIMARY KEY,
+    run_id          UUID NOT NULL REFERENCES pipeline_runs(id) ON DELETE CASCADE,
+    source          TEXT NOT NULL,
+    jobs_discovered INTEGER NOT NULL DEFAULT 0 CHECK (jobs_discovered >= 0),
+    zero_results    BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (run_id, source)
+);
+
+CREATE INDEX IF NOT EXISTS idx_source_health_source_created
+    ON source_health (source, created_at DESC);
