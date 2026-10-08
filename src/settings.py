@@ -1,0 +1,48 @@
+"""Validated application configuration for Phase 2."""
+
+from __future__ import annotations
+
+from functools import lru_cache
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Environment-backed settings with explicit validation and safe defaults."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=True,
+    )
+
+    anthropic_api_key: str | None = Field(default=None, alias="ANTHROPIC_API_KEY")
+    postgres_url: str | None = Field(default=None, alias="POSTGRES_URL")
+
+    gmail_client_id: str | None = Field(default=None, alias="GMAIL_CLIENT_ID")
+    gmail_client_secret: str | None = Field(default=None, alias="GMAIL_CLIENT_SECRET")
+    gmail_refresh_token: str | None = Field(default=None, alias="GMAIL_REFRESH_TOKEN")
+    gmail_sender: str | None = Field(default=None, alias="GMAIL_SENDER")
+    digest_recipient: str | None = Field(default=None, alias="DIGEST_RECIPIENT")
+
+    app_base_url: str = Field(default="http://localhost:8000", alias="APP_BASE_URL")
+    pipeline_timezone: str = Field(default="America/Toronto", alias="PIPELINE_TIMEZONE")
+    pipeline_hour: int = Field(default=8, ge=0, le=23, alias="PIPELINE_HOUR")
+    pipeline_minute: int = Field(default=0, ge=0, le=59, alias="PIPELINE_MINUTE")
+
+    def require_postgres_url(self) -> str:
+        if not self.postgres_url:
+            raise RuntimeError("POSTGRES_URL is required for database operations")
+        return self.postgres_url
+
+    def require_anthropic_api_key(self) -> str:
+        if not self.anthropic_api_key:
+            raise RuntimeError("ANTHROPIC_API_KEY is required for live CV generation")
+        return self.anthropic_api_key
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings()
