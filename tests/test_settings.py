@@ -36,3 +36,16 @@ def test_scheduler_time_is_validated() -> None:
 def test_invalid_ranking_mode_is_rejected() -> None:
     with pytest.raises(ValidationError):
         Settings(_env_file=None, RANKING_MODE="silent-auto-promote")
+
+
+def test_short_api_token_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, API_TOKEN="too-short")
+
+
+def test_valid_api_token_is_accepted() -> None:
+    settings = Settings(
+        _env_file=None,
+        API_TOKEN="phase2-test-token-with-enough-entropy",
+    )
+    assert settings.api_token == "phase2-test-token-with-enough-entropy"
