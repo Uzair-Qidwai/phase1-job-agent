@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 psycopg2.extras.register_uuid()
 
 VALID_SYSTEM_STATES = {
+    "legacy",
     "discovered",
     "filtered_out",
     "ranked_out",
@@ -247,8 +248,7 @@ def get_new_jobs_for_digest(min_score: float = 0.6) -> list[dict[str, Any]]:
                   ON n.job_id = j.id
                  AND n.channel = 'email'
                  AND n.status = 'sent'
-                WHERE j.found_at >= NOW() - INTERVAL '24 hours'
-                  AND j.match_score >= %s
+                WHERE j.match_score >= %s
                   AND j.system_state = 'tailored'
                   AND n.id IS NULL
                 ORDER BY j.match_score DESC
