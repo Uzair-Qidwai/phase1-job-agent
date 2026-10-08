@@ -10,6 +10,7 @@ import time
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+from src.recovery import RUNNABLE_RESTART_STAGES, safe_restart_stage
 from src.settings import get_settings
 
 logging.basicConfig(
@@ -19,11 +20,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger("scheduler")
 
+PIPELINE_STAGE_ORDER = (
+    "scraping",
+    "persisting",
+    "filtering",
+    "ranking",
+    "tailoring",
+    "notifying",
+)
+PIPELINE_STAGE_INDEX = {
+    stage: index for index, stage in enumerate(PIPELINE_STAGE_ORDER)
+}
+
+
+def _stage_enabled(stage: str, resume_from_stage: str) -> bool:
+    return PIPELINE_STAGE_INDEX[stage] >= PIPELINE_STAGE_INDEX[resume_from_stage]
+
 
 def run_pipeline(
     trigger: str = "scheduled",
     *,
     retry_of_run_id: str | None = None,
+    resume_from_stage: str = "scraping",
 ) -> str | None:
     """Run ingestion → filter → rank → tailor → notify with recoverable state."""
     from src.candidate_profile import load_candidate_profile
@@ -52,6 +70,12 @@ def run_pipeline(
         upsert_job,
     )
 
+    if resume_from_stage not in RUNNABLE_RESTART_STAGES:
+        raise ValueError(
+            f"Unsupported resume stage '{resume_from_stage}'. "
+            f"Allowed: {sorted(RUNNABLE_RESTART_STAGES)}"
+        )
+
     settings = get_settings()
     profile = load_candidate_profile()
 
@@ -67,6 +91,33 @@ def run_pipeline(
     logger.info("━━━ Pipeline %s started (%s) ━━━", run_id, trigger)
     t0 = time.perf_counter()
     stage = "created"
+
+    raw_jobs = []
+    inserted_count = 0
+    eligible_jobs: list[dict] = []
+    filtered_count = 0
+    newly_shortlisted = 0
+    tailored_count = 0
+    notified_count = 0
+    model_input_tokens = 0
+    model_output_tokens = 0
+    estimated_model_cost_usd = 0.0
+
+    if resume_from_stage != "scraping":
+        update_pipeline_run(
+            run_id,
+            status="resuming",
+            current_stage=resume_from_stage,
+        )
+        record_pipeline_event(
+            run_id,
+            "run_resuming",
+            stage=resume_from_stage,
+            payload={
+                "retry_of_run_id": retry_of_run_id,
+                "resume_from_stage": resume_from_stage,
+            },
+        )
 
     try:
         stage = "scraping"
