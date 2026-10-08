@@ -472,3 +472,28 @@ def mark_jobs_notified(
                 if cur.fetchone():
                     inserted += 1
     return inserted
+
+
+def get_active_pipeline_run() -> dict[str, Any] | None:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT *
+                FROM pipeline_runs
+                WHERE status IN (
+                    'created',
+                    'scraping',
+                    'persisting',
+                    'filtering',
+                    'ranking',
+                    'tailoring',
+                    'notifying',
+                    'resuming'
+                )
+                ORDER BY started_at DESC
+                LIMIT 1
+                """
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
