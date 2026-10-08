@@ -16,6 +16,15 @@ logger = logging.getLogger(__name__)
 
 psycopg2.extras.register_uuid()
 
+VALID_SYSTEM_STATES = {
+    "discovered",
+    "filtered_out",
+    "ranked_out",
+    "shortlisted",
+    "tailored",
+    "notified",
+}
+
 
 class PipelineAlreadyRunning(RuntimeError):
     """Raised when a second process attempts to start an active pipeline."""
@@ -139,6 +148,50 @@ def update_job_score_and_cv(job_id: str, match_score: float, cv_version_id: str)
     attach_cv_version(job_id, cv_version_id)
 
 
+
+
+def update_job_system_state(job_id: str, system_state: str) -> None:
+    if system_state not in VALID_SYSTEM_STATES:
+        raise ValueError(
+            f"Invalid system_state '{system_state}'. Must be one of {VALID_SYSTEM_STATES}"
+        )
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE jobs SET system_state = %s WHERE id = %s",
+                (system_state, uuid.UUID(job_id)),
+            )
+
+
+def get_jobs_by_system_states(
+    states: list[str],
+    *,
+    limit: int = 500,
+) -> list[dict[str, Any]]:
+    invalid = set(states) - VALID_SYSTEM_STATES
+    if invalid:
+        raise ValueError(f"Invalid system states: {sorted(invalid)}")
+    if not states:
+        return []
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, title, company, location, url, description,
+                       match_score, source, source_job_id, status, system_state,
+                       found_at, updated_at
+                FROM jobs
+                WHERE system_state = ANY(%s)
+                ORDER BY found_at ASC
+                LIMIT %s
+                """,
+                (states, limit),
+            )
+            return [dict(row) for row in cur.fetchall()]
+
+
 def update_job_status(job_id: str, status: str) -> dict[str, Any] | None:
     valid = {"new", "applied", "interview", "offer", "rejected"}
     if status not in valid:
@@ -166,7 +219,8 @@ def get_jobs(
         with conn.cursor() as cur:
             query = """
                 SELECT j.id, j.title, j.company, j.location, j.url,
-                       j.match_score, j.source, j.source_job_id, j.status, j.found_at,
+                       j.match_score, j.source, j.source_job_id, j.status,
+                       j.system_state, j.found_at,
                        j.notes, j.updated_at, cv.changes_made
                 FROM jobs j
                 LEFT JOIN cv_versions cv ON cv.id = j.cv_version_id
@@ -185,7 +239,7 @@ def get_new_jobs_for_digest(min_score: float = 0.6) -> list[dict[str, Any]]:
             cur.execute(
                 """
                 SELECT j.id, j.title, j.company, j.location, j.url,
-                       j.match_score, j.source, j.status, j.found_at,
+                       j.match_score, j.source, j.status, j.system_state, j.found_at,
                        cv.changes_made
                 FROM jobs j
                 LEFT JOIN cv_versions cv ON cv.id = j.cv_version_id
@@ -195,6 +249,7 @@ def get_new_jobs_for_digest(min_score: float = 0.6) -> list[dict[str, Any]]:
                  AND n.status = 'sent'
                 WHERE j.found_at >= NOW() - INTERVAL '24 hours'
                   AND j.match_score >= %s
+                  AND j.system_state = 'tailored'
                   AND n.id IS NULL
                 ORDER BY j.match_score DESC
                 """,
@@ -471,6 +526,10 @@ def mark_jobs_notified(
                 )
                 if cur.fetchone():
                     inserted += 1
+                    cur.execute(
+                        "UPDATE jobs SET system_state = 'notified' WHERE id = %s",
+                        (uuid.UUID(job_id),),
+                    )
     return inserted
 
 
