@@ -81,3 +81,11 @@ pending mean this checkpoint is incomplete, even if offline CI passes.
   are included. Local backup/restore succeeded on disposable PostgreSQL 16 data.
 - Target-host deployment, real provider/source/delivery checks and final human
   acceptance remain pending; this is live-ready preparation, not Phase 2 exit.
+
+## Offline readiness evidence
+
+Implementation commit `1b789ce` passed [CI #274](https://github.com/Uzair-Qidwai/phase1-job-agent/actions/runs/37802434424):
+**175 tests**, lint, migration checks and deterministic evaluation. Offline metrics
+remain Precision@5 1.0 and pairwise accuracy 1.0 across 30 ranking fixtures; all
+26 CV gold cases match expected outcomes. Machine-readable evidence is in
+`evals/reports/phase2_checkpoint04_offline.json`. Live acceptance remains pending.

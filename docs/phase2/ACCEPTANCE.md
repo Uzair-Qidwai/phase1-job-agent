@@ -92,3 +92,8 @@ backup/restore was rehearsed; production data/host deployment was not touched.
 See [LIVE_TESTING.md](LIVE_TESTING.md) for the staged commands and remaining gates.
 Live model/source quality, actual email delivery, target-host deployment and human
 CV acceptance remain **pending**. Checkpoint 4 is not an exit approval.
+
+Offline readiness implementation `1b789ce`: CI #274 passed 175 tests plus lint,
+migrations and deterministic evaluations. Evidence:
+`evals/reports/phase2_checkpoint04_offline.json`. This does not satisfy the live
+acceptance or target-host deployment gates.
