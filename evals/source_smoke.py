@@ -12,11 +12,14 @@ from src.job_identity import build_job_identity
 def summarize(source, jobs):
     identities = [build_job_identity(j.url, j.source).dedupe_key for j in jobs]
     invalid = [i for i, j in enumerate(jobs) if scraper.validate_raw_job(j)]
-    return {"source": source, "jobs": len(jobs), "invalid_rows": invalid,
+    normalized = scraper.normalize_jobs(jobs)
+    unique_ids = [build_job_identity(j.url, j.source).dedupe_key for j in normalized]
+    return {"source": source, "unique_jobs": len(normalized),
+            "dedupe_passed": len(unique_ids) == len(set(unique_ids)), "jobs": len(jobs), "invalid_rows": invalid,
             "duplicate_identities": len(identities) - len(set(identities)),
             "missing_descriptions": sum(not j.description.strip() for j in jobs),
             "sample": [asdict(j) for j in jobs[:5]],
-            "passed": bool(jobs) and not invalid and all(j.description.strip() for j in jobs) and len(identities) == len(set(identities))}
+            "passed": bool(jobs) and not invalid and all(j.description.strip() for j in jobs) and bool(normalized) and len(unique_ids) == len(set(unique_ids))}
 
 
 async def inspect(source, limit):

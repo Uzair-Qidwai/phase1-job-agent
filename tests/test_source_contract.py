@@ -61,3 +61,16 @@ def test_adapters_expose_stable_source_names() -> None:
     assert LinkedInSource.name == "linkedin"
     assert IndeedSource.name == "indeed"
     assert GreenhouseSource.name == "greenhouse"
+
+
+def test_live_overlapping_search_results_use_production_deduplication():
+    from src.scraper import normalize_jobs
+    from evals.source_smoke import summarize
+    rows = [RawJob('Engineer', 'Example', 'Toronto', url, 'Python systems', 'linkedin')
+            for url in ['https://www.linkedin.com/jobs/view/123?trk=first',
+                        'https://www.linkedin.com/jobs/view/123?trk=second']]
+    report = summarize('linkedin', rows)
+    assert report['duplicate_identities'] == 1
+    assert report['unique_jobs'] == 1
+    assert report['dedupe_passed'] and report['passed']
+    assert normalize_jobs(rows)[0].url == 'https://www.linkedin.com/jobs/view/123'

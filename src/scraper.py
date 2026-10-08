@@ -360,10 +360,17 @@ async def scrape_all(headless: bool = True) -> list[RawJob]:
 
     all_jobs = greenhouse_jobs + linkedin_jobs + indeed_jobs
 
+    unique = normalize_jobs(all_jobs)
+    logger.info("Total unique jobs this run: %d", len(unique))
+    return unique
+
+
+def normalize_jobs(jobs: list[RawJob]) -> list[RawJob]:
+    """Apply the production source contract and identity deduplication."""
     seen: set[str] = set()
     unique: list[RawJob] = []
 
-    for job in all_jobs:
+    for job in jobs:
         validation_errors = validate_raw_job(job)
         if validation_errors:
             logger.warning(
@@ -390,7 +397,6 @@ async def scrape_all(headless: bool = True) -> list[RawJob]:
         job.url = identity.canonical_url
         unique.append(job)
 
-    logger.info("Total unique jobs this run: %d", len(unique))
     return unique
 
 
