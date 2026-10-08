@@ -1,0 +1,59 @@
+[
+  {
+    "name": "supported evidence and existing metric passes",
+    "master_cv": "Built a protocol that processed $100M in lifetime volume. Python and Solidity.",
+    "candidate_profile": "{\"target_roles\":[\"DeFi Engineer\"]}",
+    "result": {
+      "tailored_cv": "DeFi engineer who built a protocol that processed $100M in lifetime volume using Python and Solidity.",
+      "changes_made": "Front-loaded protocol experience.",
+      "evidence_used": [
+        {
+          "claim": "Processed $100M in lifetime volume",
+          "source": "master_cv",
+          "source_text": "Built a protocol that processed $100M in lifetime volume."
+        }
+      ],
+      "keywords_added": ["DeFi"],
+      "warnings": []
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "invented metric fails",
+    "master_cv": "Built a protocol that processed $100M in lifetime volume.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built a protocol that processed $250M in lifetime volume and led engineering.",
+      "changes_made": "Adjusted impact statement.",
+      "evidence_used": [
+        {
+          "claim": "Built a protocol",
+          "source": "master_cv",
+          "source_text": "Built a protocol that processed $100M in lifetime volume."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "fabricated evidence quote fails",
+    "master_cv": "Built Python systems for analytics.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for analytics and machine learning.",
+      "changes_made": "Added role language.",
+      "evidence_used": [
+        {
+          "claim": "Led a 20 person ML team",
+          "source": "master_cv",
+          "source_text": "Led a 20 person ML team"
+        }
+      ],
+      "keywords_added": ["machine learning"],
+      "warnings": []
+    },
+    "expected_valid": false
+  }
+]
