@@ -15,6 +15,7 @@ from src.tracker import (
     mark_jobs_notified,
     record_source_health,
     save_cv_version,
+    source_has_consecutive_zero_results,
     start_pipeline_run,
     update_job_score,
     update_job_system_state,
@@ -220,3 +221,19 @@ def test_source_health_is_persisted_per_run() -> None:
     assert by_source["indeed"]["jobs_discovered"] == 0
     assert by_source["indeed"]["zero_results"] is True
     assert by_source["greenhouse"]["jobs_discovered"] == 7
+
+
+def test_consecutive_zero_source_runs_trigger_health_detector() -> None:
+    for _ in range(3):
+        run_id = start_pipeline_run("manual")
+        record_source_health(run_id, {"indeed": 0})
+        complete_pipeline_run(run_id)
+
+    assert source_has_consecutive_zero_results("indeed", runs=3) is True
+    assert source_has_consecutive_zero_results("indeed", runs=4) is False
+
+    run_id = start_pipeline_run("manual")
+    record_source_health(run_id, {"indeed": 2})
+    complete_pipeline_run(run_id)
+
+    assert source_has_consecutive_zero_results("indeed", runs=3) is False
