@@ -27,7 +27,7 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
     from src.emailer import send_digest
     from src.eligibility import evaluate_eligibility
     from src.ranking import rank_job
-    from src.scraper import scrape_all
+    from src.scraper import SOURCE_NAMES, scrape_all
     from src.tracker import (
         PipelineAlreadyRunning,
         attach_cv_version,
@@ -37,6 +37,7 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         get_new_jobs_for_digest,
         mark_jobs_notified,
         record_pipeline_event,
+        record_source_health,
         save_cv_version,
         start_pipeline_run,
         update_job_score,
@@ -63,12 +64,25 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         update_pipeline_run(run_id, status=stage, current_stage=stage)
         logger.info("Step 1/6 — Scraping jobs …")
         raw_jobs = asyncio.run(scrape_all(headless=True))
+        source_counts = {
+            source: sum(job.source == source for job in raw_jobs)
+            for source in SOURCE_NAMES
+        }
+        for job in raw_jobs:
+            source_counts.setdefault(job.source, 0)
+            if job.source not in SOURCE_NAMES:
+                source_counts[job.source] += 1
+
+        record_source_health(run_id, source_counts)
         update_pipeline_run(run_id, jobs_discovered=len(raw_jobs))
         record_pipeline_event(
             run_id,
             "scrape_complete",
             stage=stage,
-            payload={"jobs_discovered": len(raw_jobs)},
+            payload={
+                "jobs_discovered": len(raw_jobs),
+                "source_counts": source_counts,
+            },
         )
 
         stage = "persisting"
