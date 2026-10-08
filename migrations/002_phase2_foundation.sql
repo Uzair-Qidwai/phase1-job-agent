@@ -44,8 +44,11 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
                             'created',
                             'scraping',
                             'persisting',
+                            'filtering',
+                            'ranking',
                             'tailoring',
                             'notifying',
+                            'resuming',
                             'completed',
                             'failed'
                         )
@@ -71,8 +74,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pipeline_runs_single_active
         'created',
         'scraping',
         'persisting',
+        'filtering',
+        'ranking',
         'tailoring',
-        'notifying'
+        'notifying',
+        'resuming'
     );
 
 CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started_at
