@@ -173,3 +173,92 @@ def test_pipeline_records_fatal_stage_failure(monkeypatch) -> None:
     assert row["current_stage"] == "scraping"
     assert row["error_type"] == "RuntimeError"
     assert "simulated source outage" in row["error_message"]
+
+
+def test_failed_tailoring_is_retried_from_shortlisted_state(monkeypatch) -> None:
+    strong = scraper.RawJob(
+        title="Senior AI Engineer",
+        company="Example AI",
+        location="Toronto, Canada",
+        url="https://example.com/jobs/retry-tailor",
+        description="Build AI and machine learning systems in Python.",
+        source="phase2-e2e",
+        source_job_id="retry-tailor",
+    )
+
+    async def fake_scrape_all(headless: bool = True):
+        return [strong]
+
+    attempts = {"count": 0}
+
+    def flaky_tailor_cv(*, job_title, company, description):
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise RuntimeError("simulated CV provider failure")
+        return {
+            "tailored_cv": (
+                "# Tailored CV\n\n"
+                "Evidence-backed AI engineering experience with Python and "
+                "machine learning systems."
+            ),
+            "changes_made": "Front-loaded relevant AI engineering evidence.",
+            "evidence_used": [
+                {
+                    "claim": "Python experience",
+                    "source": "master_cv",
+                    "source_text": "Python",
+                }
+            ],
+            "keywords_added": ["AI"],
+            "warnings": [],
+            "model": "fake-model",
+            "prompt_version": "phase2-cv-v1",
+            "profile_version": "1",
+            "source_cv_sha256": "fake-sha",
+            "validation": {"valid": True},
+        }
+
+    monkeypatch.setattr(scraper, "scrape_all", fake_scrape_all)
+    monkeypatch.setattr(cv_agent, "tailor_cv", flaky_tailor_cv)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs: True)
+
+    first_run = run_pipeline(trigger="manual")
+    assert first_run is not None
+    first = get_pipeline_run(first_run)
+    assert first["jobs_inserted"] == 1
+    assert first["jobs_shortlisted"] == 1
+    assert first["jobs_tailored"] == 0
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT system_state
+                FROM jobs
+                WHERE source = 'phase2-e2e' AND source_job_id = 'retry-tailor'
+                """
+            )
+            row = cur.fetchone()
+    assert row["system_state"] == "shortlisted"
+
+    second_run = run_pipeline(trigger="retry")
+    assert second_run is not None
+    second = get_pipeline_run(second_run)
+
+    assert second["jobs_inserted"] == 0
+    assert second["jobs_ranked"] == 0
+    assert second["jobs_shortlisted"] == 0
+    assert second["jobs_tailored"] == 1
+    assert attempts["count"] == 2
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT system_state
+                FROM jobs
+                WHERE source = 'phase2-e2e' AND source_job_id = 'retry-tailor'
+                """
+            )
+            row = cur.fetchone()
+    assert row["system_state"] == "notified"
