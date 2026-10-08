@@ -7,12 +7,13 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 from pathlib import Path
 
 import anthropic
 from dotenv import load_dotenv
+
+from src.settings import get_settings
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -89,7 +90,7 @@ def tailor_cv(
         }
     """
     if client is None:
-        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+        client = anthropic.Anthropic(api_key=get_settings().require_anthropic_api_key())
     master_cv = _load_master_cv()
 
     user_message = f"""
