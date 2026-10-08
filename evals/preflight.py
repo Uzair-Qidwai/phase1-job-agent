@@ -1,6 +1,7 @@
 """Offline live-test readiness check. Never contacts a provider, database or Gmail."""
 from __future__ import annotations
 import json
+from pathlib import Path
 from src.settings import Settings, get_settings
 
 
@@ -27,7 +28,8 @@ def check(settings: Settings) -> dict:
                        "credential_configured": key_present, "prices_configured": priced})
     if settings.model_spend_stop_usd is None:
         issues.append("Set MODEL_SPEND_STOP_USD for the controlled live test")
-    if not MASTER_CV_PATH.exists():
+    master_path = Path(settings.master_cv_path).expanduser() if settings.master_cv_path else MASTER_CV_PATH
+    if not master_path.is_file():
         issues.append("Master CV is missing")
     return {"mode": "offline_preflight", "agent_workflow_enabled": settings.agent_workflow_enabled,
             "models": models, "request_limit": settings.pipeline_max_model_calls,

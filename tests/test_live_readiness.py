@@ -65,3 +65,16 @@ def test_source_summary_detects_missing_and_duplicate_data():
     assert report["duplicate_identities"] == 1
     assert report["missing_descriptions"] == 2
     assert report["passed"] is False
+
+
+def test_preflight_checks_configured_private_cv_instead_of_default(tmp_path):
+    path = tmp_path / 'private-cv.md'
+    settings = Settings(_env_file=None, MODEL_PROVIDER='gemini', MODEL_NAME='configured',
+                        GEMINI_API_KEY='test-only', MODEL_INPUT_COST_PER_MTOK=0,
+                        MODEL_OUTPUT_COST_PER_MTOK=0, MODEL_SPEND_STOP_USD=.01,
+                        MASTER_CV_PATH=str(path))
+    report = check(settings)
+    assert 'Master CV is missing' in report['issues']
+    assert not report['ready_for_model_calls']
+    path.write_text('Fictional candidate evidence')
+    assert check(settings)['ready_for_model_calls']
