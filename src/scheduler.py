@@ -452,6 +452,24 @@ def run_pipeline(
         raise
 
 
+def resume_pipeline(failed_run_id: str) -> str | None:
+    """Retry a failed run from the earliest safe persisted restart point."""
+    from src.tracker import get_pipeline_run
+
+    failed = get_pipeline_run(failed_run_id)
+    if not failed:
+        raise ValueError("Failed pipeline run does not exist")
+    if failed["status"] != "failed":
+        raise ValueError("Only failed pipeline runs can be resumed")
+
+    restart_stage = safe_restart_stage(str(failed["current_stage"]))
+    return run_pipeline(
+        trigger="retry",
+        retry_of_run_id=failed_run_id,
+        resume_from_stage=restart_stage,
+    )
+
+
 def start_scheduler(
     hour: int | None = None,
     minute: int | None = None,
