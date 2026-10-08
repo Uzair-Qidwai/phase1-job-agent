@@ -34,7 +34,12 @@ class Settings(BaseSettings):
     digest_recipient: str | None = Field(default=None, alias="DIGEST_RECIPIENT")
 
     app_base_url: str = Field(default="http://localhost:8000", alias="APP_BASE_URL")
-    api_token: str | None = Field(default=None, alias="API_TOKEN")
+    api_token: str | None = Field(
+        default=None,
+        min_length=24,
+        max_length=256,
+        alias="API_TOKEN",
+    )
     pipeline_timezone: str = Field(default="America/Toronto", alias="PIPELINE_TIMEZONE")
     pipeline_hour: int = Field(default=8, ge=0, le=23, alias="PIPELINE_HOUR")
     pipeline_minute: int = Field(default=0, ge=0, le=59, alias="PIPELINE_MINUTE")
