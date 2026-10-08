@@ -121,9 +121,17 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     estimated_model_cost_usd NUMERIC(12,6) NOT NULL DEFAULT 0,
     error_type      TEXT,
     error_message   TEXT,
+    retry_of_run_id UUID REFERENCES pipeline_runs(id) ON DELETE SET NULL,
     metadata        JSONB NOT NULL DEFAULT '{}'::jsonb,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE pipeline_runs
+    ADD COLUMN IF NOT EXISTS retry_of_run_id UUID REFERENCES pipeline_runs(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_retry_of
+    ON pipeline_runs (retry_of_run_id)
+    WHERE retry_of_run_id IS NOT NULL;
 
 -- Cross-process lock: there can be at most one active run regardless of whether
 -- it was started by APScheduler, the API, or a manual CLI process.
