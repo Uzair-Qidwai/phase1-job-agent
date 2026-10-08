@@ -42,6 +42,27 @@ class Settings(BaseSettings):
             raise RuntimeError("ANTHROPIC_API_KEY is required for live CV generation")
         return self.anthropic_api_key
 
+    def require_gmail_credentials(self) -> tuple[str, str, str, str, str]:
+        values = {
+            "GMAIL_CLIENT_ID": self.gmail_client_id,
+            "GMAIL_CLIENT_SECRET": self.gmail_client_secret,
+            "GMAIL_REFRESH_TOKEN": self.gmail_refresh_token,
+            "GMAIL_SENDER": self.gmail_sender,
+            "DIGEST_RECIPIENT": self.digest_recipient,
+        }
+        missing = [name for name, value in values.items() if not value]
+        if missing:
+            raise RuntimeError(
+                "Missing Gmail configuration: " + ", ".join(sorted(missing))
+            )
+        return (
+            self.gmail_client_id,
+            self.gmail_client_secret,
+            self.gmail_refresh_token,
+            self.gmail_sender,
+            self.digest_recipient,
+        )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
