@@ -10,6 +10,7 @@ from src.tracker import (
     fail_pipeline_run,
     get_conn,
     get_pipeline_run,
+    save_cv_version,
     start_pipeline_run,
     upsert_job,
 )
@@ -89,3 +90,52 @@ def test_source_job_id_prevents_duplicate_jobs() -> None:
     assert first_is_new is True
     assert second_is_new is False
     assert first_id == second_id
+
+
+def test_cv_version_audit_metadata_is_persisted() -> None:
+    job_id, _ = upsert_job(
+        title="AI Engineer",
+        company="Example",
+        location="Toronto",
+        url="https://example.com/jobs/audit-cv",
+        description="Build AI systems.",
+        source="phase2-test",
+        source_job_id="audit-cv",
+    )
+    cv_id = save_cv_version(
+        job_id,
+        "# Tailored CV\n\nEvidence-backed content long enough for storage.",
+        "Reordered existing experience.",
+        model="test-model",
+        prompt_version="phase2-cv-v1",
+        profile_version="1",
+        source_cv_sha256="abc123",
+        evidence=[
+            {
+                "claim": "Python experience",
+                "source": "master_cv",
+                "source_text": "Python",
+            }
+        ],
+        validation={"valid": True},
+    )
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT model, prompt_version, profile_version, source_cv_sha256,
+                       evidence, validation
+                FROM cv_versions
+                WHERE id = %s
+                """,
+                (cv_id,),
+            )
+            row = cur.fetchone()
+
+    assert row["model"] == "test-model"
+    assert row["prompt_version"] == "phase2-cv-v1"
+    assert row["profile_version"] == "1"
+    assert row["source_cv_sha256"] == "abc123"
+    assert row["validation"]["valid"] is True
+    assert row["evidence"][0]["claim"] == "Python experience"
