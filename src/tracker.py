@@ -556,3 +556,45 @@ def get_active_pipeline_run() -> dict[str, Any] | None:
             )
             row = cur.fetchone()
             return dict(row) if row else None
+
+
+def record_source_health(
+    run_id: str,
+    source_counts: dict[str, int],
+) -> None:
+    """Persist per-source discovery counts for operational trend monitoring."""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            for source, count in source_counts.items():
+                cur.execute(
+                    """
+                    INSERT INTO source_health (
+                        run_id, source, jobs_discovered, zero_results
+                    )
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (run_id, source) DO UPDATE
+                    SET jobs_discovered = EXCLUDED.jobs_discovered,
+                        zero_results = EXCLUDED.zero_results
+                    """,
+                    (uuid.UUID(run_id), source, count, count == 0),
+                )
+
+
+def get_source_health(
+    source: str | None = None,
+    *,
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, run_id, source, jobs_discovered, zero_results, created_at
+                FROM source_health
+                WHERE (%s IS NULL OR source = %s)
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (source, source, limit),
+            )
+            return [dict(row) for row in cur.fetchall()]
