@@ -76,6 +76,7 @@ def tailor_cv(
     description: str,
     model: str = "claude-sonnet-4-5",
     max_tokens: int = 4096,
+    client=None,
 ) -> dict:
     """
     Call Claude API to produce a tailored CV for a specific job.
@@ -87,7 +88,8 @@ def tailor_cv(
             "changes_made": str,
         }
     """
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    if client is None:
+        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     master_cv = _load_master_cv()
 
     user_message = f"""
