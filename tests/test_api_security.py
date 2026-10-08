@@ -11,7 +11,7 @@ from src.settings import get_settings
 
 @pytest.fixture(autouse=True)
 def configured_api_token(monkeypatch):
-    monkeypatch.setenv("API_TOKEN", "test-secret-token")
+    monkeypatch.setenv("API_TOKEN", "phase2-test-secret-token-strong-enough")
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
