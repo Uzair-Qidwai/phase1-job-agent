@@ -214,3 +214,5 @@ pipeline events. No live-provider compatibility claim is made before Checkpoint 
 
 See [Checkpoint 3](docs/phase2/CHECKPOINT_03.md) and
 [Checkpoint 4](docs/phase2/CHECKPOINT_04.md) for delivery and acceptance gates.
+
+Phase 2 live-test preparation and remaining acceptance gates: [Checkpoint 4 live-test handoff](docs/phase2/LIVE_TESTING.md).

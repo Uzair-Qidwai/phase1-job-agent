@@ -81,3 +81,14 @@ operational prerequisite, not an automatic liveness inference.
 5. **Exit decision:** review these limitations, the private-network read policy,
    migration deployment assumptions and deferred retry policy before marking the
    PR ready. No merge has been performed or approved.
+
+## Checkpoint 4 offline readiness
+
+Delivery reconciliation, run-wide request/spend controls, bounded transient retry,
+CV relationship/section checks and live-test tooling are implemented. Existing
+worker-death/recovery and concurrent trigger checks remain green. Disposable DB
+backup/restore was rehearsed; production data/host deployment was not touched.
+
+See [LIVE_TESTING.md](LIVE_TESTING.md) for the staged commands and remaining gates.
+Live model/source quality, actual email delivery, target-host deployment and human
+CV acceptance remain **pending**. Checkpoint 4 is not an exit approval.

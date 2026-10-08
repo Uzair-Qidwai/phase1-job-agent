@@ -1,6 +1,7 @@
 # Checkpoint 4 — Live validation, remaining features, Phase 2 exit
 
-Status: planned; live checks remain deferred by the user. Starts after Checkpoint 3.
+Status: offline hardening and live-test preparation implemented; live acceptance
+remains deferred by the user. See [live-test handoff](LIVE_TESTING.md).
 Branch remains `phase2-foundation`; PR #1 remains Draft until explicit exit review.
 
 ## Ordered work
@@ -72,3 +73,11 @@ pending mean this checkpoint is incomplete, even if offline CI passes.
   relationships, employer swaps, intact structure and omitted sections. Neutral
   headings may be added to otherwise unstructured excerpts. This conservative
   lexical gate is not semantic entailment; live false-rejection review remains.
+
+- CV slice CI #272 passed on `d1d49d0` (166 tests, 26 CV gold cases).
+- Live-test tools now require explicit invocation and preserve private reports;
+  model evaluation budgets cover the entire run. Offline preflight, synthetic
+  delivery preview, optional read authentication and legacy upgrade rehearsal
+  are included. Local backup/restore succeeded on disposable PostgreSQL 16 data.
+- Target-host deployment, real provider/source/delivery checks and final human
+  acceptance remain pending; this is live-ready preparation, not Phase 2 exit.

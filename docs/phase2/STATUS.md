@@ -2,9 +2,9 @@
 
 This document tracks implementation against the Phase 2 architecture and evaluation plan.
 
-Updated for Checkpoint 3 specialist-workflow implementation. The former recovery
+Updated for Checkpoint 4 offline hardening and live-test preparation. The former recovery
 checkpoint is preserved in [RECOVERY_CHECKPOINT.md](RECOVERY_CHECKPOINT.md).
-[Checkpoint 4](CHECKPOINT_04.md) is the planned live-validation/exit milestone. Automated checks pass;
+[Checkpoint 4](CHECKPOINT_04.md) has completed offline preparation; live validation/exit remains pending. Automated checks pass;
 Phase 2 exit approval is still pending. See [acceptance report](ACCEPTANCE.md).
 
 | Workstream | Runtime implementation | Evaluation / test gate | Status |
@@ -24,10 +24,10 @@ Phase 2 exit approval is still pending. See [acceptance report](ACCEPTANCE.md).
 | Semantic promotion gate | candidate-vs-baseline live evaluator | exits non-zero on Precision@5 or pairwise regression | Ready for live run |
 | Rank-before-generate | only shortlisted jobs receive CV generation | E2E acceptance test | Complete |
 | CV generation contract | typed result, no ranking responsibility, prompt-injection boundary | CV agent unit tests | Complete |
-| CV factuality | whole-output lexical coverage, source quotes, numeric support, qualifiers and negation | v2 adversarial factuality goldens | Deterministic gate passes; semantic limits remain |
+| CV factuality | whole-output coverage, source quotes, numeric support, qualifiers, relationship order and section attribution | v3 adversarial factuality goldens, relationship order and section attribution | Deterministic gate passes; semantic limits remain |
 | CV audit history | prompt/model/profile/source CV fingerprint/evidence/validation/usage persisted | DB integration test | Complete |
 | Job recovery | persisted job system state recovers unfinished work across runs | failed-tailoring retry E2E test | Complete |
-| Notification idempotency | recorded job/channel delivery suppresses later digests | integration + E2E rerun tests | Passes recorded-delivery tests; external-send crash window remains |
+| Notification idempotency | recorded job/channel delivery suppresses later digests | integration + E2E rerun tests | Durable ambiguous attempts block resend; operator reconciliation tested |
 | API write security | bearer token for writes and manual trigger | API security regression tests | Complete |
 | HTML/link safety | escaped dashboard/email output; unsafe URL schemes blocked | XSS regression tests | Complete |
 | Security headers | CSP, frame denial, nosniff, referrer policy | API header test | Complete |
@@ -130,3 +130,7 @@ they are deliberately excluded from automatic pull-request CI.
 Additional exit decisions: accept or remediate external email delivery ambiguity,
 CV semantic/context limitations, and private-network unauthenticated reads.
 Neither this status document nor passing CI constitutes approval to merge.
+
+Live execution checklist: [LIVE_TESTING.md](LIVE_TESTING.md). Runtime request/spend
+guards, bounded transient retry, partial CV failure reporting and optional read
+authentication are implemented. Production deployment/live acceptance is pending.

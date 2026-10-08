@@ -96,7 +96,12 @@ async def security_headers(request, call_next):
     return response
 
 
-@app.get("/jobs")
+def require_read_auth(authorization: str | None = Header(default=None)) -> None:
+    if get_settings().api_require_read_auth:
+        require_write_auth(authorization)
+
+
+@app.get("/jobs", dependencies=[Depends(require_read_auth)])
 def list_jobs(
     status: Optional[str] = Query(None, description="Filter by status"),
     min_score: float = Query(0.0, ge=0.0, le=1.0),
@@ -105,7 +110,7 @@ def list_jobs(
     return get_jobs(status=status, min_score=min_score, limit=limit)
 
 
-@app.get("/jobs/{job_id}")
+@app.get("/jobs/{job_id}", dependencies=[Depends(require_read_auth)])
 def get_job(job_id: UUID):
     job = get_job_by_id(str(job_id))
     if not job:
@@ -133,7 +138,7 @@ def patch_notes(job_id: UUID, body: NoteUpdate):
     return {"ok": True}
 
 
-@app.get("/pipeline/runs")
+@app.get("/pipeline/runs", dependencies=[Depends(require_read_auth)])
 def list_pipeline_runs(
     status: str | None = Query(None),
     limit: int = Query(100, ge=1, le=500),
@@ -145,7 +150,7 @@ def list_pipeline_runs(
     return [{key: row.get(key) for key in PIPELINE_RUN_PUBLIC_FIELDS} for row in rows]
 
 
-@app.get("/pipeline/runs/{run_id}")
+@app.get("/pipeline/runs/{run_id}", dependencies=[Depends(require_read_auth)])
 def read_pipeline_run(run_id: UUID):
     run = get_pipeline_run(str(run_id))
     if not run:
@@ -153,7 +158,14 @@ def read_pipeline_run(run_id: UUID):
     return {key: run.get(key) for key in PIPELINE_RUN_PUBLIC_FIELDS}
 
 
-@app.get("/sources/health")
+@app.get("/deliveries", dependencies=[Depends(require_write_auth)])
+def read_delivery_attempts(limit: int = Query(20, ge=1, le=100)):
+    from src.delivery import list_attempts
+    fields = ("id", "run_id", "message_id", "status", "created_at", "resolved_at")
+    return [{key: row[key] for key in fields} for row in list_attempts(limit)]
+
+
+@app.get("/sources/health", dependencies=[Depends(require_read_auth)])
 def list_source_health(
     source: str | None = Query(None, min_length=1, max_length=100),
     limit: int = Query(100, ge=1, le=500),
@@ -239,7 +251,7 @@ def _score_color(score: float | None) -> str:
     return "#ef4444"
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
+@app.get("/dashboard", response_class=HTMLResponse, dependencies=[Depends(require_read_auth)])
 def dashboard(
     status: Optional[str] = Query(None),
     min_score: float = Query(0.0, ge=0.0, le=1.0),
@@ -406,4 +418,4 @@ def dashboard(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("src.api:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("src.api:app", host="127.0.0.1", port=8000, reload=True)

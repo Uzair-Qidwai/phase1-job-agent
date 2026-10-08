@@ -1,7 +1,7 @@
 """Live candidate-vs-baseline ranking evaluation.
 
 Usage:
-    python -m evals.run_semantic_eval
+    python -m evals.run_semantic_eval --allow-live --output .local/report.json
 
 Requires the configured analyst provider credential and model.
 The command exits non-zero if semantic ranking regresses on Precision@5 or
@@ -17,7 +17,8 @@ from evals.metrics import pairwise_accuracy, precision_at_k
 from src.candidate_profile import load_candidate_profile
 from src.ranking import rank_job
 from src.semantic_ranking import rank_job_semantic
-from src.settings import get_settings
+from src.model_runtime import AgentRuntime
+from evals.live_support import run_live
 
 
 GOLD = Path(__file__).parent / "ranking_gold.json"
@@ -37,8 +38,7 @@ def _metrics(dataset: dict, scores: dict[str, float]) -> dict[str, float]:
     }
 
 
-def main() -> int:
-    settings = get_settings()
+def evaluate(settings, budget, steps) -> dict:
     config = settings.agent_config("analyst")
     settings.require_model_key(config.provider)
     profile = load_candidate_profile()
@@ -67,7 +67,7 @@ def main() -> int:
         baseline = rank_job(**common)
         candidate = ranker(
             **common,
-
+            runtime=AgentRuntime(settings=settings, run_budget=budget, on_step=steps.append),
         )
 
         baseline_scores[job["id"]] = baseline.total_score
@@ -102,14 +102,18 @@ def main() -> int:
             "cost_estimate_complete": cost_estimate_complete,
         },
         "promotion_gate_passed": passed,
+        "passed": passed,
         "scores": {
             "baseline": baseline_scores,
             "candidate": candidate_scores,
         },
     }
 
-    print(json.dumps(report, indent=2, sort_keys=True))
-    return 0 if passed else 1
+    return report
+
+
+def main() -> int:
+    return run_live(evaluate)
 
 
 if __name__ == "__main__":

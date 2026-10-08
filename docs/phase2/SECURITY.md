@@ -88,3 +88,9 @@ CI tests must include:
 - unsafe URL scheme is rejected;
 - concurrent pipeline trigger is refused;
 - secrets are absent from serialized API responses.
+
+Checkpoint 4 adds optional bearer protection to all application read routes via
+`API_REQUIRE_READ_AUTH=true`; delivery attempt history always requires auth.
+The development entrypoint binds loopback. Keep public exposure disabled without
+an authenticated deployment boundary. Live reports under `.local/` are ignored
+by Git and may contain personal CV drafts; do not publish them as CI artifacts.

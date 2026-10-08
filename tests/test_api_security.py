@@ -195,3 +195,18 @@ def test_source_health_filters_are_forwarded(monkeypatch):
     assert response.status_code == 200
     assert response.json() == []
     assert received == {"source": "indeed", "limit": 7, "offset": 2}
+
+
+def test_optional_read_auth_blocks_private_reads(monkeypatch):
+    monkeypatch.setenv("API_REQUIRE_READ_AUTH", "true")
+    get_settings.cache_clear()
+    monkeypatch.setattr(api_module, "get_pipeline_runs", lambda **kwargs: [])
+    client = TestClient(api_module.app)
+    assert client.get("/pipeline/runs").status_code == 401
+    assert client.get("/pipeline/runs", headers=_auth_headers()).status_code == 200
+    assert client.get("/dashboard").status_code == 401
+
+
+def test_delivery_history_requires_auth():
+    client = TestClient(api_module.app)
+    assert client.get("/deliveries").status_code == 401

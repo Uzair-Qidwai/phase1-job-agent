@@ -1,7 +1,7 @@
 """Controlled live-provider smoke test for Phase 2 AI boundaries.
 
 Usage:
-    python -m evals.live_provider_smoke
+    python -m evals.live_provider_smoke --allow-live --output .local/report.json
 
 Requires configured specialist provider credentials. This performs ranking and CV generation; when AGENT_WORKFLOW_ENABLED is true it
 uses the four bounded specialists (and can make multiple model/tool calls). It does not write to PostgreSQL and does not send email.
@@ -15,14 +15,14 @@ from pathlib import Path
 from src.candidate_profile import load_candidate_profile
 from src.cv_agent import tailor_cv
 from src.semantic_ranking import rank_job_semantic
-from src.settings import get_settings
+from src.model_runtime import AgentRuntime
+from evals.live_support import run_live
 
 
 GOLD = Path(__file__).parent / "ranking_gold.json"
 
 
-def main() -> int:
-    settings = get_settings()
+def evaluate(settings, budget, steps) -> dict:
     roles = ("researcher", "analyst", "writer", "reviewer") if settings.agent_workflow_enabled else ("analyst", "writer")
     for role in roles:
         settings.require_model_key(settings.agent_config(role).provider)
@@ -42,12 +42,14 @@ def main() -> int:
         location=job["location"],
         description=job["description"],
         profile=profile,
+        runtime=AgentRuntime(settings=settings, run_budget=budget, on_step=steps.append),
     )
 
     tailored = tailorer(
         job_title=job["title"],
         company=job["company"],
         description=job["description"],
+        runtime=AgentRuntime(settings=settings, run_budget=budget, on_step=steps.append),
     )
 
     report = {
@@ -82,8 +84,11 @@ def main() -> int:
         ),
     }
 
-    print(json.dumps(report, indent=2, sort_keys=True))
-    return 0 if report["passed"] else 1
+    return report
+
+
+def main() -> int:
+    return run_live(evaluate)
 
 
 if __name__ == "__main__":

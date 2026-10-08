@@ -58,11 +58,11 @@ class Settings(BaseSettings):
     agent_transient_retries: int = Field(default=1, ge=0, le=2, alias="AGENT_TRANSIENT_RETRIES")
     agent_retry_backoff_seconds: float = Field(default=1, ge=0, le=10, alias="AGENT_RETRY_BACKOFF_SECONDS")
 
-    postgres_url: str | None = Field(default=None, alias="POSTGRES_URL")
+    postgres_url: str | None = Field(default=None, repr=False, alias="POSTGRES_URL")
 
-    gmail_client_id: str | None = Field(default=None, alias="GMAIL_CLIENT_ID")
-    gmail_client_secret: str | None = Field(default=None, alias="GMAIL_CLIENT_SECRET")
-    gmail_refresh_token: str | None = Field(default=None, alias="GMAIL_REFRESH_TOKEN")
+    gmail_client_id: str | None = Field(default=None, repr=False, alias="GMAIL_CLIENT_ID")
+    gmail_client_secret: str | None = Field(default=None, repr=False, alias="GMAIL_CLIENT_SECRET")
+    gmail_refresh_token: str | None = Field(default=None, repr=False, alias="GMAIL_REFRESH_TOKEN")
     gmail_sender: str | None = Field(default=None, alias="GMAIL_SENDER")
     digest_recipient: str | None = Field(default=None, alias="DIGEST_RECIPIENT")
 
@@ -72,7 +72,9 @@ class Settings(BaseSettings):
         min_length=24,
         max_length=256,
         alias="API_TOKEN",
+        repr=False,
     )
+    api_require_read_auth: bool = Field(default=False, alias="API_REQUIRE_READ_AUTH")
     pipeline_timezone: str = Field(default="America/Toronto", alias="PIPELINE_TIMEZONE")
     pipeline_hour: int = Field(default=8, ge=0, le=23, alias="PIPELINE_HOUR")
     pipeline_minute: int = Field(default=0, ge=0, le=59, alias="PIPELINE_MINUTE")

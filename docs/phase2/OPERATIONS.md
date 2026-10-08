@@ -60,3 +60,35 @@ not an automatic lease/heartbeat system or distributed fencing guarantee.
 Use a direct PostgreSQL connection or session-pooling connection for workers;
 transaction-pooling proxies cannot preserve this session-lock contract.
 Each running worker holds one additional database connection for the lock.
+
+## Delivery ambiguity and reconciliation
+
+Every non-empty digest commits an `ambiguous` delivery attempt **before** calling
+Gmail. Success atomically records all job notifications and resolves the attempt.
+A crash, false return, provider error or failed final DB commit leaves the attempt
+unresolved. All subsequent digests are blocked until an operator investigates.
+This favors avoiding duplicate mail over unattended retry availability.
+
+Stop all workers/entrypoints first and inspect:
+
+```bash
+python -m src.delivery list
+```
+
+Use the recorded Message-ID to investigate Gmail Sent/provider logs. It is a
+correlation aid, not an exactly-once guarantee. If confirmed sent:
+
+```bash
+python -m src.delivery reconcile ATTEMPT_UUID --outcome sent \
+  --reason "Verified delivery in provider logs; incident reference" \
+  --confirm-workers-stopped
+```
+
+Only with evidence that nothing was sent, use `--outcome not-sent`. That releases
+the block and leaves jobs eligible for a later pipeline retry. If inconclusive,
+leave ambiguous and investigate; do not guess. The command sends no email, holds
+the worker exclusion lock and stores the resolution reason. Then recover any
+stranded run and retry from its persisted stage. Successful CV deliveries remain
+recorded when a different CV failed; retry resumes tailoring without resending.
+
+See [live-test handoff](LIVE_TESTING.md) for budgets, privacy and deployment checks.
