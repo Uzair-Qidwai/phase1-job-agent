@@ -40,6 +40,7 @@ def fake_client(payload: dict = SAMPLE_RESPONSE) -> MagicMock:
     client = MagicMock()
     response = MagicMock()
     response.content = [MagicMock(text=json.dumps(payload))]
+    response.usage = MagicMock(input_tokens=123, output_tokens=45)
     client.messages.create.return_value = response
     return client
 
@@ -77,6 +78,8 @@ class TestTailorCV(unittest.TestCase):
         self.assertIn("changes_made", result)
         self.assertIn("evidence_used", result)
         self.assertTrue(result["validation"]["valid"])
+        self.assertEqual(result["usage"]["input_tokens"], 123)
+        self.assertEqual(result["usage"]["output_tokens"], 45)
         self.assertNotIn("match_score", result)
 
     def test_generation_metadata_is_attached(self):
