@@ -85,3 +85,33 @@ def test_numeric_magnitude_suffixes_are_compared() -> None:
     )
     assert invented_validation.valid is False
     assert "250m" in invented_validation.unsupported_numeric_claims
+
+
+def test_irrelevant_evidence_is_rejected() -> None:
+    result = TailoredCVResult.model_validate(
+        {
+            "tailored_cv": (
+                "Engineering leader who managed platform delivery across teams "
+                "and owned technical execution."
+            ),
+            "changes_made": "Strengthened leadership framing.",
+            "evidence_used": [
+                {
+                    "claim": "Managed engineering teams",
+                    "source": "master_cv",
+                    "source_text": "Python, SQL, FastAPI",
+                }
+            ],
+        }
+    )
+
+    validation = validate_tailored_cv(
+        result,
+        master_cv="Python, SQL, FastAPI",
+        candidate_profile_text="{}",
+    )
+
+    assert validation.valid is False
+    assert any(
+        "not relevant" in message for message in validation.invalid_evidence
+    )
