@@ -26,7 +26,9 @@ ALTER TABLE cv_versions
     ADD COLUMN IF NOT EXISTS profile_version TEXT,
     ADD COLUMN IF NOT EXISTS source_cv_sha256 TEXT,
     ADD COLUMN IF NOT EXISTS evidence JSONB NOT NULL DEFAULT '[]'::jsonb,
-    ADD COLUMN IF NOT EXISTS validation JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ADD COLUMN IF NOT EXISTS validation JSONB NOT NULL DEFAULT '{}'::jsonb,
+    ADD COLUMN IF NOT EXISTS usage JSONB NOT NULL DEFAULT '{}'::jsonb,
+    ADD COLUMN IF NOT EXISTS estimated_cost_usd NUMERIC(12,6) NOT NULL DEFAULT 0;
 
 DO $phase2state$
 BEGIN
@@ -114,6 +116,9 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     jobs_shortlisted INTEGER NOT NULL DEFAULT 0,
     jobs_tailored   INTEGER NOT NULL DEFAULT 0,
     jobs_notified   INTEGER NOT NULL DEFAULT 0,
+    model_input_tokens INTEGER NOT NULL DEFAULT 0,
+    model_output_tokens INTEGER NOT NULL DEFAULT 0,
+    estimated_model_cost_usd NUMERIC(12,6) NOT NULL DEFAULT 0,
     error_type      TEXT,
     error_message   TEXT,
     metadata        JSONB NOT NULL DEFAULT '{}'::jsonb,
