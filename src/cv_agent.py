@@ -64,7 +64,10 @@ Rules:
 
 
 def _load_master_cv() -> str:
-    return MASTER_CV_PATH.read_text(encoding="utf-8")
+    from src.settings import get_settings
+    configured = get_settings().master_cv_path
+    path = Path(configured).expanduser() if configured else MASTER_CV_PATH
+    return path.read_text(encoding="utf-8")
 
 
 def _usage_int(usage, name: str) -> int:

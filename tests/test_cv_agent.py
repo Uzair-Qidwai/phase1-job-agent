@@ -123,3 +123,20 @@ class TestTailorCV(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_private_master_cv_override_is_used_without_fallback(monkeypatch, tmp_path):
+    from src.cv_agent import _load_master_cv
+    from src.settings import get_settings
+    path = tmp_path / 'private.md'
+    path.write_text('Private synthetic evidence only')
+    monkeypatch.setenv('MASTER_CV_PATH', str(path))
+    get_settings.cache_clear()
+    try:
+        assert _load_master_cv() == 'Private synthetic evidence only'
+        path.unlink()
+        import pytest
+        with pytest.raises(FileNotFoundError):
+            _load_master_cv()
+    finally:
+        get_settings.cache_clear()

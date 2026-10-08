@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     agent_transient_retries: int = Field(default=1, ge=0, le=2, alias="AGENT_TRANSIENT_RETRIES")
     agent_retry_backoff_seconds: float = Field(default=1, ge=0, le=10, alias="AGENT_RETRY_BACKOFF_SECONDS")
 
+    master_cv_path: str | None = Field(default=None, min_length=1, alias="MASTER_CV_PATH")
+
     postgres_url: str | None = Field(default=None, repr=False, alias="POSTGRES_URL")
 
     gmail_client_id: str | None = Field(default=None, repr=False, alias="GMAIL_CLIENT_ID")

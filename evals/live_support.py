@@ -29,7 +29,8 @@ def run_live(evaluate):
     budget = RunBudget(settings.pipeline_max_model_calls, settings.model_spend_stop_usd)
     steps = []
     root = Path(__file__).resolve().parent.parent
-    inputs = [root / "evals/ranking_gold.json", root / "data/master_cv.md"]
+    master_path = Path(settings.master_cv_path).expanduser() if settings.master_cv_path else root / "data/master_cv.md"
+    inputs = [root / "evals/ranking_gold.json", master_path, root / "data/candidate_profile.json"]
     report = {"passed": False, "started_at": datetime.now(timezone.utc).isoformat(),
               "input_sha256": {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs},
               "agent_workflow_enabled": settings.agent_workflow_enabled}
