@@ -1,0 +1,23 @@
+[
+  {
+    "name": "indeed distinct job A",
+    "source": "indeed",
+    "input_url": "https://ca.indeed.com/viewjob?jk=ABC123&utm_source=email",
+    "expected_source_job_id": "ABC123",
+    "expected_canonical_url": "https://ca.indeed.com/viewjob?jk=ABC123"
+  },
+  {
+    "name": "indeed distinct job B",
+    "source": "indeed",
+    "input_url": "https://ca.indeed.com/viewjob?jk=XYZ789&from=serp",
+    "expected_source_job_id": "XYZ789",
+    "expected_canonical_url": "https://ca.indeed.com/viewjob?jk=XYZ789"
+  },
+  {
+    "name": "linkedin public job",
+    "source": "linkedin",
+    "input_url": "https://www.linkedin.com/jobs/view/ai-engineer-1234567890/?trackingId=foo",
+    "expected_source_job_id": "1234567890",
+    "expected_canonical_url": "https://www.linkedin.com/jobs/view/ai-engineer-1234567890"
+  }
+]
