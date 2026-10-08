@@ -275,3 +275,34 @@ def test_default_turn_budget_allows_four_evidence_reads_and_final_answer():
     assert invoke(runtime, tools=[read_evidence]).output.answer == "review completed"
     assert seen == ["candidate", "validation", "job", "preferences"]
     assert runtime.steps[0]["model_requests"] == 5
+
+
+def test_gemini_finishes_after_reading_all_immutable_evidence_tools():
+    @function_tool
+    def read_captured_job() -> str:
+        """Read the captured job."""
+        return "Synthetic job"
+
+    @function_tool
+    def read_candidate_evidence() -> str:
+        """Read candidate evidence."""
+        return "Synthetic CV"
+
+    class ContractModel(FakeModel):
+        async def get_response(self, *args, **kwargs):
+            choice = kwargs["model_settings"].tool_choice
+            if len(self.inputs) == 2:
+                assert choice == "none"
+            else:
+                assert choice != "none"
+            return await super().get_response(*args, **kwargs)
+
+    model = ContractModel([
+        ResponseFunctionToolCall(type="function_call", call_id="job", name="read_captured_job", arguments="{}"),
+        ResponseFunctionToolCall(type="function_call", call_id="cv", name="read_candidate_evidence", arguments="{}"),
+        message({"answer": "Evidence reviewed"}),
+    ])
+    runtime = AgentRuntime(settings=Settings(_env_file=None, MODEL_PROVIDER="gemini", MODEL_NAME="test"),
+                           model_factory=lambda _: model)
+    assert invoke(runtime, tools=[read_captured_job, read_candidate_evidence]).output.answer == "Evidence reviewed"
+    assert runtime.steps[0]["model_requests"] == 3

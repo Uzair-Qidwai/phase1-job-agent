@@ -7,7 +7,7 @@ import os
 import re
 import time
 from uuid import uuid4
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Callable
 
 from agents import Agent, Model, ModelResponse, ModelSettings, RunConfig, Runner
@@ -79,6 +79,15 @@ class BudgetedModel(Model):
         self.run_budget, self.config, self.settings = run_budget, config, settings
 
     async def get_response(self, *args, **kwargs) -> ModelResponse:
+        # These tools are immutable snapshots with no parameters. Once all have
+        # been read, Gemini must synthesize an answer instead of rereading them.
+        # Leave generic/parameterized tools and other providers unchanged.
+        names = {tool.name for tool in kwargs.get("tools", [])}
+        evidence_tools = {"read_captured_job", "read_candidate_evidence",
+                          "read_search_preferences", "check_draft_evidence"}
+        if (self.config.provider == "gemini" and names and names <= evidence_tools
+                and names <= set(self.usage.tool_calls)):
+            kwargs["model_settings"] = replace(kwargs["model_settings"], tool_choice="none")
         # Bound the full SDK request, including accumulated tool results.
         if len(json.dumps([args, kwargs], default=str).encode()) > self.settings.agent_max_input_bytes:
             raise BudgetExceeded("Specialist input-size budget exceeded")

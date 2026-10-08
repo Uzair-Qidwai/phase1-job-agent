@@ -112,3 +112,10 @@ turns reading its four tools. Default turn allowance is now six so sequential
 reads can be followed by a final answer; request caps, timeouts and revision
 limits remain enforced. A regression test exercises four reads plus final output.
 This tuning follows observed tool behavior, not a relaxation of evidence checks.
+
+Turn allowance `021e28a` passed CI #280 (180 tests). A subsequent 3.5 Flash Lite
+trial was interrupted by provider overload; 3.1 Flash Lite instead repeated
+unchanged evidence reads. Gemini now receives `tool_choice=none` once every
+available immutable evidence tool has been read, requiring synthesis on the
+next request. Generic tools and other providers retain their existing behavior.
+This does not waive validation or increase the request budget.
