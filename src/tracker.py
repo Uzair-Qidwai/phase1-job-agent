@@ -610,3 +610,29 @@ def get_source_health(
                 (source, source, limit),
             )
             return [dict(row) for row in cur.fetchall()]
+
+
+def source_has_consecutive_zero_results(
+    source: str,
+    *,
+    runs: int,
+) -> bool:
+    """Return True only when the latest N recorded source runs are all empty."""
+    if runs < 1:
+        raise ValueError("runs must be positive")
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT zero_results
+                FROM source_health
+                WHERE source = %s
+                ORDER BY created_at DESC, id DESC
+                LIMIT %s
+                """,
+                (source, runs),
+            )
+            rows = cur.fetchall()
+
+    return len(rows) == runs and all(row["zero_results"] for row in rows)
