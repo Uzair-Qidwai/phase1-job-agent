@@ -53,7 +53,7 @@ def _score_badge(score: float) -> str:
 
 def _build_html(jobs: list[dict]) -> str:
     if not jobs:
-        return "<p>No new high-score jobs found in the last 24 hours.</p>"
+        return "<p>No unsent high-score jobs are waiting for delivery.</p>"
 
     rows = ""
     for job in jobs:
