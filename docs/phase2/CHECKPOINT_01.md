@@ -136,3 +136,11 @@ Applied SQL files are now immutable; future changes use the next numbered file.
 Existing 001/002 SQL remains unchanged. CI verifies legacy adoption and repeat
 execution, and tests cover concurrent runners, rollback, and history drift.
 Full local suite: 90 passed. Migration slice CI must pass before the next slice.
+
+## Follow-on slice: operational reads
+
+Migration commit `3c6225b` passed GitHub CI #250. Added bounded run history,
+run detail, and source-health read endpoints with status/source filters and
+pagination. Run responses deliberately omit raw errors and metadata. Local suite:
+94 passed, including query validation, field redaction, filters and pagination.
+Endpoint slice CI must pass before the next slice.

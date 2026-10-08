@@ -18,6 +18,10 @@ from pydantic import BaseModel
 
 from src.settings import get_settings
 from src.tracker import (
+    PIPELINE_RUN_PUBLIC_FIELDS,
+    VALID_PIPELINE_STATUSES,
+    get_pipeline_runs,
+    get_source_health,
     PipelineAlreadyRunning,
     fail_pipeline_run,
     start_pipeline_run,
@@ -127,6 +131,35 @@ def patch_notes(job_id: UUID, body: NoteUpdate):
     if not updated:
         raise HTTPException(status_code=404, detail="Job not found")
     return {"ok": True}
+
+
+@app.get("/pipeline/runs")
+def list_pipeline_runs(
+    status: str | None = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0, le=100000),
+):
+    if status is not None and status not in VALID_PIPELINE_STATUSES:
+        raise HTTPException(status_code=422, detail="Invalid pipeline status")
+    rows = get_pipeline_runs(status=status, limit=limit, offset=offset)
+    return [{key: row.get(key) for key in PIPELINE_RUN_PUBLIC_FIELDS} for row in rows]
+
+
+@app.get("/pipeline/runs/{run_id}")
+def read_pipeline_run(run_id: UUID):
+    run = get_pipeline_run(str(run_id))
+    if not run:
+        raise HTTPException(status_code=404, detail="Pipeline run not found")
+    return {key: run.get(key) for key in PIPELINE_RUN_PUBLIC_FIELDS}
+
+
+@app.get("/sources/health")
+def list_source_health(
+    source: str | None = Query(None, min_length=1, max_length=100),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0, le=100000),
+):
+    return get_source_health(source=source, limit=limit, offset=offset)
 
 
 @app.post("/pipeline/runs/{run_id}/retry", dependencies=[Depends(require_write_auth)])

@@ -136,3 +136,17 @@ CONCURRENTLY` in these files. Back up deployed data before upgrades. This small
 runner intentionally has no downgrade framework; rollback needs a reviewed
 forward migration or a database restore. Run from a source checkout (SQL files
 are not bundled in the package wheel).
+
+### Operational reads
+
+- `GET /pipeline/runs?status=failed&limit=100&offset=0`: newest runs first.
+- `GET /pipeline/runs/{uuid}`: run state, counters, costs, and retry lineage.
+- `GET /sources/health?source=indeed&limit=100&offset=0`: source observations.
+
+These follow the existing unauthenticated read policy; deploy on a private
+network. Run responses omit exception text, metadata, and event payloads.
+Limits are 1–500 and offsets 0–100000; UUIDs and status filters are validated.
+Missing run IDs return 404, empty history returns `[]`. Ordering uses timestamp
+then ID; offset pages may shift as new runs arrive. Source zero counts describe
+observations, not proof that an upstream service is healthy. HTTP trigger and
+retry responses now include the admitted `run_id` for polling.

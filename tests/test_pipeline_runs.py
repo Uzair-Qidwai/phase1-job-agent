@@ -470,3 +470,25 @@ def test_admitted_child_initialization_failure_releases_slot(monkeypatch):
         scheduler.execute_admitted_run(run_id)
     assert get_pipeline_run(run_id)["status"] == "failed"
     complete_pipeline_run(start_pipeline_run("scheduled"))
+
+
+def test_operational_history_filters_pagination_and_redaction():
+    from src.tracker import get_pipeline_runs
+    first = start_pipeline_run("manual")
+    record_source_health(first, {"indeed": 0, "linkedin": 2})
+    fail_pipeline_run(first, "ranking", RuntimeError("secret-value"))
+    second = start_pipeline_run("scheduled")
+    record_source_health(second, {"indeed": 3})
+    complete_pipeline_run(second)
+    rows = get_pipeline_runs(limit=1)
+    assert str(rows[0]["id"]) == second
+    assert str(get_pipeline_runs(limit=1, offset=1)[0]["id"]) == first
+    failed = get_pipeline_runs(status="failed")
+    assert [str(row["id"]) for row in failed] == [first]
+    assert "error_message" not in failed[0]
+    assert "metadata" not in failed[0]
+    assert get_pipeline_runs(offset=10) == []
+    health = get_source_health(source="indeed", limit=1, offset=1)
+    assert len(health) == 1
+    assert health[0]["jobs_discovered"] == 0
+    assert str(health[0]["run_id"]) == first

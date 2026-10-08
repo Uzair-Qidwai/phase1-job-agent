@@ -730,7 +730,10 @@ def get_source_health(
     source: str | None = None,
     *,
     limit: int = 100,
+    offset: int = 0,
 ) -> list[dict[str, Any]]:
+    if not 1 <= limit <= 500 or not 0 <= offset <= 100000:
+        raise ValueError("Invalid pagination bounds")
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -738,10 +741,10 @@ def get_source_health(
                 SELECT id, run_id, source, jobs_discovered, zero_results, created_at
                 FROM source_health
                 WHERE (%s IS NULL OR source = %s)
-                ORDER BY created_at DESC
-                LIMIT %s
+                ORDER BY created_at DESC, id DESC
+                LIMIT %s OFFSET %s
                 """,
-                (source, source, limit),
+                (source, source, limit, offset),
             )
             return [dict(row) for row in cur.fetchall()]
 
@@ -788,3 +791,31 @@ def claim_admitted_run(run_id: str) -> dict[str, Any]:
             if not row:
                 raise ValueError("Run reservation does not exist or was already claimed")
             return dict(row)
+
+
+# Deliberately omit exception text, arbitrary metadata and event payloads.
+PIPELINE_RUN_PUBLIC_FIELDS = (
+    "id", "trigger", "status", "current_stage", "started_at", "finished_at",
+    "updated_at", "retry_of_run_id", "jobs_discovered", "jobs_inserted",
+    "jobs_ranked", "jobs_shortlisted", "jobs_tailored", "jobs_notified",
+    "model_input_tokens", "model_output_tokens", "estimated_model_cost_usd",
+)
+
+
+def get_pipeline_runs(*, status: str | None = None, limit: int = 100,
+                      offset: int = 0) -> list[dict[str, Any]]:
+    if status is not None and status not in VALID_PIPELINE_STATUSES:
+        raise ValueError("Invalid pipeline status")
+    if not 1 <= limit <= 500 or not 0 <= offset <= 100000:
+        raise ValueError("Invalid pagination bounds")
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT {', '.join(PIPELINE_RUN_PUBLIC_FIELDS)} FROM pipeline_runs
+                WHERE (%s IS NULL OR status = %s)
+                ORDER BY started_at DESC, id DESC LIMIT %s OFFSET %s
+                """,
+                (status, status, limit, offset),
+            )
+            return [dict(row) for row in cur.fetchall()]

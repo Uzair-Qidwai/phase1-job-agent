@@ -154,3 +154,44 @@ def test_retry_endpoint_launches_failed_run_recovery(monkeypatch) -> None:
     assert body["failed_stage"] == "notifying"
     assert launched["args"][-2:] == ["--admitted-run", admitted_id]
     assert body["run_id"] == admitted_id
+
+
+def test_operational_endpoints_bound_and_validate_queries(monkeypatch):
+    def unexpected(**kwargs):
+        pytest.fail("Invalid input must not reach the database")
+    monkeypatch.setattr(api_module, "get_pipeline_runs", unexpected)
+    monkeypatch.setattr(api_module, "get_source_health", unexpected)
+    client = TestClient(api_module.app)
+    for path in ["/pipeline/runs?limit=501", "/pipeline/runs?status=unknown",
+                 "/pipeline/runs?offset=-1", "/pipeline/runs/not-a-uuid",
+                 "/sources/health?limit=0", "/sources/health?offset=100001",
+                 "/sources/health?source="]:
+        assert client.get(path).status_code == 422
+
+
+def test_operational_runs_hide_sensitive_fields(monkeypatch):
+    run = {"id": str(uuid4()), "status": "failed", "current_stage": "ranking",
+           "error_message": "secret-value", "metadata": {"key": "secret-value"}}
+    monkeypatch.setattr(api_module, "get_pipeline_runs", lambda **kw: [run])
+    monkeypatch.setattr(api_module, "get_pipeline_run", lambda value: run)
+    client = TestClient(api_module.app)
+    for path in ["/pipeline/runs", f"/pipeline/runs/{run['id']}"]:
+        response = client.get(path)
+        assert response.status_code == 200
+        assert "secret-value" not in response.text
+        assert "error_message" not in response.text
+        assert "ranking" in response.text
+    monkeypatch.setattr(api_module, "get_pipeline_run", lambda value: None)
+    assert client.get(f"/pipeline/runs/{run['id']}").status_code == 404
+
+
+def test_source_health_filters_are_forwarded(monkeypatch):
+    received = {}
+    def health(**kwargs):
+        received.update(kwargs)
+        return []
+    monkeypatch.setattr(api_module, "get_source_health", health)
+    response = TestClient(api_module.app).get("/sources/health?source=indeed&limit=7&offset=2")
+    assert response.status_code == 200
+    assert response.json() == []
+    assert received == {"source": "indeed", "limit": 7, "offset": 2}
