@@ -21,6 +21,9 @@ class RankingResult(BaseModel):
     profile_version: str
     ranking_version: str = "deterministic-v1"
     model: str | None = None
+    provider: str | None = None
+    cost_estimate_complete: bool = True
+    agent_steps: list[dict] = Field(default_factory=list)
     usage: dict[str, int] = Field(default_factory=dict)
     estimated_cost_usd: float = Field(default=0.0, ge=0.0)
 

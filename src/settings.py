@@ -3,9 +3,23 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+AgentRole = Literal["researcher", "analyst", "writer", "reviewer"]
+Provider = Literal["anthropic", "openai", "gemini"]
+
+
+class AgentModelConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    provider: Provider
+    model: str = Field(min_length=1)
+    input_cost_per_mtok: float | None = Field(default=None, ge=0)
+    output_cost_per_mtok: float | None = Field(default=None, ge=0)
+    max_output_tokens: int = Field(default=4096, ge=128, le=16384)
 
 
 class Settings(BaseSettings):
@@ -18,13 +32,26 @@ class Settings(BaseSettings):
         case_sensitive=True,
     )
 
-    anthropic_api_key: str | None = Field(default=None, alias="ANTHROPIC_API_KEY")
+    anthropic_api_key: str | None = Field(default=None, alias="ANTHROPIC_API_KEY", repr=False)
     anthropic_input_cost_per_mtok: float = Field(
         default=0.0, ge=0.0, alias="ANTHROPIC_INPUT_COST_PER_MTOK"
     )
     anthropic_output_cost_per_mtok: float = Field(
         default=0.0, ge=0.0, alias="ANTHROPIC_OUTPUT_COST_PER_MTOK"
     )
+    openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY", repr=False)
+    gemini_api_key: str | None = Field(default=None, alias="GEMINI_API_KEY", repr=False)
+    model_provider: Provider = Field(default="anthropic", alias="MODEL_PROVIDER")
+    model_name: str | None = Field(default=None, min_length=1, alias="MODEL_NAME")
+    model_input_cost_per_mtok: float | None = Field(default=None, ge=0, alias="MODEL_INPUT_COST_PER_MTOK")
+    model_output_cost_per_mtok: float | None = Field(default=None, ge=0, alias="MODEL_OUTPUT_COST_PER_MTOK")
+    agent_models: dict[AgentRole, AgentModelConfig] = Field(default_factory=dict, alias="AGENT_MODELS")
+    agent_workflow_enabled: bool = Field(default=False, alias="AGENT_WORKFLOW_ENABLED")
+    agent_max_turns: int = Field(default=4, ge=1, le=8, alias="AGENT_MAX_TURNS")
+    agent_max_model_calls: int = Field(default=12, ge=1, le=32, alias="AGENT_MAX_MODEL_CALLS")
+    agent_timeout_seconds: float = Field(default=90, gt=0, le=300, alias="AGENT_TIMEOUT_SECONDS")
+    agent_max_revisions: int = Field(default=1, ge=0, le=2, alias="AGENT_MAX_REVISIONS")
+
     postgres_url: str | None = Field(default=None, alias="POSTGRES_URL")
 
     gmail_client_id: str | None = Field(default=None, alias="GMAIL_CLIENT_ID")
@@ -64,6 +91,35 @@ class Settings(BaseSettings):
         le=30,
         alias="SOURCE_ZERO_ALERT_RUNS",
     )
+
+    def agent_config(self, role: AgentRole, *, model: str | None = None,
+                     max_tokens: int = 4096) -> AgentModelConfig:
+        if role in self.agent_models:
+            config = self.agent_models[role]
+            if model and model != config.model:
+                raise ValueError("Model override conflicts with configured specialist")
+            return config
+        selected = model or self.model_name
+        if not selected and self.model_provider == "anthropic":
+            selected = self.ranking_model  # Preserve the existing baseline explicitly.
+        if not selected:
+            raise ValueError("MODEL_NAME or a per-role AGENT_MODELS entry is required")
+        input_rate, output_rate = self.model_input_cost_per_mtok, self.model_output_cost_per_mtok
+        if self.model_provider == "anthropic" and selected == self.ranking_model:
+            if input_rate is None and self.anthropic_input_cost_per_mtok > 0:
+                input_rate = self.anthropic_input_cost_per_mtok
+            if output_rate is None and self.anthropic_output_cost_per_mtok > 0:
+                output_rate = self.anthropic_output_cost_per_mtok
+        return AgentModelConfig(provider=self.model_provider, model=selected,
+                                input_cost_per_mtok=input_rate, output_cost_per_mtok=output_rate,
+                                max_output_tokens=max_tokens)
+
+    def require_model_key(self, provider: Provider) -> str:
+        key = {"anthropic": self.anthropic_api_key, "openai": self.openai_api_key,
+               "gemini": self.gemini_api_key}[provider]
+        if not key:
+            raise RuntimeError(f"{provider.upper()}_API_KEY is required for this provider")
+        return key
 
     def require_postgres_url(self) -> str:
         if not self.postgres_url:

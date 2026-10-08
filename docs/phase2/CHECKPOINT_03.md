@@ -1,31 +1,44 @@
-# Phase 2 Checkpoint 3 — Operator recovery and acceptance evidence
+# Checkpoint 3 — Provider-independent specialist workflow
 
-Date: 2026-10-08. Continues Checkpoint 2 (`0212abf`, CI #256).
-Branch `phase2-foundation`; PR #1 remains Draft. No changes to `main`.
+Status: implementation in progress. Branch `phase2-foundation`; PR #1 stays Draft.
+The earlier recovery checkpoint is preserved in [RECOVERY_CHECKPOINT.md](RECOVERY_CHECKPOINT.md).
 
-## Implemented
+## Delivery slices
 
-- PostgreSQL session execution lock held through every worker's pipeline lifetime.
-- Manual recovery CLI with worker-stop confirmation, exact run UUID and audit reason.
-- Live-worker exclusion, atomic stage-preserving failure/audit event, and refusal
-  of terminal/missing runs. Recovery and retry are distinct operations.
-- Admitted children acquire the lock before claiming; late children cannot run a
-  recovered reservation, and temporary lock contention does not discard a child.
-- Operator runbook covering deployment, process verification, connection pooling,
-  network partitions, and external email ambiguity.
-- Reconciled status/architecture/evaluation docs: duplicate suppression after a
-  recorded send is not an exactly-once delivery guarantee.
-- Reproducible offline acceptance report and CI evaluator.
+1. Provider boundary: Agents SDK runtime; explicit OpenAI/Anthropic/Gemini adapters;
+   per-role models, token caps, timeouts, model-call limits, normalized usage and
+   honest unknown-cost reporting. Remove Anthropic coupling from ranking/CV code.
+2. Four specialists: researcher extracts requirements from captured source data;
+   analyst assesses fit; writer tailors from candidate evidence; reviewer requests
+   bounded revisions. Existing source adapters perform discovery; no arbitrary
+   URL fetch tool or new external action surface is added.
+3. Scheduler integration: deterministic admission/filtering and database ownership
+   remain in application code. Research/analysis occur before tailoring. The
+   reviewer cannot bypass deterministic CV validation. Persist sanitized role
+   execution metadata and account for failed/revised calls.
+4. Offline acceptance: exercise real SDK tool loops with fake models, provider
+   routing, missing credentials, budgets, malformed outputs, review rejection,
+   revision limits, audit persistence, retries and the full regression suite.
 
-## Verification
+Each meaningful slice must pass CI before the next. Keep the new workflow opt-in
+until Checkpoint 4 validates real models. Provider capability and output quality
+are not proven by adapter/unit tests. No live calls or semantic promotion here.
 
-Local suite: 125 passed. Offline ranking: Precision@5 1.0 and pairwise accuracy
-1.0 over 30 fixture jobs. CV goldens: 22/22 matched expected outcomes.
-Implementation commit `81aa5799800bf5ed43bdec2df5b3a10d2f264b73` passed
-[CI #258](https://github.com/Uzair-Qidwai/phase1-job-agent/actions/runs/37738157620),
-including migrations, lint, 125 tests and offline acceptance metrics.
+## Exit criteria
 
-See [ACCEPTANCE.md](ACCEPTANCE.md) for the evidence mapping and open decisions.
-Live provider and semantic promotion checks remain pending at the user's request;
-credentials/cost rates were not configured. No live model calls, scraping, or
-email sends were performed. This checkpoint does not approve Phase 2 exit.
+All four roles wired into the opt-in pipeline; existing baseline remains usable;
+model/provider configuration is independent per role; no agent can mutate the DB,
+send mail or submit applications; deterministic factuality remains mandatory;
+usage and failure metadata are auditable; automated CI is green.
+
+Design basis: [Agents SDK](https://developers.openai.com/api/docs/guides/agents/sdk),
+[agent definitions](https://developers.openai.com/api/docs/guides/agents/define-agents),
+and [provider configuration](https://developers.openai.com/api/docs/guides/agents/models).
+
+## Slice 1 local evidence
+
+Shared SDK runtime and provider adapters implemented; legacy injected Anthropic
+clients remain a compatibility/test seam. Real SDK loops with fake models verify
+tools, usage, budgets, timeouts and sanitized failures. Adapter routing is tested
+without live providers. Production calls use the SDK; no implicit model choice
+is made when selecting OpenAI/Gemini. CI confirmation follows on the slice commit.

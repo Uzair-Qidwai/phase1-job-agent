@@ -5,14 +5,13 @@ from __future__ import annotations
 import json
 import re
 
-import anthropic
 from pydantic import BaseModel, Field
 
 from src.candidate_profile import CandidateProfile
 from src.cv_agent import _load_master_cv
 from src.eligibility import evaluate_eligibility
 from src.ranking import RankingResult
-from src.settings import get_settings
+from src.model_runtime import AgentRuntime
 
 
 SEMANTIC_RANKING_VERSION = "semantic-v1"
@@ -99,6 +98,7 @@ def rank_job_semantic(
     model: str | None = None,
     client=None,
     max_tokens: int = 1200,
+    runtime: AgentRuntime | None = None,
 ) -> RankingResult:
     """Evaluate nuanced fit after the deterministic hard-filter gate."""
 
@@ -126,13 +126,7 @@ def rank_job_semantic(
             ranking_version=SEMANTIC_RANKING_VERSION,
         )
 
-    settings = get_settings()
-    model = model or settings.ranking_model
-
-    if client is None:
-        client = anthropic.Anthropic(
-            api_key=settings.require_anthropic_api_key()
-        )
+    runtime = runtime or AgentRuntime()
 
     master_cv = _load_master_cv()
     profile_text = profile.model_dump_json(indent=2)
@@ -157,24 +151,14 @@ Location: {location}
 Evaluate this job using the required JSON schema.
 """.strip()
 
-    response = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
+    execution = runtime.run(
+        "analyst", instructions=SYSTEM_PROMPT, prompt=user_message,
+        output_type=SemanticRankingPayload, prompt_version=SEMANTIC_RANKING_VERSION,
+        model=model, max_tokens=max_tokens, legacy_client=client,
     )
-
-    payload = SemanticRankingPayload.model_validate(
-        _parse_json(response.content[0].text)
-    )
+    payload = execution.output
     components = payload.components
-
-    input_tokens = _usage_int(getattr(response, "usage", None), "input_tokens")
-    output_tokens = _usage_int(getattr(response, "usage", None), "output_tokens")
-    estimated_cost_usd = (
-        (input_tokens * settings.anthropic_input_cost_per_mtok)
-        + (output_tokens * settings.anthropic_output_cost_per_mtok)
-    ) / 1_000_000
+    totals = runtime.totals()
 
     explanation = list(payload.explanation)
     explanation.extend(f"warning: {warning}" for warning in payload.warnings)
@@ -186,10 +170,10 @@ Evaluate this job using the required JSON schema.
         explanation=explanation,
         profile_version=profile.version,
         ranking_version=SEMANTIC_RANKING_VERSION,
-        model=model,
-        usage={
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-        },
-        estimated_cost_usd=round(estimated_cost_usd, 6),
+        model=execution.step["model"],
+        provider=execution.step["provider"],
+        usage=totals["usage"],
+        estimated_cost_usd=totals["estimated_cost_usd"],
+        cost_estimate_complete=totals["cost_estimate_complete"],
+        agent_steps=list(runtime.steps),
     )

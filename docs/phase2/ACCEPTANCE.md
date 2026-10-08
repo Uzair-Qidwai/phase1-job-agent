@@ -1,4 +1,4 @@
-# Phase 2 acceptance review — Checkpoint 3
+# Phase 2 acceptance review — recovery baseline
 
 Date: 2026-10-08. Branch: `phase2-foundation`. PR #1 stays Draft.
 

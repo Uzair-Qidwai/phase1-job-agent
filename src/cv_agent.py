@@ -8,11 +8,10 @@ import logging
 import re
 from pathlib import Path
 
-import anthropic
 
 from src.candidate_profile import load_candidate_profile
 from src.cv_validation import TailoredCVResult, validate_tailored_cv
-from src.settings import get_settings
+from src.model_runtime import AgentRuntime
 
 logger = logging.getLogger(__name__)
 
@@ -88,15 +87,13 @@ def tailor_cv(
     job_title: str,
     company: str,
     description: str,
-    model: str = "claude-sonnet-4-5",
+    model: str | None = None,
     max_tokens: int = 4096,
     client=None,
+    runtime: AgentRuntime | None = None,
 ) -> dict:
     """Generate, type-check, and factuality-check one tailored CV."""
-    if client is None:
-        client = anthropic.Anthropic(
-            api_key=get_settings().require_anthropic_api_key()
-        )
+    runtime = runtime or AgentRuntime()
 
     master_cv = _load_master_cv()
     profile = load_candidate_profile()
@@ -121,16 +118,12 @@ Company: {company}
 Tailor the CV for this role. Respond only with the required JSON object.
 """.strip()
 
-    response = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
+    execution = runtime.run(
+        "writer", instructions=SYSTEM_PROMPT, prompt=user_message,
+        output_type=TailoredCVResult, prompt_version=CV_PROMPT_VERSION,
+        model=model, max_tokens=max_tokens, legacy_client=client,
     )
-
-    raw = response.content[0].text
-    parsed = _parse_response(raw)
-    result = TailoredCVResult.model_validate(parsed)
+    result = execution.output
     validation = validate_tailored_cv(
         result,
         master_cv=master_cv,
@@ -145,26 +138,16 @@ Tailor the CV for this role. Respond only with the required JSON object.
         }
         raise ValueError(f"Tailored CV failed factuality validation: {details}")
 
-    settings = get_settings()
-    input_tokens = _usage_int(getattr(response, "usage", None), "input_tokens")
-    output_tokens = _usage_int(getattr(response, "usage", None), "output_tokens")
-    estimated_cost_usd = (
-        (input_tokens * settings.anthropic_input_cost_per_mtok)
-        + (output_tokens * settings.anthropic_output_cost_per_mtok)
-    ) / 1_000_000
-
     payload = result.model_dump()
-    payload["model"] = model
+    payload["model"] = execution.step["model"]
+    payload["provider"] = execution.step["provider"]
     payload["prompt_version"] = CV_PROMPT_VERSION
     payload["profile_version"] = profile.version
     payload["source_cv_sha256"] = hashlib.sha256(
         master_cv.encode("utf-8")
     ).hexdigest()
-    payload["usage"] = {
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-    }
-    payload["estimated_cost_usd"] = round(estimated_cost_usd, 6)
+    payload.update(runtime.totals())
+    payload["agent_steps"] = list(runtime.steps)
     payload["validation"] = validation.model_dump()
     return payload
 

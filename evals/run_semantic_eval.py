@@ -3,7 +3,7 @@
 Usage:
     python -m evals.run_semantic_eval
 
-Requires ANTHROPIC_API_KEY. RANKING_MODEL selects the candidate model.
+Requires the configured analyst provider credential and model.
 The command exits non-zero if semantic ranking regresses on Precision@5 or
 pairwise preference accuracy against the deterministic baseline.
 """
@@ -39,7 +39,8 @@ def _metrics(dataset: dict, scores: dict[str, float]) -> dict[str, float]:
 
 def main() -> int:
     settings = get_settings()
-    settings.require_anthropic_api_key()
+    config = settings.agent_config("analyst")
+    settings.require_model_key(config.provider)
     profile = load_candidate_profile()
     dataset = json.loads(GOLD.read_text(encoding="utf-8"))
 
@@ -48,6 +49,7 @@ def main() -> int:
     total_input_tokens = 0
     total_output_tokens = 0
     estimated_cost_usd = 0.0
+    cost_estimate_complete = True
 
     for job in dataset["jobs"]:
         common = {
@@ -60,7 +62,7 @@ def main() -> int:
         baseline = rank_job(**common)
         candidate = rank_job_semantic(
             **common,
-            model=settings.ranking_model,
+
         )
 
         baseline_scores[job["id"]] = baseline.total_score
@@ -68,6 +70,7 @@ def main() -> int:
         total_input_tokens += candidate.usage.get("input_tokens", 0)
         total_output_tokens += candidate.usage.get("output_tokens", 0)
         estimated_cost_usd += candidate.estimated_cost_usd
+        cost_estimate_complete = cost_estimate_complete and candidate.cost_estimate_complete
 
     baseline_metrics = _metrics(dataset, baseline_scores)
     candidate_metrics = _metrics(dataset, candidate_scores)
@@ -80,7 +83,8 @@ def main() -> int:
     )
 
     report = {
-        "ranking_model": settings.ranking_model,
+        "ranking_model": config.model,
+        "provider": config.provider,
         "profile_version": profile.version,
         "dataset_jobs": len(dataset["jobs"]),
         "baseline": baseline_metrics,
@@ -89,6 +93,7 @@ def main() -> int:
             "input_tokens": total_input_tokens,
             "output_tokens": total_output_tokens,
             "estimated_cost_usd": round(estimated_cost_usd, 6),
+            "cost_estimate_complete": cost_estimate_complete,
         },
         "promotion_gate_passed": passed,
         "scores": {

@@ -11,6 +11,8 @@ requires-python = ">=3.11"
 dependencies = [
     # Core AI
     "anthropic>=0.25.0",
+    "openai-agents[litellm]==0.23.1",
+    "litellm==1.83.0",
 
     # Web scraping
     "playwright>=1.44.0",

@@ -3,7 +3,7 @@
 Usage:
     python -m evals.live_provider_smoke
 
-Requires ANTHROPIC_API_KEY. This performs one semantic ranking call and one CV
+Requires configured specialist provider credentials. This performs one semantic ranking call and one CV
 generation call. It does not write to PostgreSQL and does not send email.
 """
 
@@ -23,7 +23,8 @@ GOLD = Path(__file__).parent / "ranking_gold.json"
 
 def main() -> int:
     settings = get_settings()
-    settings.require_anthropic_api_key()
+    for role in ("analyst", "writer"):
+        settings.require_model_key(settings.agent_config(role).provider)
 
     dataset = json.loads(GOLD.read_text(encoding="utf-8"))
     job = next(item for item in dataset["jobs"] if item["id"] == "ai-platform")
@@ -35,7 +36,6 @@ def main() -> int:
         location=job["location"],
         description=job["description"],
         profile=profile,
-        model=settings.ranking_model,
     )
 
     tailored = tailor_cv(
@@ -50,11 +50,15 @@ def main() -> int:
             "score": ranking.total_score,
             "version": ranking.ranking_version,
             "model": ranking.model,
+            "provider": ranking.provider,
+            "cost_estimate_complete": ranking.cost_estimate_complete,
             "usage": ranking.usage,
             "estimated_cost_usd": ranking.estimated_cost_usd,
         },
         "cv_generation": {
             "model": tailored["model"],
+            "provider": tailored["provider"],
+            "cost_estimate_complete": tailored["cost_estimate_complete"],
             "prompt_version": tailored["prompt_version"],
             "profile_version": tailored["profile_version"],
             "evidence_items": len(tailored["evidence_used"]),
