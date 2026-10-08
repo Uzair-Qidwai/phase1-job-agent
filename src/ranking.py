@@ -20,6 +20,9 @@ class RankingResult(BaseModel):
     explanation: list[str] = Field(default_factory=list)
     profile_version: str
     ranking_version: str = "deterministic-v1"
+    model: str | None = None
+    usage: dict[str, int] = Field(default_factory=dict)
+    estimated_cost_usd: float = Field(default=0.0, ge=0.0)
 
 
 def _tokens(value: str) -> set[str]:
