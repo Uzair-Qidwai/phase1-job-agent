@@ -10,7 +10,7 @@ Date: 2026-10-08. Branch: `phase2-foundation`. PR #1 remains Draft, targeting
 | Reserve HTTP admission before spawning; claim once | `152fec8` | #248 |
 | Ordered migrations with checksum ledger and transaction lock | `3c6225b` | #250 |
 | Bounded operational history endpoints | `811466e` | #252 |
-| Whole-output CV coverage and qualifier checks | This checkpoint's implementation commit | Verify CI on that commit |
+| Whole-output CV coverage and qualifier checks | `aeb2db3` | #254 |
 
 HTTP admission uses the existing unique active-run index across HTTP workers,
 CLI invocations, and scheduled runs. Retry reservations retain lineage and are
@@ -71,6 +71,7 @@ Validation metadata records version, output claim count and unsupported claims.
 
 Full local suite: 117 tests and deterministic evals pass against a freshly
 migrated isolated PostgreSQL database; a second migration run is a no-op. CI
-uses Python 3.11/PostgreSQL 16. See the final checkpoint confirmation for the
-implementation commit's exact test count and CI links. No live provider calls,
+uses Python 3.11/PostgreSQL 16. Implementation commit `aeb2db31557bc7cb2db1edbe940e4198e4e06092` passed
+[CI #254](https://github.com/Uzair-Qidwai/phase1-job-agent/actions/runs/37735378495)
+with 117 tests. No live provider calls,
 scraping, or email delivery were used for these tests.

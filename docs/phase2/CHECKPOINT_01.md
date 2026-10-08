@@ -144,3 +144,9 @@ run detail, and source-health read endpoints with status/source filters and
 pagination. Run responses deliberately omit raw errors and metadata. Local suite:
 94 passed, including query validation, field redaction, filters and pagination.
 Endpoint slice CI must pass before the next slice.
+
+## Current continuation status
+
+All four follow-on slices have passed CI. See [Checkpoint 2](CHECKPOINT_02.md)
+for the implementation commits, validation results, updated CV contract and
+remaining Phase 2 exit work. This file retains the Checkpoint 1 baseline record.
