@@ -21,6 +21,7 @@ from src.tracker import (
     get_active_pipeline_run,
     get_job_by_id,
     get_jobs,
+    get_pipeline_run,
     update_job_status,
 )
 
@@ -122,6 +123,40 @@ def patch_notes(job_id: UUID, body: NoteUpdate):
     if not updated:
         raise HTTPException(status_code=404, detail="Job not found")
     return {"ok": True}
+
+
+@app.post("/pipeline/runs/{run_id}/retry", dependencies=[Depends(require_write_auth)])
+def retry_pipeline(run_id: UUID):
+    active = get_active_pipeline_run()
+    if active:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "Pipeline already running",
+                "run_id": str(active["id"]),
+                "stage": active["current_stage"],
+            },
+        )
+
+    failed = get_pipeline_run(str(run_id))
+    if not failed:
+        raise HTTPException(status_code=404, detail="Pipeline run not found")
+    if failed["status"] != "failed":
+        raise HTTPException(
+            status_code=409,
+            detail="Only failed pipeline runs can be retried",
+        )
+
+    subprocess.Popen(
+        [sys.executable, "-m", "src.scheduler", "--retry-run", str(run_id)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return {
+        "status": "pipeline retry accepted",
+        "retry_of_run_id": str(run_id),
+        "failed_stage": failed["current_stage"],
+    }
 
 
 @app.post("/pipeline/run", dependencies=[Depends(require_write_auth)])
