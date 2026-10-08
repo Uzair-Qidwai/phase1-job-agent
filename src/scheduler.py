@@ -208,6 +208,12 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                     job_id=job["id"],
                     tailored_cv=result["tailored_cv"],
                     changes_made=result["changes_made"],
+                    model=result["model"],
+                    prompt_version=result["prompt_version"],
+                    profile_version=result["profile_version"],
+                    source_cv_sha256=result["source_cv_sha256"],
+                    evidence=result["evidence_used"],
+                    validation=result["validation"],
                 )
                 attach_cv_version(job["id"], cv_id)
                 tailored_count += 1
