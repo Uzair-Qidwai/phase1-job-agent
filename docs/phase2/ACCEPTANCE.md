@@ -5,6 +5,18 @@ Date: 2026-10-08. Branch: `phase2-foundation`. PR #1 stays Draft.
 **Disposition: automated checks pass; live validation and exit approval remain
 pending. This report is not authorization to merge or enable semantic ranking.**
 
+## Current milestone map
+
+This report preserves recovery-baseline evidence. The user reassigned Checkpoint 3
+to the agent-workflow addition: [Checkpoint 3](CHECKPOINT_03.md) now records the
+completed provider/specialist implementation and CI #264 (150 tests). Its live
+promotion remains pending. The former checkpoint record is
+[RECOVERY_CHECKPOINT.md](RECOVERY_CHECKPOINT.md).
+
+[Checkpoint 4](CHECKPOINT_04.md) is the final live-validation, remaining-features
+and exit-review milestone. It remains unstarted, and no earlier offline results
+constitute live validation or permission to merge.
+
 ## Evidence
 
 - Full local regression suite: 125 passed against isolated PostgreSQL.

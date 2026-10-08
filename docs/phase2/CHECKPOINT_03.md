@@ -1,6 +1,6 @@
 # Checkpoint 3 — Provider-independent specialist workflow
 
-Status: implementation complete locally; final integration CI pending. Branch `phase2-foundation`; PR #1 stays Draft.
+Status: complete for offline implementation; live promotion deferred to Checkpoint 4. Branch `phase2-foundation`; PR #1 stays Draft.
 The earlier recovery checkpoint is preserved in [RECOVERY_CHECKPOINT.md](RECOVERY_CHECKPOINT.md).
 
 ## Delivery slices
@@ -71,3 +71,25 @@ and Anthropic/Gemini adapters are exercised with offline fake responses only;
 real provider availability, tool/schema behavior and quality await Checkpoint 4.
 No automatic provider fallback or model promotion is enabled. Default baseline
 is preserved: `AGENT_WORKFLOW_ENABLED=false`, deterministic ranking.
+
+## Green checkpoint evidence
+
+| Slice | Commit | Passing CI |
+| --- | --- | --- |
+| Provider-independent runtime and milestone map | `0e3e558` | [#262](https://github.com/Uzair-Qidwai/phase1-job-agent/actions/runs/37740042696) |
+| Four specialists, scheduler audit, review gates | `addbdb9` | [#264](https://github.com/Uzair-Qidwai/phase1-job-agent/actions/runs/37776823038) |
+
+Integration CI passed 150 tests, lint, migration checks and offline acceptance
+metrics. The existing deterministic benchmark remains Precision@5 1.0 and
+pairwise accuracy 1.0 across 30 jobs; 22/22 CV goldens match expected outcomes.
+These figures measure fixtures, not the quality of any live agent/model.
+
+[Saved checkpoint evidence](../../evals/reports/phase2_agent_checkpoint03.json)
+records the implementation commit, CI and offline results. Real SDK tool loops,
+provider routing, output-schema rejection, turn/call budgets, timeouts, independent
+role models, review revisions/rejection, deterministic-gate enforcement, and DB
+usage/provenance persistence are covered without real provider calls.
+
+No live model/source/email calls were made. The opt-in feature is not enabled in
+production. PR #1 remains Draft and `main` is unchanged. Checkpoint 4 is planned,
+not complete; see [CHECKPOINT_04.md](CHECKPOINT_04.md).
