@@ -2,7 +2,8 @@
 -- Run after 001_jobs.sql.
 
 ALTER TABLE jobs
-    ADD COLUMN IF NOT EXISTS source_job_id TEXT;
+    ADD COLUMN IF NOT EXISTS source_job_id TEXT,
+    ADD COLUMN IF NOT EXISTS system_state TEXT NOT NULL DEFAULT 'discovered';
 
 ALTER TABLE cv_versions
     ADD COLUMN IF NOT EXISTS model TEXT,
@@ -11,6 +12,37 @@ ALTER TABLE cv_versions
     ADD COLUMN IF NOT EXISTS source_cv_sha256 TEXT,
     ADD COLUMN IF NOT EXISTS evidence JSONB NOT NULL DEFAULT '[]'::jsonb,
     ADD COLUMN IF NOT EXISTS validation JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+UPDATE jobs
+SET system_state = 'tailored'
+WHERE cv_version_id IS NOT NULL
+  AND system_state = 'discovered';
+
+DO $
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'jobs_system_state_valid'
+    ) THEN
+        ALTER TABLE jobs
+            ADD CONSTRAINT jobs_system_state_valid
+            CHECK (
+                system_state IN (
+                    'discovered',
+                    'filtered_out',
+                    'ranked_out',
+                    'shortlisted',
+                    'tailored',
+                    'notified'
+                )
+            )
+            NOT VALID;
+    END IF;
+END $;
+
+ALTER TABLE jobs VALIDATE CONSTRAINT jobs_system_state_valid;
+
+CREATE INDEX IF NOT EXISTS idx_jobs_system_state
+    ON jobs (system_state);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_jobs_source_job_id
     ON jobs (source, source_job_id)
