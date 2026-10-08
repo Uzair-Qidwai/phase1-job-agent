@@ -16,6 +16,7 @@ from src.tracker import (
     mark_jobs_notified,
     record_source_health,
     save_cv_version,
+    save_ranking_result,
     source_has_consecutive_zero_results,
     start_pipeline_run,
     update_job_score,
@@ -318,3 +319,59 @@ def test_retry_parent_must_be_failed_when_lineage_is_supplied() -> None:
 
     with pytest.raises(ValueError, match="must be failed"):
         start_pipeline_run("retry", retry_of_run_id=completed)
+
+
+def test_ranking_result_history_is_persisted() -> None:
+    job_id, _ = upsert_job(
+        title="AI Engineer",
+        company="Example",
+        location="Toronto",
+        url="https://example.com/jobs/ranking-history",
+        description="Build AI systems.",
+        source="phase2-test",
+        source_job_id="ranking-history",
+    )
+    run_id = start_pipeline_run("manual")
+
+    ranking_id = save_ranking_result(
+        job_id=job_id,
+        run_id=run_id,
+        total_score=87.5,
+        hard_mismatch=False,
+        component_scores={
+            "role_fit": 90.0,
+            "domain_skill_fit": 85.0,
+            "location_fit": 80.0,
+        },
+        explanation=["Strong AI role fit", "Toronto preference matched"],
+        profile_version="1",
+        ranking_version="semantic-v2",
+        model="test-ranker",
+        usage={"input_tokens": 321, "output_tokens": 45},
+        estimated_cost_usd=0.0042,
+    )
+    complete_pipeline_run(run_id)
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT total_score, hard_mismatch, component_scores, explanation,
+                       profile_version, ranking_version, model, usage,
+                       estimated_cost_usd
+                FROM ranking_results
+                WHERE id = %s
+                """,
+                (ranking_id,),
+            )
+            row = cur.fetchone()
+
+    assert float(row["total_score"]) == pytest.approx(87.5)
+    assert row["hard_mismatch"] is False
+    assert row["component_scores"]["role_fit"] == 90.0
+    assert row["explanation"][0] == "Strong AI role fit"
+    assert row["profile_version"] == "1"
+    assert row["ranking_version"] == "semantic-v2"
+    assert row["model"] == "test-ranker"
+    assert row["usage"]["input_tokens"] == 321
+    assert float(row["estimated_cost_usd"]) == pytest.approx(0.0042)
