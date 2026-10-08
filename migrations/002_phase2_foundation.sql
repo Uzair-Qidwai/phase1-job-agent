@@ -4,6 +4,14 @@
 ALTER TABLE jobs
     ADD COLUMN IF NOT EXISTS source_job_id TEXT;
 
+ALTER TABLE cv_versions
+    ADD COLUMN IF NOT EXISTS model TEXT,
+    ADD COLUMN IF NOT EXISTS prompt_version TEXT,
+    ADD COLUMN IF NOT EXISTS profile_version TEXT,
+    ADD COLUMN IF NOT EXISTS source_cv_sha256 TEXT,
+    ADD COLUMN IF NOT EXISTS evidence JSONB NOT NULL DEFAULT '[]'::jsonb,
+    ADD COLUMN IF NOT EXISTS validation JSONB NOT NULL DEFAULT '{}'::jsonb;
+
 CREATE UNIQUE INDEX IF NOT EXISTS uq_jobs_source_job_id
     ON jobs (source, source_job_id)
     WHERE source_job_id IS NOT NULL;
