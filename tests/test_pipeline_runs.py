@@ -375,3 +375,98 @@ def test_ranking_result_history_is_persisted() -> None:
     assert row["model"] == "test-ranker"
     assert row["usage"]["input_tokens"] == 321
     assert float(row["estimated_cost_usd"]) == pytest.approx(0.0042)
+
+
+def test_simultaneous_http_triggers_spawn_only_one_child(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+    from fastapi.testclient import TestClient
+    import src.api as api
+    from src.settings import get_settings
+
+    monkeypatch.setenv("API_TOKEN", "phase2-test-secret-token-strong-enough")
+    get_settings.cache_clear()
+    parent = start_pipeline_run("manual")
+    fail_pipeline_run(parent, "ranking", RuntimeError("test"))
+    barrier = Barrier(8)
+    real_start = api.start_pipeline_run
+    spawned = []
+
+    def synchronized_start(*args, **kwargs):
+        barrier.wait(timeout=10)
+        return real_start(*args, **kwargs)
+
+    monkeypatch.setattr(api, "start_pipeline_run", synchronized_start)
+    monkeypatch.setattr(api.subprocess, "Popen", lambda args, **kw: spawned.append(args))
+
+    def request(index):
+        with TestClient(api.app) as client:
+            route = "/pipeline/run" if index % 2 else f"/pipeline/runs/{parent}/retry"
+            return client.post(route, headers={
+                "Authorization": "Bearer phase2-test-secret-token-strong-enough"
+            })
+
+    try:
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            responses = list(executor.map(request, range(8)))
+        assert sorted(r.status_code for r in responses) == [200] + [409] * 7
+        assert len(spawned) == 1
+        winner = next(r.json()["run_id"] for r in responses if r.status_code == 200)
+        assert spawned[0][-2:] == ["--admitted-run", winner]
+        assert get_pipeline_run(winner)["status"] == "created"
+        with pytest.raises(PipelineAlreadyRunning):
+            start_pipeline_run("scheduled")
+    finally:
+        get_settings.cache_clear()
+
+
+def test_reservation_can_only_be_claimed_once():
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+    from src.tracker import claim_admitted_run
+
+    run_id = start_pipeline_run("manual")
+    barrier = Barrier(2)
+
+    def claim():
+        barrier.wait(timeout=10)
+        try:
+            claim_admitted_run(run_id)
+            return True
+        except ValueError:
+            return False
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(lambda _: claim(), range(2)))
+    assert sorted(results) == [False, True]
+    assert get_pipeline_run(run_id)["status"] == "resuming"
+
+
+def test_spawn_failure_releases_reservation(monkeypatch):
+    import src.api as api
+    from fastapi import HTTPException
+
+    def fail(*args, **kwargs):
+        raise OSError("simulated spawn failure")
+
+    monkeypatch.setattr(api.subprocess, "Popen", fail)
+    with pytest.raises(HTTPException) as caught:
+        api._launch_pipeline("manual")
+    assert caught.value.status_code == 503
+    next_id = start_pipeline_run("scheduled")
+    complete_pipeline_run(next_id)
+
+
+def test_admitted_child_initialization_failure_releases_slot(monkeypatch):
+    import src.scheduler as scheduler
+
+    run_id = start_pipeline_run("manual")
+
+    def fail(**kwargs):
+        raise RuntimeError("initialization failed")
+
+    monkeypatch.setattr(scheduler, "run_pipeline", fail)
+    with pytest.raises(RuntimeError, match="initialization"):
+        scheduler.execute_admitted_run(run_id)
+    assert get_pipeline_run(run_id)["status"] == "failed"
+    complete_pipeline_run(start_pipeline_run("scheduled"))

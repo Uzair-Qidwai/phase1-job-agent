@@ -770,3 +770,21 @@ def source_has_consecutive_zero_results(
             rows = cur.fetchall()
 
     return len(rows) == runs and all(row["zero_results"] for row in rows)
+
+
+def claim_admitted_run(run_id: str) -> dict[str, Any]:
+    """Consume an HTTP reservation once; duplicate children cannot execute it."""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE pipeline_runs SET status = 'resuming'
+                WHERE id = %s AND status = 'created'
+                RETURNING *
+                """,
+                (uuid.UUID(run_id),),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise ValueError("Run reservation does not exist or was already claimed")
+            return dict(row)

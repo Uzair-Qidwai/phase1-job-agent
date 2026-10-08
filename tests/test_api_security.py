@@ -121,6 +121,8 @@ def test_retry_endpoint_rejects_nonfailed_run(monkeypatch) -> None:
 def test_retry_endpoint_launches_failed_run_recovery(monkeypatch) -> None:
     run_id = uuid4()
     launched = {}
+    admitted_id = str(uuid4())
+    monkeypatch.setattr(api_module, "start_pipeline_run", lambda *a, **kw: admitted_id)
 
     monkeypatch.setattr(api_module, "get_active_pipeline_run", lambda: None)
     monkeypatch.setattr(
@@ -150,4 +152,5 @@ def test_retry_endpoint_launches_failed_run_recovery(monkeypatch) -> None:
     body = response.json()
     assert body["retry_of_run_id"] == str(run_id)
     assert body["failed_stage"] == "notifying"
-    assert launched["args"][-2:] == ["--retry-run", str(run_id)]
+    assert launched["args"][-2:] == ["--admitted-run", admitted_id]
+    assert body["run_id"] == admitted_id

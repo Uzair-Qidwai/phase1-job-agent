@@ -6,6 +6,7 @@ import logging
 import secrets
 import subprocess
 import sys
+from pathlib import Path
 from html import escape
 from typing import Optional
 from urllib.parse import urlsplit
@@ -17,6 +18,9 @@ from pydantic import BaseModel
 
 from src.settings import get_settings
 from src.tracker import (
+    PipelineAlreadyRunning,
+    fail_pipeline_run,
+    start_pipeline_run,
     add_note,
     get_active_pipeline_run,
     get_job_by_id,
@@ -147,37 +151,39 @@ def retry_pipeline(run_id: UUID):
             detail="Only failed pipeline runs can be retried",
         )
 
-    subprocess.Popen(
-        [sys.executable, "-m", "src.scheduler", "--retry-run", str(run_id)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    admitted_id = _launch_pipeline("retry", retry_of_run_id=str(run_id))
     return {
         "status": "pipeline retry accepted",
+        "run_id": admitted_id,
         "retry_of_run_id": str(run_id),
         "failed_stage": failed["current_stage"],
     }
 
 
+def _launch_pipeline(trigger: str, *, retry_of_run_id: str | None = None) -> str:
+    # Reserve before spawning: the unique active-run index arbitrates across
+    # threads, HTTP workers, CLI processes, and scheduled runs.
+    try:
+        run_id = start_pipeline_run(trigger, retry_of_run_id=retry_of_run_id)
+    except PipelineAlreadyRunning as exc:
+        raise HTTPException(status_code=409, detail="Pipeline already running") from exc
+    try:
+        subprocess.Popen(
+            [sys.executable, "-m", "src.scheduler", "--admitted-run", run_id],
+            cwd=Path(__file__).resolve().parent.parent,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except OSError as exc:
+        fail_pipeline_run(run_id, "created", exc)
+        raise HTTPException(status_code=503, detail="Pipeline could not be launched") from exc
+    return run_id
+
+
 @app.post("/pipeline/run", dependencies=[Depends(require_write_auth)])
 def trigger_pipeline():
-    active = get_active_pipeline_run()
-    if active:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "message": "Pipeline already running",
-                "run_id": str(active["id"]),
-                "stage": active["current_stage"],
-            },
-        )
-
-    subprocess.Popen(
-        [sys.executable, "-m", "src.scheduler", "--run-now"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    return {"status": "pipeline trigger accepted"}
+    run_id = _launch_pipeline("manual")
+    return {"status": "pipeline trigger accepted", "run_id": run_id}
 
 
 STATUSES = ["new", "applied", "interview", "offer", "rejected"]

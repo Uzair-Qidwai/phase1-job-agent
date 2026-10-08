@@ -113,3 +113,17 @@ Move Draft PR #1 to ready-for-review only when:
 - remaining technical debt is documented and consciously accepted.
 
 This checkpoint is not V2 product scope. Automatic applications, browser form automation, outreach, multi-user SaaS, billing, and frontend redesign remain deferred.
+
+## Follow-on slice: HTTP admission
+
+HTTP triggers now reserve the existing database active-run slot before spawning.
+The child consumes that reservation once and uses its original run ID and retry
+lineage. Competing HTTP/CLI/scheduled requests remain guarded by the unique index.
+Spawn errors and child initialization exceptions mark the reservation failed.
+As with other abruptly killed runs, a host crash or interpreter failure before
+claiming can leave an active reservation; verify no worker is alive before
+operator recovery. No automatic time-based unlock is introduced.
+
+Validation: full local suite, 86 passed, including concurrent HTTP admission,
+one-time child claim, spawn failure, and initialization failure. CI is required
+on the slice commit before proceeding. PR #1 remains draft; main is unchanged.

@@ -42,6 +42,7 @@ def run_pipeline(
     *,
     retry_of_run_id: str | None = None,
     resume_from_stage: str = "scraping",
+    admitted_run_id: str | None = None,
 ) -> str | None:
     """Run ingestion → filter → rank → tailor → notify with recoverable state."""
     from src.candidate_profile import load_candidate_profile
@@ -81,7 +82,7 @@ def run_pipeline(
     profile = load_candidate_profile()
 
     try:
-        run_id = start_pipeline_run(
+        run_id = admitted_run_id or start_pipeline_run(
             trigger,
             retry_of_run_id=retry_of_run_id,
         )
@@ -484,6 +485,31 @@ def resume_pipeline(failed_run_id: str) -> str | None:
     )
 
 
+def execute_admitted_run(run_id: str) -> str | None:
+    from src.tracker import claim_admitted_run, fail_pipeline_run, get_pipeline_run
+
+    # Claim outside the failure handler: a duplicate claimant must never mark
+    # the legitimate worker's run as failed or release its active slot.
+    run = claim_admitted_run(run_id)
+    try:
+        parent_id = str(run["retry_of_run_id"]) if run["retry_of_run_id"] else None
+        restart = "scraping"
+        if parent_id:
+            parent = get_pipeline_run(parent_id)
+            if not parent or parent["status"] != "failed":
+                raise ValueError("Retry parent must exist and be failed")
+            restart = safe_restart_stage(parent["current_stage"])
+        return run_pipeline(
+            trigger=run["trigger"], retry_of_run_id=parent_id,
+            resume_from_stage=restart, admitted_run_id=run_id,
+        )
+    except Exception as exc:
+        current = get_pipeline_run(run_id)
+        if current and current["status"] not in {"failed", "completed"}:
+            fail_pipeline_run(run_id, current["current_stage"] or "created", exc)
+        raise
+
+
 def start_scheduler(
     hour: int | None = None,
     minute: int | None = None,
@@ -517,7 +543,12 @@ def start_scheduler(
 
 
 if __name__ == "__main__":
-    if "--retry-run" in sys.argv:
+    if "--admitted-run" in sys.argv:
+        index = sys.argv.index("--admitted-run")
+        if index + 1 >= len(sys.argv):
+            raise SystemExit("--admitted-run requires a reserved run UUID")
+        execute_admitted_run(sys.argv[index + 1])
+    elif "--retry-run" in sys.argv:
         index = sys.argv.index("--retry-run")
         if index + 1 >= len(sys.argv):
             raise SystemExit("--retry-run requires a failed run UUID")
