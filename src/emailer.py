@@ -7,28 +7,26 @@ from __future__ import annotations
 
 import base64
 import logging
-import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from dotenv import load_dotenv
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
-load_dotenv()
+from src.settings import get_settings
+
 logger = logging.getLogger(__name__)
 
-RECIPIENT_EMAIL = os.environ.get("DIGEST_RECIPIENT", "uzair@example.com")
-SENDER_EMAIL = os.environ.get("GMAIL_SENDER", "uzair@example.com")
-
-
 def _get_gmail_service():
+    client_id, client_secret, refresh_token, _, _ = (
+        get_settings().require_gmail_credentials()
+    )
     creds = Credentials(
         token=None,
-        refresh_token=os.environ["GMAIL_REFRESH_TOKEN"],
-        client_id=os.environ["GMAIL_CLIENT_ID"],
-        client_secret=os.environ["GMAIL_CLIENT_SECRET"],
+        refresh_token=refresh_token,
+        client_id=client_id,
+        client_secret=client_secret,
         token_uri="https://oauth2.googleapis.com/token",
     )
     creds.refresh(Request())
@@ -94,7 +92,7 @@ def _build_html(jobs: list[dict]) -> str:
           </tbody>
         </table>
         <div style="padding:16px 24px;color:#94a3b8;font-size:12px;">
-          Dashboard → <a href="http://localhost:8000/dashboard" style="color:#3b82f6;">localhost:8000/dashboard</a>
+          Dashboard → <a href="{get_settings().app_base_url.rstrip('/')}/dashboard" style="color:#3b82f6;">Open dashboard</a>
         </div>
       </div>
     </body>
@@ -108,12 +106,14 @@ def send_digest(jobs: list[dict]) -> bool:
         logger.info("No jobs to digest — skipping email.")
         return True
 
+    settings = get_settings()
+    _, _, _, sender_email, recipient_email = settings.require_gmail_credentials()
     html_body = _build_html(jobs)
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"📋 Job Digest — {len(jobs)} new match{'es' if len(jobs) != 1 else ''}"
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = RECIPIENT_EMAIL
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
     msg.attach(MIMEText(html_body, "html"))
 
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
@@ -123,7 +123,7 @@ def send_digest(jobs: list[dict]) -> bool:
         service.users().messages().send(
             userId="me", body={"raw": raw}
         ).execute()
-        logger.info("Digest sent to %s (%d jobs)", RECIPIENT_EMAIL, len(jobs))
+        logger.info("Digest sent to %s (%d jobs)", recipient_email, len(jobs))
         return True
     except Exception as exc:
         logger.error("Failed to send digest: %s", exc)
