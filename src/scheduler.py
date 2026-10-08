@@ -34,6 +34,7 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         complete_pipeline_run,
         fail_pipeline_run,
         get_new_jobs_for_digest,
+        mark_jobs_notified,
         record_pipeline_event,
         save_cv_version,
         start_pipeline_run,
@@ -245,9 +246,17 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         digest_jobs = get_new_jobs_for_digest(
             min_score=settings.shortlist_threshold
         )
-        send_digest(digest_jobs)
+        sent = send_digest(digest_jobs)
+        if not sent:
+            raise RuntimeError("Digest delivery failed")
 
-        complete_pipeline_run(run_id, jobs_notified=len(digest_jobs))
+        notified_count = mark_jobs_notified(
+            [str(job["id"]) for job in digest_jobs],
+            run_id=run_id,
+            channel="email",
+        )
+
+        complete_pipeline_run(run_id, jobs_notified=notified_count)
         elapsed = time.perf_counter() - t0
         record_pipeline_event(
             run_id,
