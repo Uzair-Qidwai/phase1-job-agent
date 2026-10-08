@@ -35,10 +35,34 @@ class CVValidationResult(BaseModel):
 _NUMERIC_TOKEN = re.compile(
     r"(?<!\w)(?:[$€£]?\d[\d,]*(?:\.\d+)?(?:[kKmMbB])?(?:%|\+)?)(?!\w)"
 )
+_CLAIM_TERM = re.compile(r"[a-z][a-z0-9+#.-]{2,}")
+_CLAIM_STOPWORDS = {
+    "and",
+    "the",
+    "with",
+    "for",
+    "from",
+    "that",
+    "this",
+    "into",
+    "using",
+    "used",
+    "role",
+    "work",
+    "experience",
+}
 
 
 def _normalize_text(value: str) -> str:
     return " ".join(value.casefold().split())
+
+
+def _meaningful_terms(value: str) -> set[str]:
+    return {
+        term
+        for term in _CLAIM_TERM.findall(value.casefold())
+        if term not in _CLAIM_STOPWORDS
+    }
 
 
 def _normalize_number(value: str) -> str:
@@ -94,6 +118,14 @@ def validate_tailored_cv(
         if source_text not in corpora[item.source]:
             invalid_evidence.append(
                 f"{item.source}: evidence not found for claim '{item.claim}'"
+            )
+            continue
+
+        claim_terms = _meaningful_terms(item.claim)
+        evidence_terms = _meaningful_terms(item.source_text)
+        if claim_terms and not claim_terms.intersection(evidence_terms):
+            invalid_evidence.append(
+                f"{item.source}: evidence is not relevant to claim '{item.claim}'"
             )
 
     allowed_numbers = _material_numeric_tokens(master_cv)
