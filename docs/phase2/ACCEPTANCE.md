@@ -97,3 +97,12 @@ Offline readiness implementation `1b789ce`: CI #274 passed 175 tests plus lint,
 migrations and deterministic evaluations. Evidence:
 `evals/reports/phase2_checkpoint04_offline.json`. This does not satisfy the live
 acceptance or target-host deployment gates.
+
+## Synthetic live evidence — Gemini
+
+`evals/reports/gemini_synthetic_checkpoint04.json` records the first successful
+live four-specialist pass on Gemini 3.1 Flash Lite. It used fictional inputs,
+19 requests and one revision; unsupported employer/skill attribution was caught
+and corrected. It validates the exercised SDK/tool/schema/review path only.
+Personal CV/profile transmission, representative model-quality promotion,
+source/delivery/deployment acceptance remain pending.

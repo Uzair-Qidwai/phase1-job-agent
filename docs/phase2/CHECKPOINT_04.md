@@ -1,7 +1,8 @@
 # Checkpoint 4 — Live validation, remaining features, Phase 2 exit
 
 Status: offline hardening and live-test preparation implemented; live acceptance
-remains deferred by the user. See [live-test handoff](LIVE_TESTING.md).
+is in progress. Synthetic Gemini validation has passed; representative quality
+and deployment gates remain pending. See [live-test handoff](LIVE_TESTING.md).
 Branch remains `phase2-foundation`; PR #1 remains Draft until explicit exit review.
 
 ## Ordered work
@@ -119,3 +120,21 @@ unchanged evidence reads. Gemini now receives `tool_choice=none` once every
 available immutable evidence tool has been read, requiring synthesis on the
 next request. Generic tools and other providers retain their existing behavior.
 This does not waive validation or increase the request budget.
+
+## First complete synthetic live pass
+
+Gemini **3.1 Flash Lite** completed researcher → analyst → writer → reviewer,
+including one writer/reviewer revision, in **19 requests** (cap 20), using a fully
+fictional CV/profile/job. Input tokens: 16,451; output tokens: 1,289. The writer
+initially asserted PostgreSQL usage under an employer where the source only
+listed it as a skill. The deterministic gate and reviewer rejected that linkage;
+the revision removed it and passed all checks. Both drafts are now regression
+fixtures, bringing the CV golden dataset to 28 cases.
+
+The implementation at `75441c3` passed CI #282 (181 tests before the two new
+fixtures). Live evidence: `evals/reports/gemini_synthetic_checkpoint04.json`.
+3.5 Flash Lite passed simpler tests but was intermittently overloaded; it is not
+claimed fully validated. The local test model is now 3.1 Flash Lite. Automatic
+agent workflow remains disabled; no personal data, email or pipeline DB writes
+were involved. A single synthetic pass is not ranking promotion, representative
+quality acceptance, or proof of production reliability.

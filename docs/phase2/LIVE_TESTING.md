@@ -1,6 +1,7 @@
 # Checkpoint 4 — live-test handoff
 
-Offline preparation is complete. Live acceptance is **pending**, not passed.
+Offline preparation is complete. A synthetic Gemini four-role smoke has passed;
+representative quality and production acceptance are **pending**.
 Keep PR #1 draft and scheduling disabled until the staged checks below succeed.
 All commands run from the repository root with its virtual environment active.
 Private reports belong in `.local/` (ignored by Git), never in committed fixtures.
@@ -126,3 +127,21 @@ send outcome is uncertain. Never automatically resolve uncertainty as not sent.
   an existing job and applying the ordered migration ledger twice.
 - Preflight reports missing credentials/prices/spend threshold as expected.
   No live model calls, source fetches or real email sends were made for preparation.
+
+## Gemini free-tier trial findings
+
+Gemini 3.1 Flash Lite passed a fictional four-role case in 19 requests, including
+one correction of unsupported CV content. The trial paced requests at least five
+seconds apart, allowed six turns per role and capped the whole test at 20 model
+requests. Snapshot tools were read-only. Once every snapshot was read, Gemini
+was required to return a final answer instead of repeating reads.
+
+The user's dashboard confirmed Free tier. Zero prices described that tier only;
+they are not a paid-plan cost estimate. The isolated synthetic trial used request
+caps rather than the monetary stop guard so transient failures with unknown
+usage could receive bounded retries. Regular production spending-guard behavior
+remains unchanged. Do not copy free-tier prices into a billing-enabled project.
+
+The normal live evaluators load the real master CV/profile. Do **not** run them
+for further free-tier tests unless personal-data use has been explicitly chosen.
+The successful synthetic trial is not permission to transmit the personal CV.

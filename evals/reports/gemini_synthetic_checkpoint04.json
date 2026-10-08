@@ -1,0 +1,190 @@
+{
+  "checkpoint": "4 synthetic Gemini live smoke",
+  "provider": "gemini",
+  "model": "gemini-3.1-flash-lite",
+  "data": "fully fictional candidate, profile and job; no personal data transmitted",
+  "passed": true,
+  "scope": "model/tool/structured-output and bounded revision smoke; not ranking promotion or production acceptance",
+  "request_limit": 20,
+  "turn_limit": 6,
+  "minimum_request_interval_seconds": 5,
+  "model_requests": 19,
+  "revisions": 1,
+  "validation": {
+    "valid": true,
+    "validation_version": "deterministic-cv-v3",
+    "output_claims_checked": 7,
+    "context_errors": [],
+    "unsupported_claims": [],
+    "evidence_items_checked": 1,
+    "invalid_evidence": [],
+    "unsupported_numeric_claims": [],
+    "agent_review": {
+      "workflow_version": "specialists-v1",
+      "revisions": 1,
+      "reviews": [
+        {
+          "decision": "revise",
+          "issues": [
+            "The claim 'Worked with PostgreSQL for financial reporting' in the experience section is not supported by the candidate's master CV.",
+            "The deterministic validation indicates that this claim is unsupported, as the master CV only lists PostgreSQL under 'Technical Skills' and not within the experience description."
+          ],
+          "reason": "The draft includes a claim in the experience section that cannot be verified against the master CV. While PostgreSQL is listed in the skills section, the master CV does not support the assertion that the candidate worked with PostgreSQL for financial reporting in their previous role. This needs to be removed or rephrased to align strictly with the factual evidence provided in the master CV."
+        },
+        {
+          "decision": "approve",
+          "issues": [],
+          "reason": "The draft accurately reflects the required skills (Python, SQL, PostgreSQL, automated testing, data workflows) and is well-aligned with the target job description. The deterministic validation confirms all claims are supported by the provided master CV. The structure is clear and professional."
+        }
+      ],
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite"
+    }
+  },
+  "steps": [
+    {
+      "execution_id": "9698cf66-3604-43aa-ae34-9d4e712c2d85",
+      "sequence": 1,
+      "role": "researcher",
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite",
+      "prompt_version": "specialists-v1",
+      "status": "completed",
+      "model_requests": 2,
+      "input_tokens": 344,
+      "output_tokens": 79,
+      "usage_complete": true,
+      "estimated_cost_usd": 0.0,
+      "latency_seconds": 6.928,
+      "tool_calls": [
+        "read_captured_job"
+      ]
+    },
+    {
+      "execution_id": "9698cf66-3604-43aa-ae34-9d4e712c2d85",
+      "sequence": 2,
+      "role": "analyst",
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite",
+      "prompt_version": "semantic-v1",
+      "status": "completed",
+      "model_requests": 2,
+      "input_tokens": 1779,
+      "output_tokens": 249,
+      "usage_complete": true,
+      "estimated_cost_usd": 0.0,
+      "latency_seconds": 14.369,
+      "tool_calls": [
+        "read_captured_job",
+        "read_candidate_evidence",
+        "read_search_preferences"
+      ]
+    },
+    {
+      "execution_id": "e388d52e-9802-4335-972d-266ac0db9250",
+      "sequence": 1,
+      "role": "writer",
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite",
+      "prompt_version": "phase2-cv-v3",
+      "status": "completed",
+      "model_requests": 4,
+      "input_tokens": 3969,
+      "output_tokens": 354,
+      "usage_complete": true,
+      "estimated_cost_usd": 0.0,
+      "latency_seconds": 19.315,
+      "tool_calls": [
+        "read_candidate_evidence",
+        "read_captured_job",
+        "read_search_preferences"
+      ]
+    },
+    {
+      "execution_id": "e388d52e-9802-4335-972d-266ac0db9250",
+      "sequence": 2,
+      "role": "reviewer",
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite",
+      "prompt_version": "specialists-v1",
+      "status": "completed",
+      "model_requests": 4,
+      "input_tokens": 3616,
+      "output_tokens": 178,
+      "usage_complete": true,
+      "estimated_cost_usd": 0.0,
+      "latency_seconds": 20.17,
+      "tool_calls": [
+        "read_candidate_evidence",
+        "check_draft_evidence",
+        "read_captured_job"
+      ]
+    },
+    {
+      "execution_id": "e388d52e-9802-4335-972d-266ac0db9250",
+      "sequence": 3,
+      "role": "writer",
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite",
+      "prompt_version": "phase2-cv-v3",
+      "status": "completed",
+      "model_requests": 2,
+      "input_tokens": 2413,
+      "output_tokens": 314,
+      "usage_complete": true,
+      "estimated_cost_usd": 0.0,
+      "latency_seconds": 8.483,
+      "tool_calls": [
+        "read_captured_job",
+        "read_candidate_evidence",
+        "read_search_preferences"
+      ]
+    },
+    {
+      "execution_id": "e388d52e-9802-4335-972d-266ac0db9250",
+      "sequence": 4,
+      "role": "reviewer",
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-lite",
+      "prompt_version": "specialists-v1",
+      "status": "completed",
+      "model_requests": 5,
+      "input_tokens": 4330,
+      "output_tokens": 115,
+      "usage_complete": true,
+      "estimated_cost_usd": 0.0,
+      "latency_seconds": 53.968,
+      "tool_calls": [
+        "read_candidate_evidence",
+        "check_draft_evidence",
+        "read_captured_job",
+        "read_search_preferences"
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 16451,
+    "output_tokens": 1289
+  },
+  "findings": [
+    "Gemini multi-tool agents require omitting parallel_tool_calls=False",
+    "Four snapshot reads require a subsequent final-answer turn",
+    "Stop repeated Gemini evidence reads once every snapshot has been read",
+    "Reviewer and deterministic validation rejected unsupported PostgreSQL employer attribution; corrected revision passed"
+  ],
+  "remaining": [
+    "30-job ranking promotion gate",
+    "representative CV quality and false-rejection evaluation",
+    "live sources",
+    "authorized email delivery",
+    "target-host deployment and acceptance"
+  ],
+  "free_tier": "confirmed by user-provided AI Studio dashboard; no paid features requested",
+  "implementation_commit": "75441c3ac55fd21283b8416479033acf489fc667",
+  "implementation_ci": {
+    "number": 282,
+    "run_id": 37824285149,
+    "conclusion": "success",
+    "offline_tests": 181
+  }
+}

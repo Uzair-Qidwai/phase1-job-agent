@@ -134,3 +134,13 @@ Neither this status document nor passing CI constitutes approval to merge.
 Live execution checklist: [LIVE_TESTING.md](LIVE_TESTING.md). Runtime request/spend
 guards, bounded transient retry, partial CV failure reporting and optional read
 authentication are implemented. Production deployment/live acceptance is pending.
+
+## Gemini live-smoke progress
+
+Gemini 3.1 Flash Lite passed the complete four-role **synthetic** workflow,
+including a caught unsupported employer/skill claim and a successful bounded
+revision (19 requests). Gemini tool-option compatibility, final-answer turn
+allowance and repeated-read control were fixed and regression-tested; CI #282
+passed. Two live-derived fictional CV fixtures bring the factuality dataset to
+28 cases. Representative ranking/CV quality, live sources, email and target-host
+acceptance remain pending. Automatic agent mode is still disabled.
