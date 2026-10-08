@@ -44,6 +44,15 @@ class Settings(BaseSettings):
         le=1.0,
         alias="SHORTLIST_THRESHOLD",
     )
+    ranking_mode: str = Field(
+        default="deterministic",
+        pattern="^(deterministic|semantic)$",
+        alias="RANKING_MODE",
+    )
+    ranking_model: str = Field(
+        default="claude-sonnet-4-5",
+        alias="RANKING_MODEL",
+    )
 
     def require_postgres_url(self) -> str:
         if not self.postgres_url:
