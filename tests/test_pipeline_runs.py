@@ -48,8 +48,20 @@ def clean_test_rows():
     yield
     with get_conn() as conn:
         with conn.cursor() as cur:
+            cur.execute("DELETE FROM notifications")
             cur.execute("DELETE FROM pipeline_events")
             cur.execute("DELETE FROM pipeline_runs")
+            cur.execute(
+                "UPDATE jobs SET cv_version_id = NULL WHERE source = 'phase2-test'"
+            )
+            cur.execute(
+                """
+                DELETE FROM cv_versions
+                WHERE job_id IN (
+                    SELECT id FROM jobs WHERE source = 'phase2-test'
+                )
+                """
+            )
             cur.execute("DELETE FROM jobs WHERE source = 'phase2-test'")
 
 
