@@ -164,3 +164,67 @@ def test_explicit_model_override_does_not_inherit_another_models_prices():
     override = settings.agent_config("writer", model="different-model")
     assert override.input_cost_per_mtok is None
     assert override.output_cost_per_mtok is None
+
+
+def test_pipeline_budget_is_shared_across_jobs():
+    from src.model_runtime import RunBudget
+    budget = RunBudget(1)
+    model = FakeModel([message({"answer": "ok"})])
+    invoke(AgentRuntime(settings=config(), run_budget=budget, model_factory=lambda _: model))
+    with pytest.raises(SpecialistError, match="BudgetExceeded"):
+        invoke(AgentRuntime(settings=config(), run_budget=budget, model_factory=lambda _: model))
+    assert len(model.inputs) == 1
+
+
+def test_spend_threshold_stops_followup_calls_and_requires_pricing():
+    settings = config(MODEL_SPEND_STOP_USD=0.0001, MODEL_INPUT_COST_PER_MTOK=1,
+                      MODEL_OUTPUT_COST_PER_MTOK=2)
+    model = FakeModel([message({"answer": "ok"})])
+    runtime = AgentRuntime(settings=settings, model_factory=lambda _: model)
+    invoke(runtime)
+    with pytest.raises(SpecialistError, match="BudgetExceeded"):
+        invoke(runtime)
+    assert runtime.run_budget.known_cost == pytest.approx(0.00014)
+    unpriced = AgentRuntime(settings=config(MODEL_SPEND_STOP_USD=1), model_factory=lambda _: model)
+    with pytest.raises(SpecialistError, match="BudgetExceeded"):
+        invoke(unpriced)
+    assert unpriced.run_budget.used == 0
+
+
+@pytest.mark.parametrize("status, expected_calls", [(429, 2), (503, 2), (401, 1), (400, 1)])
+def test_only_transient_provider_errors_retry_with_shared_budget(status, expected_calls):
+    class ProviderFailure(RuntimeError):
+        status_code = status
+    model = FakeModel([ProviderFailure("private failure"), message({"answer": "recovered"})])
+    runtime = AgentRuntime(settings=config(AGENT_RETRY_BACKOFF_SECONDS=0), model_factory=lambda _: model)
+    if expected_calls == 2:
+        assert invoke(runtime).output.answer == "recovered"
+    else:
+        with pytest.raises(SpecialistError):
+            invoke(runtime)
+    assert len(model.inputs) == expected_calls
+    assert runtime.steps[0]["model_requests"] == expected_calls
+    assert runtime.steps[0]["usage_complete"] is False
+
+
+def test_spend_guard_stops_after_unknown_failed_request():
+    class RateLimit(RuntimeError):
+        status_code = 429
+    model = FakeModel([RateLimit("unknown usage"), message({"answer": "unused"})])
+    runtime = AgentRuntime(settings=config(MODEL_SPEND_STOP_USD=1,
+                           MODEL_INPUT_COST_PER_MTOK=1, MODEL_OUTPUT_COST_PER_MTOK=2),
+                           model_factory=lambda _: model)
+    with pytest.raises(SpecialistError):
+        invoke(runtime)
+    with pytest.raises(SpecialistError, match="BudgetExceeded"):
+        invoke(runtime)
+    assert len(model.inputs) == 1
+
+
+def test_full_request_size_is_bounded_before_network():
+    model = FakeModel([])
+    runtime = AgentRuntime(settings=config(AGENT_MAX_INPUT_BYTES=1000), model_factory=lambda _: model)
+    with pytest.raises(SpecialistError, match="BudgetExceeded"):
+        runtime.run("writer", instructions="x" * 2000, prompt="test", output_type=Answer,
+                    prompt_version="test")
+    assert model.inputs == []

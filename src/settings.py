@@ -17,8 +17,8 @@ class AgentModelConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     provider: Provider
     model: str = Field(min_length=1)
-    input_cost_per_mtok: float | None = Field(default=None, ge=0)
-    output_cost_per_mtok: float | None = Field(default=None, ge=0)
+    input_cost_per_mtok: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    output_cost_per_mtok: float | None = Field(default=None, ge=0, allow_inf_nan=False)
     max_output_tokens: int | None = Field(default=None, ge=128, le=16384)
 
 
@@ -43,14 +43,20 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = Field(default=None, alias="GEMINI_API_KEY", repr=False)
     model_provider: Provider = Field(default="anthropic", alias="MODEL_PROVIDER")
     model_name: str | None = Field(default=None, min_length=1, alias="MODEL_NAME")
-    model_input_cost_per_mtok: float | None = Field(default=None, ge=0, alias="MODEL_INPUT_COST_PER_MTOK")
-    model_output_cost_per_mtok: float | None = Field(default=None, ge=0, alias="MODEL_OUTPUT_COST_PER_MTOK")
+    model_input_cost_per_mtok: float | None = Field(default=None, ge=0, allow_inf_nan=False, alias="MODEL_INPUT_COST_PER_MTOK")
+    model_output_cost_per_mtok: float | None = Field(default=None, ge=0, allow_inf_nan=False, alias="MODEL_OUTPUT_COST_PER_MTOK")
     agent_models: dict[AgentRole, AgentModelConfig] = Field(default_factory=dict, alias="AGENT_MODELS")
     agent_workflow_enabled: bool = Field(default=False, alias="AGENT_WORKFLOW_ENABLED")
     agent_max_turns: int = Field(default=4, ge=1, le=8, alias="AGENT_MAX_TURNS")
     agent_max_model_calls: int = Field(default=12, ge=1, le=32, alias="AGENT_MAX_MODEL_CALLS")
     agent_timeout_seconds: float = Field(default=90, gt=0, le=300, alias="AGENT_TIMEOUT_SECONDS")
     agent_max_revisions: int = Field(default=1, ge=0, le=2, alias="AGENT_MAX_REVISIONS")
+
+    pipeline_max_model_calls: int = Field(default=100, ge=1, le=1000, alias="PIPELINE_MAX_MODEL_CALLS")
+    model_spend_stop_usd: float | None = Field(default=None, gt=0, allow_inf_nan=False, alias="MODEL_SPEND_STOP_USD")
+    agent_max_input_bytes: int = Field(default=200000, ge=1000, le=2000000, alias="AGENT_MAX_INPUT_BYTES")
+    agent_transient_retries: int = Field(default=1, ge=0, le=2, alias="AGENT_TRANSIENT_RETRIES")
+    agent_retry_backoff_seconds: float = Field(default=1, ge=0, le=10, alias="AGENT_RETRY_BACKOFF_SECONDS")
 
     postgres_url: str | None = Field(default=None, alias="POSTGRES_URL")
 

@@ -57,3 +57,12 @@ pending mean this checkpoint is incomplete, even if offline CI passes.
   delivering successful jobs. Rejected CVs remain shortlisted and unsent.
 - Local full suite: 154 tests pass, including send/record crash boundaries,
   reconciliation exclusion, and stage-aware retries. Live sends remain deferred.
+- Runtime controls now share `PIPELINE_MAX_MODEL_CALLS` across jobs and stages.
+  Tool loops and transient retries consume the same limit; per-specialist limits
+  still apply. Input payload bytes and output tokens are bounded.
+- Only 429/5xx errors receive bounded exponential backoff. Timeouts, malformed
+  output and authentication/configuration failures do not automatically retry.
+  They retain stage-aware recovery. A configured `MODEL_SPEND_STOP_USD` requires
+  explicit prices and stops on unknown usage; it is a spending stop threshold,
+  potentially overshooting by the last response, not a guaranteed invoice cap.
+- Delivery slice CI #268 passed on `b74b960`.

@@ -120,6 +120,9 @@ def _run_pipeline(
     model_output_tokens = 0
     estimated_model_cost_usd = 0.0
 
+    from src.model_runtime import RunBudget
+    model_budget = RunBudget(settings.pipeline_max_model_calls, settings.model_spend_stop_usd)
+
     def agent_runtime(job_id: str):
         from src.model_runtime import AgentRuntime
 
@@ -134,7 +137,7 @@ def _run_pipeline(
             update_pipeline_run(run_id, model_input_tokens=model_input_tokens,
                                 model_output_tokens=model_output_tokens,
                                 estimated_model_cost_usd=estimated_model_cost_usd)
-        return AgentRuntime(settings=settings, on_step=on_step)
+        return AgentRuntime(settings=settings, on_step=on_step, run_budget=model_budget)
 
     if resume_from_stage != "scraping":
         update_pipeline_run(
