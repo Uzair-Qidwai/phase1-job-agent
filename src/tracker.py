@@ -115,17 +115,28 @@ def upsert_job(
             return str(existing["id"]), False
 
 
-def update_job_score_and_cv(job_id: str, match_score: float, cv_version_id: str) -> None:
+def update_job_score(job_id: str, match_score: float) -> None:
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                """
-                UPDATE jobs
-                SET match_score = %s, cv_version_id = %s
-                WHERE id = %s
-                """,
-                (match_score, uuid.UUID(cv_version_id), uuid.UUID(job_id)),
+                "UPDATE jobs SET match_score = %s WHERE id = %s",
+                (match_score, uuid.UUID(job_id)),
             )
+
+
+def attach_cv_version(job_id: str, cv_version_id: str) -> None:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE jobs SET cv_version_id = %s WHERE id = %s",
+                (uuid.UUID(cv_version_id), uuid.UUID(job_id)),
+            )
+
+
+def update_job_score_and_cv(job_id: str, match_score: float, cv_version_id: str) -> None:
+    """Compatibility wrapper for Phase 1 callers; new code should separate ranking and CV."""
+    update_job_score(job_id, match_score)
+    attach_cv_version(job_id, cv_version_id)
 
 
 def update_job_status(job_id: str, status: str) -> dict[str, Any] | None:
@@ -262,6 +273,8 @@ def update_pipeline_run(
     current_stage: str | None = None,
     jobs_discovered: int | None = None,
     jobs_inserted: int | None = None,
+    jobs_ranked: int | None = None,
+    jobs_shortlisted: int | None = None,
     jobs_tailored: int | None = None,
     jobs_notified: int | None = None,
 ) -> None:
@@ -273,6 +286,8 @@ def update_pipeline_run(
         ("current_stage", current_stage),
         ("jobs_discovered", jobs_discovered),
         ("jobs_inserted", jobs_inserted),
+        ("jobs_ranked", jobs_ranked),
+        ("jobs_shortlisted", jobs_shortlisted),
         ("jobs_tailored", jobs_tailored),
         ("jobs_notified", jobs_notified),
     ):
