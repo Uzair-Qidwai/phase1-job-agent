@@ -68,6 +68,11 @@ jobs:
               conn.close()
           PY
 
+      - name: Adopt legacy schema and verify versioned migration repeatability
+        run: |
+          python -m src.migrations
+          python -m src.migrations
+
       - name: Lint
         run: ruff check src tests evals
 

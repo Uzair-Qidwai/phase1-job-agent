@@ -43,7 +43,7 @@ cp .env.example .env
 ### 3. Create the database
 
 ```bash
-psql $POSTGRES_URL -f migrations/001_jobs.sql
+python -m src.migrations
 ```
 
 ### 4. Gmail OAuth setup
@@ -120,3 +120,19 @@ pytest tests/ -v
 - [ ] Daily digest email arrives with correct jobs
 - [ ] Dashboard shows all jobs, status updates persist
 - [ ] Scheduler runs without manual intervention
+
+
+### Schema version discipline
+
+From the repository checkout, run `python -m src.migrations` before starting the
+API or scheduler. The runner adopts existing installations by replaying the
+unchanged, idempotent 001/002 files, then records filenames and SHA-256 hashes in
+`schema_migrations`. It locks concurrent runners and applies all pending SQL and
+version rows in one transaction. Errors roll back the batch; fix the pending
+migration and rerun. Applied files must never be edited, removed, or renamed.
+Add the next contiguous numbered SQL file for schema changes. Do not put explicit
+transaction control or nontransactional operations such as `CREATE INDEX
+CONCURRENTLY` in these files. Back up deployed data before upgrades. This small
+runner intentionally has no downgrade framework; rollback needs a reviewed
+forward migration or a database restore. Run from a source checkout (SQL files
+are not bundled in the package wheel).

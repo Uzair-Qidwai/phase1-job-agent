@@ -127,3 +127,12 @@ operator recovery. No automatic time-based unlock is introduced.
 Validation: full local suite, 86 passed, including concurrent HTTP admission,
 one-time child claim, spawn failure, and initialization failure. CI is required
 on the slice commit before proceeding. PR #1 remains draft; main is unchanged.
+
+## Follow-on slice: ordered migrations
+
+Admission commit `152fec8` passed GitHub CI #248. Added a small transactional
+migration runner with an ordered checksum ledger and concurrent-runner lock.
+Applied SQL files are now immutable; future changes use the next numbered file.
+Existing 001/002 SQL remains unchanged. CI verifies legacy adoption and repeat
+execution, and tests cover concurrent runners, rollback, and history drift.
+Full local suite: 90 passed. Migration slice CI must pass before the next slice.
