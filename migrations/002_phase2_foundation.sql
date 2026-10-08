@@ -111,3 +111,18 @@ DROP TRIGGER IF EXISTS trg_pipeline_runs_updated_at ON pipeline_runs;
 CREATE TRIGGER trg_pipeline_runs_updated_at
     BEFORE UPDATE ON pipeline_runs
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id          BIGSERIAL PRIMARY KEY,
+    job_id      UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    run_id      UUID REFERENCES pipeline_runs(id) ON DELETE SET NULL,
+    channel     TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent')),
+    sent_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata    JSONB NOT NULL DEFAULT '{}'::jsonb,
+    UNIQUE (job_id, channel)
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_sent_at
+    ON notifications (sent_at DESC);
