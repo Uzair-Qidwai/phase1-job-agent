@@ -62,6 +62,7 @@ def run_pipeline(
         record_pipeline_event,
         record_source_health,
         save_cv_version,
+        save_ranking_result,
         source_has_consecutive_zero_results,
         start_pipeline_run,
         update_job_score,
@@ -275,6 +276,19 @@ def run_pipeline(
                     ranking.estimated_cost_usd or 0.0
                 )
                 job_id = str(job["id"])
+                save_ranking_result(
+                    job_id=job_id,
+                    run_id=run_id,
+                    total_score=ranking.total_score,
+                    hard_mismatch=ranking.hard_mismatch,
+                    component_scores=ranking.component_scores,
+                    explanation=ranking.explanation,
+                    profile_version=ranking.profile_version,
+                    ranking_version=ranking.ranking_version,
+                    model=ranking.model,
+                    usage=ranking.usage,
+                    estimated_cost_usd=ranking.estimated_cost_usd,
+                )
                 update_job_score(job_id, normalized_score)
 
                 shortlisted = (
