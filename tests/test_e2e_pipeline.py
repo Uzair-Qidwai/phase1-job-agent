@@ -6,6 +6,7 @@ import pytest
 
 import src.cv_agent as cv_agent
 import src.emailer as emailer
+import src.ranking as ranking_module
 import src.scraper as scraper
 from src.scheduler import resume_pipeline, run_pipeline
 from src.tracker import get_conn, get_pipeline_run
@@ -346,3 +347,93 @@ def test_notification_failure_resumes_without_repeating_expensive_stages(monkeyp
     assert retry["jobs_notified"] == 1
 
     assert calls == {"scrape": 1, "tailor": 1, "send": 2}
+
+
+def test_ranking_failure_resumes_from_filtering_without_rescraping(monkeypatch) -> None:
+    strong = scraper.RawJob(
+        title="Senior AI Engineer",
+        company="Example AI",
+        location="Toronto, Canada",
+        url="https://example.com/jobs/resume-ranking",
+        description="Build AI and machine learning systems in Python.",
+        source="phase2-e2e",
+        source_job_id="resume-ranking",
+    )
+
+    calls = {"scrape": 0, "rank": 0, "tailor": 0}
+    real_rank_job = ranking_module.rank_job
+
+    async def fake_scrape_all(headless: bool = True):
+        calls["scrape"] += 1
+        return [strong]
+
+    def flaky_rank_job(**kwargs):
+        calls["rank"] += 1
+        if calls["rank"] == 1:
+            raise RuntimeError("simulated ranking provider failure")
+        return real_rank_job(**kwargs)
+
+    def fake_tailor_cv(*, job_title, company, description):
+        calls["tailor"] += 1
+        return {
+            "tailored_cv": (
+                "# Tailored CV\n\n"
+                "Evidence-backed AI engineering experience with Python and "
+                "machine learning systems."
+            ),
+            "changes_made": "Front-loaded relevant AI engineering evidence.",
+            "evidence_used": [
+                {
+                    "claim": "Python experience",
+                    "source": "master_cv",
+                    "source_text": "Python",
+                }
+            ],
+            "keywords_added": ["AI"],
+            "warnings": [],
+            "model": "fake-model",
+            "prompt_version": "phase2-cv-v1",
+            "profile_version": "1",
+            "source_cv_sha256": "fake-sha",
+            "validation": {"valid": True},
+        }
+
+    monkeypatch.setattr(scraper, "scrape_all", fake_scrape_all)
+    monkeypatch.setattr(ranking_module, "rank_job", flaky_rank_job)
+    monkeypatch.setattr(cv_agent, "tailor_cv", fake_tailor_cv)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs: True)
+
+    with pytest.raises(RuntimeError, match="simulated ranking provider failure"):
+        run_pipeline(trigger="manual")
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, status, current_stage
+                FROM pipeline_runs
+                ORDER BY started_at DESC
+                LIMIT 1
+                """
+            )
+            failed = cur.fetchone()
+
+    assert failed["status"] == "failed"
+    assert failed["current_stage"] == "ranking"
+
+    retry_id = resume_pipeline(str(failed["id"]))
+    assert retry_id is not None
+    retry = get_pipeline_run(retry_id)
+    assert retry is not None
+    assert retry["status"] == "completed"
+    assert str(retry["retry_of_run_id"]) == str(failed["id"])
+    assert retry["jobs_discovered"] == 0
+    assert retry["jobs_inserted"] == 0
+    assert retry["jobs_ranked"] == 1
+    assert retry["jobs_shortlisted"] == 1
+    assert retry["jobs_tailored"] == 1
+    assert retry["jobs_notified"] == 1
+
+    assert calls["scrape"] == 1
+    assert calls["rank"] == 2
+    assert calls["tailor"] == 1
