@@ -20,7 +20,11 @@ logging.basicConfig(
 logger = logging.getLogger("scheduler")
 
 
-def run_pipeline(trigger: str = "scheduled") -> str | None:
+def run_pipeline(
+    trigger: str = "scheduled",
+    *,
+    retry_of_run_id: str | None = None,
+) -> str | None:
     """Run ingestion → filter → rank → tailor → notify with recoverable state."""
     from src.candidate_profile import load_candidate_profile
     from src.cv_agent import tailor_cv
@@ -52,7 +56,10 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
     profile = load_candidate_profile()
 
     try:
-        run_id = start_pipeline_run(trigger)
+        run_id = start_pipeline_run(
+            trigger,
+            retry_of_run_id=retry_of_run_id,
+        )
     except PipelineAlreadyRunning:
         logger.warning("Pipeline trigger ignored: another run is already active")
         return None
