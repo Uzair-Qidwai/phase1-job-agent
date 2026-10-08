@@ -96,7 +96,10 @@ def test_failed_run_releases_active_slot_and_records_stage() -> None:
     assert run["error_type"] == "RuntimeError"
     assert "simulated provider failure" in run["error_message"]
 
-    retry_id = start_pipeline_run("retry")
+    retry_id = start_pipeline_run("retry", retry_of_run_id=run_id)
+    retry = get_pipeline_run(retry_id)
+    assert retry is not None
+    assert str(retry["retry_of_run_id"]) == run_id
     complete_pipeline_run(retry_id)
 
 
@@ -304,3 +307,14 @@ def test_database_enforces_match_score_range() -> None:
                     "UPDATE jobs SET match_score = 1.5 WHERE id = %s",
                     (job_id,),
                 )
+
+
+def test_retry_requires_failed_parent_run() -> None:
+    with pytest.raises(ValueError, match="must reference a failed run"):
+        start_pipeline_run("retry")
+
+    completed = start_pipeline_run("manual")
+    complete_pipeline_run(completed)
+
+    with pytest.raises(ValueError, match="must be failed"):
+        start_pipeline_run("retry", retry_of_run_id=completed)
