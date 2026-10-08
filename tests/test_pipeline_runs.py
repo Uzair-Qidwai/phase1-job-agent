@@ -9,9 +9,12 @@ from src.tracker import (
     complete_pipeline_run,
     fail_pipeline_run,
     get_conn,
+    get_new_jobs_for_digest,
     get_pipeline_run,
+    mark_jobs_notified,
     save_cv_version,
     start_pipeline_run,
+    update_job_score,
     upsert_job,
 )
 
@@ -26,6 +29,7 @@ pytestmark = pytest.mark.skipif(
 def clean_test_rows():
     with get_conn() as conn:
         with conn.cursor() as cur:
+            cur.execute("DELETE FROM notifications")
             cur.execute("DELETE FROM pipeline_events")
             cur.execute("DELETE FROM pipeline_runs")
             cur.execute("DELETE FROM jobs WHERE source = 'phase2-test'")
@@ -139,3 +143,30 @@ def test_cv_version_audit_metadata_is_persisted() -> None:
     assert row["source_cv_sha256"] == "abc123"
     assert row["validation"]["valid"] is True
     assert row["evidence"][0]["claim"] == "Python experience"
+
+
+def test_digest_notification_is_exactly_once() -> None:
+    job_id, _ = upsert_job(
+        title="AI Engineer",
+        company="Example",
+        location="Toronto",
+        url="https://example.com/jobs/notify-once",
+        description="Build AI systems.",
+        source="phase2-test",
+        source_job_id="notify-once",
+    )
+    update_job_score(job_id, 0.95)
+
+    first_digest = get_new_jobs_for_digest(min_score=0.65)
+    assert any(str(job["id"]) == job_id for job in first_digest)
+
+    run_id = start_pipeline_run("manual")
+    inserted = mark_jobs_notified([job_id], run_id=run_id, channel="email")
+    complete_pipeline_run(run_id, jobs_notified=inserted)
+
+    assert inserted == 1
+    second_digest = get_new_jobs_for_digest(min_score=0.65)
+    assert all(str(job["id"]) != job_id for job in second_digest)
+
+    duplicate = mark_jobs_notified([job_id], run_id=None, channel="email")
+    assert duplicate == 0
