@@ -23,6 +23,8 @@ from src.job_identity import build_job_identity
 
 logger = logging.getLogger(__name__)
 
+SOURCE_NAMES = ("greenhouse", "linkedin", "indeed")
+
 
 @dataclass
 class RawJob:
