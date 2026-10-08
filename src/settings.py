@@ -53,6 +53,12 @@ class Settings(BaseSettings):
         default="claude-sonnet-4-5",
         alias="RANKING_MODEL",
     )
+    source_zero_alert_runs: int = Field(
+        default=3,
+        ge=1,
+        le=30,
+        alias="SOURCE_ZERO_ALERT_RUNS",
+    )
 
     def require_postgres_url(self) -> str:
         if not self.postgres_url:
