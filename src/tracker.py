@@ -224,16 +224,47 @@ def add_note(job_id: str, note: str) -> bool:
             return cur.fetchone() is not None
 
 
-def save_cv_version(job_id: str, tailored_cv: str, changes_made: str) -> str:
+def save_cv_version(
+    job_id: str,
+    tailored_cv: str,
+    changes_made: str,
+    *,
+    model: str | None = None,
+    prompt_version: str | None = None,
+    profile_version: str | None = None,
+    source_cv_sha256: str | None = None,
+    evidence: list[dict[str, Any]] | None = None,
+    validation: dict[str, Any] | None = None,
+) -> str:
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO cv_versions (job_id, tailored_cv, changes_made)
-                VALUES (%s, %s, %s)
+                INSERT INTO cv_versions (
+                    job_id,
+                    tailored_cv,
+                    changes_made,
+                    model,
+                    prompt_version,
+                    profile_version,
+                    source_cv_sha256,
+                    evidence,
+                    validation
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
-                (uuid.UUID(job_id), tailored_cv, changes_made),
+                (
+                    uuid.UUID(job_id),
+                    tailored_cv,
+                    changes_made,
+                    model,
+                    prompt_version,
+                    profile_version,
+                    source_cv_sha256,
+                    psycopg2.extras.Json(evidence or []),
+                    psycopg2.extras.Json(validation or {}),
+                ),
             )
             return str(cur.fetchone()["id"])
 
