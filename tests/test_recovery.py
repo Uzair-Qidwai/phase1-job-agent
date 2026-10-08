@@ -23,3 +23,13 @@ def test_safe_restart_stage(failed_stage: str, restart_stage: str) -> None:
 def test_unknown_failure_stage_is_rejected() -> None:
     with pytest.raises(ValueError, match="Unsupported failed pipeline stage"):
         safe_restart_stage("unknown-stage")
+
+
+def test_recovery_cli_requires_confirmation_before_database_access(monkeypatch):
+    from uuid import uuid4
+    import src.tracker as tracker
+    from src.recovery import main
+    monkeypatch.setattr(tracker, "recover_abandoned_run", lambda *a, **kw: pytest.fail("DB reached"))
+    with pytest.raises(SystemExit) as caught:
+        main([str(uuid4()), "--reason", "Worker stopped"])
+    assert caught.value.code == 2

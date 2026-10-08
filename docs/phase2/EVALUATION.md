@@ -149,7 +149,8 @@ Assertions:
 - retry/resume starts from a safe stage;
 - completed jobs are not duplicated;
 - duplicate CV generation is avoided when possible;
-- notifications are not sent twice;
+- notifications with a committed delivery record are not sent twice;
+- external-send success before a database commit remains an explicit ambiguous case;
 - lock prevents concurrent runs.
 
 ## 6. API / Security Harness
@@ -174,7 +175,7 @@ Known fixture input should produce:
 3. expected eligibility outcomes;
 4. shortlist in an acceptable order;
 5. valid evidence-backed CV for qualifying jobs;
-6. exactly-once notification behavior;
+6. duplicate suppression after committed notification delivery;
 7. complete run/event trace;
 8. recorded latency and cost metadata.
 

@@ -463,3 +463,32 @@ def test_admitted_retry_reuses_reserved_run_and_restart_stage(monkeypatch):
         with conn.cursor() as cur:
             cur.execute("SELECT count(*) AS n FROM pipeline_runs")
             assert cur.fetchone()["n"] == 2
+
+
+def test_running_pipeline_holds_execution_lock_until_completion(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    from src.tracker import PipelineAlreadyRunning, get_active_pipeline_run, recover_abandoned_run
+    entered = Event()
+    release = Event()
+
+    async def paused_scrape(**kwargs):
+        entered.set()
+        assert release.wait(timeout=10)
+        return []
+
+    monkeypatch.setattr(scraper, "scrape_all", paused_scrape)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs: True)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(run_pipeline, "manual")
+        try:
+            assert entered.wait(timeout=10)
+            active = get_active_pipeline_run()
+            assert active is not None
+            with pytest.raises(PipelineAlreadyRunning):
+                recover_abandoned_run(str(active["id"]), reason="Operator claims worker stopped",
+                                      workers_stopped=True)
+        finally:
+            release.set()
+        run_id = future.result(timeout=10)
+    assert get_pipeline_run(run_id)["status"] == "completed"

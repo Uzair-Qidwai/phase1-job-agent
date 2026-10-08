@@ -2,12 +2,17 @@
 
 This document tracks implementation against the Phase 2 architecture and evaluation plan.
 
+Updated after Checkpoint 2 and operator-recovery hardening. Automated checks pass;
+Phase 2 exit approval is still pending. See [acceptance report](ACCEPTANCE.md).
+
 | Workstream | Runtime implementation | Evaluation / test gate | Status |
 |---|---|---|---|
 | Configuration | Central validated settings for DB, model, Gmail, API, scheduler | settings validation tests | Complete |
 | Job identity | Source-aware canonical URLs and native source IDs | golden identity fixtures; Indeed regression test | Complete |
-| Database hardening | constraints, source identity, run/events, notifications, CV audit metadata, job system state | migrations executed twice in CI | Complete |
-| Pipeline locking | one active run across processes | PostgreSQL integration test | Complete |
+| Database hardening | constraints plus ordered checksum migration ledger | legacy adoption, repeatability, concurrent runners, rollback and history-drift tests | Automated checks pass |
+| Pipeline locking | database admission plus worker execution lock and one-time HTTP reservation claim | concurrent HTTP, worker-lifetime and process-death tests | Automated checks pass |
+| Stranded-run recovery | explicit worker-stop confirmation, execution lock, audited stage-preserving failure | process termination, live-worker refusal, late-child and temporary-contention tests | Implemented; operator shutdown required |
+| Operational reads | bounded run/source-health history and run details | validation, filtering, pagination and redaction tests | Automated checks pass |
 | Run observability | stage, counts, duration, errors, event ledger | integration + E2E assertions | Complete |
 | Source adapters | common adapter contract and RawJob runtime validation | source contract tests | Complete |
 | Candidate profile | versioned structured matching profile | profile load/validation tests | Complete |
@@ -17,14 +22,14 @@ This document tracks implementation against the Phase 2 architecture and evaluat
 | Semantic promotion gate | candidate-vs-baseline live evaluator | exits non-zero on Precision@5 or pairwise regression | Ready for live run |
 | Rank-before-generate | only shortlisted jobs receive CV generation | E2E acceptance test | Complete |
 | CV generation contract | typed result, no ranking responsibility, prompt-injection boundary | CV agent unit tests | Complete |
-| CV factuality | exact evidence references + unsupported numeric/magnitude claim blocking | CV factuality goldens | Complete |
+| CV factuality | whole-output lexical coverage, source quotes, numeric support, qualifiers and negation | v2 adversarial factuality goldens | Deterministic gate passes; semantic limits remain |
 | CV audit history | prompt/model/profile/source CV fingerprint/evidence/validation/usage persisted | DB integration test | Complete |
 | Job recovery | persisted job system state recovers unfinished work across runs | failed-tailoring retry E2E test | Complete |
-| Notification idempotency | persisted exactly-once job/channel delivery | integration + E2E rerun tests | Complete |
+| Notification idempotency | recorded job/channel delivery suppresses later digests | integration + E2E rerun tests | Passes recorded-delivery tests; external-send crash window remains |
 | API write security | bearer token for writes and manual trigger | API security regression tests | Complete |
 | HTML/link safety | escaped dashboard/email output; unsafe URL schemes blocked | XSS regression tests | Complete |
 | Security headers | CSP, frame denial, nosniff, referrer policy | API header test | Complete |
-| End-to-end acceptance | mocked complete pipeline + failure injection | CI E2E harness | Complete |
+| End-to-end acceptance | mocked complete pipeline + failure injection | CI E2E harness | Automated checks pass; live acceptance pending |
 | Source health telemetry | per-source persisted counts and consecutive-zero warning events | DB integration tests | Complete |
 | Model usage/cost telemetry | ranking/CV tokens persisted per artifact and run; cost rates configurable | unit + DB integration assertions | Complete |
 | Live provider smoke | one semantic rank + one evidence-gated CV, no DB/email side effects | explicit opt-in command | Ready for live run |
@@ -45,7 +50,7 @@ discover
   -> evidence-constrained CV generation
       -> on failure: remain shortlisted for retry
       -> on success: tailored
-  -> exactly-once notification
+  -> notification with persisted duplicate suppression
       -> on delivery failure: remain tailored for retry
       -> on success: notified
 ```
@@ -64,9 +69,10 @@ Jobs carry persisted processing state:
 - `tailored`
 - `notified`
 
-A later run processes unfinished states. A process crash after persistence,
-ranking, CV generation, or before delivery therefore does not permanently
-strand the job.
+A later run processes unfinished job states, but an abrupt process death can
+leave its run active and prevent later admission. Follow [the recovery
+runbook](OPERATIONS.md) to verify worker shutdown, mark the stranded run failed,
+and retry from its persisted stage. Recovery must not infer death from age.
 
 ## Ranking promotion policy
 
@@ -98,8 +104,8 @@ if Precision@5 or pairwise preference accuracy regresses.
 
 ## Remaining external validation
 
-The code hardening work is complete enough for Phase 2 acceptance. Two
-provider-dependent checks remain intentionally manual:
+Phase 2 acceptance is not yet approved. Two provider-dependent checks are
+pending at the user’s request while credentials and cost rates are unavailable:
 
 1. run the controlled live-provider smoke with real credentials;
 2. run the 30-job semantic promotion evaluation and inspect quality/cost before
@@ -107,3 +113,7 @@ provider-dependent checks remain intentionally manual:
 
 Those checks require real provider credentials and incur real model calls, so
 they are deliberately excluded from automatic pull-request CI.
+
+Additional exit decisions: accept or remediate external email delivery ambiguity,
+CV semantic/context limitations, and private-network unauthenticated reads.
+Neither this status document nor passing CI constitutes approval to merge.

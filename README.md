@@ -162,3 +162,11 @@ credentials. Failed coverage blocks generation and reports unsupported claims.
 This conservative lexical check can reject valid paraphrases and cannot prove
 semantic relationships or section context. Review generated CVs before use.
 See `docs/phase2/CHECKPOINT_02.md` for test coverage and remaining limitations.
+
+### Stranded pipeline runs
+
+Use the [operator recovery runbook](docs/phase2/OPERATIONS.md) after a worker or
+host crash. Recovery requires verified worker shutdown and refuses a live
+execution lock; it records failure without retrying or sending email. Never
+unlock by age alone. See [Phase 2 acceptance](docs/phase2/ACCEPTANCE.md) for the
+current validation evidence and pending live checks.

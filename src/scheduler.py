@@ -38,6 +38,21 @@ def _stage_enabled(stage: str, resume_from_stage: str) -> bool:
 
 
 def run_pipeline(
+    trigger: str = "scheduled", *, retry_of_run_id: str | None = None,
+    resume_from_stage: str = "scraping",
+) -> str | None:
+    from src.tracker import PipelineAlreadyRunning, pipeline_execution_lock
+
+    try:
+        with pipeline_execution_lock():
+            return _run_pipeline(trigger, retry_of_run_id=retry_of_run_id,
+                                 resume_from_stage=resume_from_stage)
+    except PipelineAlreadyRunning:
+        logger.warning("Pipeline trigger ignored: worker or recovery operation active")
+        return None
+
+
+def _run_pipeline(
     trigger: str = "scheduled",
     *,
     retry_of_run_id: str | None = None,
@@ -486,6 +501,15 @@ def resume_pipeline(failed_run_id: str) -> str | None:
 
 
 def execute_admitted_run(run_id: str) -> str | None:
+    from src.tracker import pipeline_execution_lock
+
+    # Acquire before consuming the reservation so recovery and child startup
+    # cannot interleave. A recovered reservation can no longer be claimed.
+    with pipeline_execution_lock(wait=True):
+        return _execute_admitted_run(run_id)
+
+
+def _execute_admitted_run(run_id: str) -> str | None:
     from src.tracker import claim_admitted_run, fail_pipeline_run, get_pipeline_run
 
     # Claim outside the failure handler: a duplicate claimant must never mark
@@ -499,7 +523,7 @@ def execute_admitted_run(run_id: str) -> str | None:
             if not parent or parent["status"] != "failed":
                 raise ValueError("Retry parent must exist and be failed")
             restart = safe_restart_stage(parent["current_stage"])
-        return run_pipeline(
+        return _run_pipeline(
             trigger=run["trigger"], retry_of_run_id=parent_id,
             resume_from_stage=restart, admitted_run_id=run_id,
         )

@@ -111,7 +111,7 @@ Acceptance:
 Deliverables:
 
 - notification state table;
-- exactly-once digest logic;
+- persisted digest duplicate suppression (external-send crash ambiguity requires review);
 - authentication for mutations;
 - protected pipeline trigger;
 - HTML escaping;

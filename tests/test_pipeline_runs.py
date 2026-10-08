@@ -465,7 +465,7 @@ def test_admitted_child_initialization_failure_releases_slot(monkeypatch):
     def fail(**kwargs):
         raise RuntimeError("initialization failed")
 
-    monkeypatch.setattr(scheduler, "run_pipeline", fail)
+    monkeypatch.setattr(scheduler, "_run_pipeline", fail)
     with pytest.raises(RuntimeError, match="initialization"):
         scheduler.execute_admitted_run(run_id)
     assert get_pipeline_run(run_id)["status"] == "failed"
@@ -492,3 +492,114 @@ def test_operational_history_filters_pagination_and_redaction():
     assert len(health) == 1
     assert health[0]["jobs_discovered"] == 0
     assert str(health[0]["run_id"]) == first
+
+
+def test_operator_recovery_preserves_stage_and_audits_reason():
+    from src.tracker import recover_abandoned_run
+    run_id = start_pipeline_run("manual")
+    update_pipeline_run(run_id, status="ranking", current_stage="ranking")
+    reason = "Worker terminated; all trigger entrypoints stopped"
+    recovered = recover_abandoned_run(run_id, reason=reason, workers_stopped=True)
+    assert recovered["status"] == "failed"
+    assert recovered["current_stage"] == "ranking"
+    run = get_pipeline_run(run_id)
+    assert run["error_type"] == "OperatorRecovery"
+    assert run["finished_at"] is not None
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT payload FROM pipeline_events WHERE run_id = %s AND event_type = 'operator_recovery'", (run_id,))
+            assert cur.fetchone()["payload"] == {"reason": reason, "workers_stopped_confirmed": True}
+    complete_pipeline_run(start_pipeline_run("retry", retry_of_run_id=run_id))
+    with pytest.raises(ValueError, match="terminal"):
+        recover_abandoned_run(run_id, reason=reason, workers_stopped=True)
+
+
+def test_recovery_requires_explicit_confirmation_and_reason():
+    from src.tracker import recover_abandoned_run
+    run_id = start_pipeline_run("manual")
+    with pytest.raises(ValueError, match="Confirm"):
+        recover_abandoned_run(run_id, reason="Worker stopped", workers_stopped=False)
+    with pytest.raises(ValueError, match="reason"):
+        recover_abandoned_run(run_id, reason=" ", workers_stopped=True)
+    assert get_pipeline_run(run_id)["status"] == "created"
+
+
+def test_live_worker_refuses_recovery_then_process_death_allows_it():
+    import subprocess
+    import sys
+    from src.tracker import recover_abandoned_run
+
+    run_id = start_pipeline_run("manual")
+    # A real separate process owns the PostgreSQL session lock. Killing it
+    # simulates an abrupt exit, rather than explicitly releasing the lock.
+    child = subprocess.Popen(
+        [sys.executable, "-c", "from src.tracker import pipeline_execution_lock\n"
+         "with pipeline_execution_lock():\n print('ready', flush=True)\n input()\n"],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    )
+    try:
+        # communicate cannot be used yet: closing stdin would release the lock.
+        import selectors
+        with selectors.DefaultSelector() as selector:
+            selector.register(child.stdout, selectors.EVENT_READ)
+            assert selector.select(timeout=10), "Worker failed to acquire lock in time"
+            assert child.stdout.readline().strip() == "ready"
+        with pytest.raises(PipelineAlreadyRunning):
+            recover_abandoned_run(run_id, reason="Worker supposedly stopped", workers_stopped=True)
+        assert get_pipeline_run(run_id)["status"] == "created"
+    finally:
+        child.kill()
+        child.communicate(timeout=10)
+    recovered = recover_abandoned_run(run_id, reason="Worker killed and exit verified", workers_stopped=True)
+    assert recovered["status"] == "failed"
+
+
+def test_late_admitted_child_cannot_execute_recovered_reservation(monkeypatch):
+    import src.scheduler as scheduler
+    from src.tracker import recover_abandoned_run
+    run_id = start_pipeline_run("manual")
+    recover_abandoned_run(run_id, reason="All workers stopped and verified", workers_stopped=True)
+    monkeypatch.setattr(scheduler, "_run_pipeline", lambda **kw: pytest.fail("Recovered run executed"))
+    with pytest.raises(ValueError, match="already claimed"):
+        scheduler.execute_admitted_run(run_id)
+    assert get_pipeline_run(run_id)["error_type"] == "OperatorRecovery"
+
+
+def test_worker_lock_blocks_other_worker_and_recovery():
+    from src.scheduler import run_pipeline
+    from src.tracker import pipeline_execution_lock, recover_abandoned_run
+    run_id = start_pipeline_run("manual")
+    with pipeline_execution_lock():
+        assert run_pipeline("scheduled") is None
+        with pytest.raises(PipelineAlreadyRunning):
+            recover_abandoned_run(run_id, reason="Stopped worker confirmation", workers_stopped=True)
+    assert get_pipeline_run(run_id)["status"] == "created"
+
+
+def test_admitted_child_waits_for_temporary_lock_contention(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    import src.scheduler as scheduler
+    from src.tracker import pipeline_execution_lock
+    run_id = start_pipeline_run("manual")
+    entered = Event()
+    ran = Event()
+
+    def execute(**kwargs):
+        ran.set()
+        complete_pipeline_run(kwargs["admitted_run_id"])
+        return kwargs["admitted_run_id"]
+
+    def child():
+        entered.set()
+        return scheduler.execute_admitted_run(run_id)
+
+    monkeypatch.setattr(scheduler, "_run_pipeline", execute)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with pipeline_execution_lock():
+            future = pool.submit(child)
+            assert entered.wait(timeout=5)
+            assert not ran.is_set()
+        assert future.result(timeout=10) == run_id
+    assert ran.is_set()
+    assert get_pipeline_run(run_id)["status"] == "completed"

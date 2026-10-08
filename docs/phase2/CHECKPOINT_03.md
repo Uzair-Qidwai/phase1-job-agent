@@ -1,0 +1,29 @@
+# Phase 2 Checkpoint 3 — Operator recovery and acceptance evidence
+
+Date: 2026-10-08. Continues Checkpoint 2 (`0212abf`, CI #256).
+Branch `phase2-foundation`; PR #1 remains Draft. No changes to `main`.
+
+## Implemented
+
+- PostgreSQL session execution lock held through every worker's pipeline lifetime.
+- Manual recovery CLI with worker-stop confirmation, exact run UUID and audit reason.
+- Live-worker exclusion, atomic stage-preserving failure/audit event, and refusal
+  of terminal/missing runs. Recovery and retry are distinct operations.
+- Admitted children acquire the lock before claiming; late children cannot run a
+  recovered reservation, and temporary lock contention does not discard a child.
+- Operator runbook covering deployment, process verification, connection pooling,
+  network partitions, and external email ambiguity.
+- Reconciled status/architecture/evaluation docs: duplicate suppression after a
+  recorded send is not an exactly-once delivery guarantee.
+- Reproducible offline acceptance report and CI evaluator.
+
+## Verification
+
+Local suite: 125 passed. Offline ranking: Precision@5 1.0 and pairwise accuracy
+1.0 over 30 fixture jobs. CV goldens: 22/22 matched expected outcomes. CI must be
+confirmed on the implementation commit before treating this checkpoint as green.
+
+See [ACCEPTANCE.md](ACCEPTANCE.md) for the evidence mapping and open decisions.
+Live provider and semantic promotion checks remain pending at the user's request;
+credentials/cost rates were not configured. No live model calls, scraping, or
+email sends were performed. This checkpoint does not approve Phase 2 exit.

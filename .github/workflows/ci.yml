@@ -78,3 +78,6 @@ jobs:
 
       - name: Tests and deterministic evals
         run: pytest -q
+
+      - name: Offline acceptance metrics
+        run: python -m evals.run_offline_eval

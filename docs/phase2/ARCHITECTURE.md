@@ -246,10 +246,12 @@ CV generation happens only after a shortlist threshold is met.
 
 - only one active pipeline run at a time;
 - stages are idempotent;
-- retries use bounded backoff;
+- failed work remains retryable from persisted state; a general bounded-backoff
+  policy remains a design target, not a completed application-level feature;
 - external-service failures are explicit, not silently swallowed;
 - each run records counts, durations, errors, and external-call cost metadata;
-- duplicate delivery is prevented through persisted notification state.
+- persisted notification state suppresses recorded deliveries; external send
+  success before the delivery record commits can still lead to a duplicate retry.
 
 ## Out of Scope for Phase 2
 
@@ -287,3 +289,11 @@ Two fault-injection acceptance cases enforce this behavior:
 2. notification failure → resume at notification without another scrape, ranking pass, or CV generation.
 
 The API exposes an authenticated retry action for failed run IDs. The retry is still protected by the same database-backed single-active-run constraint as scheduled and manual execution.
+
+## Stranded run recovery
+
+All workers hold a PostgreSQL session execution lock alongside the durable
+active-run admission constraint. Operator recovery requires confirmed shutdown
+and the same execution lock, and records a stage-preserving failed transition
+and audit event atomically. See [OPERATIONS.md](OPERATIONS.md) for the deployment
+contract, network-partition limitation, and recovery/retry steps.

@@ -819,3 +819,65 @@ def get_pipeline_runs(*, status: str | None = None, limit: int = 100,
                 (status, status, limit, offset),
             )
             return [dict(row) for row in cur.fetchall()]
+
+
+# Session lock shared by every worker and manual recovery. The unique active-run
+# index remains the admission guard; this lock proves a healthy worker is alive.
+PIPELINE_EXECUTION_LOCK = 724810292
+
+
+@contextmanager
+def pipeline_execution_lock(*, wait: bool = False):
+    conn = psycopg2.connect(get_settings().require_postgres_url())
+    conn.autocommit = True
+    try:
+        with conn.cursor() as cur:
+            function = "pg_advisory_lock" if wait else "pg_try_advisory_lock"
+            cur.execute(f"SELECT {function}(%s)", (PIPELINE_EXECUTION_LOCK,))
+            acquired = cur.fetchone()[0]
+            if not wait and not acquired:
+                raise PipelineAlreadyRunning("A pipeline worker or recovery operation is active")
+        yield
+    finally:
+        # Closing the session releases the lock, including on exceptions.
+        conn.close()
+
+
+def recover_abandoned_run(run_id: str, *, reason: str, workers_stopped: bool) -> dict[str, Any]:
+    """Mark one stranded run failed, after operator shutdown and lock exclusion.
+
+    Absence of a database session is not proof of process termination (network
+    partitions exist). Confirmation of worker shutdown is therefore mandatory.
+    """
+    if not workers_stopped:
+        raise ValueError("Confirm all pipeline workers have been stopped before recovery")
+    reason = reason.strip()
+    if not 10 <= len(reason) <= 1000:
+        raise ValueError("Recovery reason must contain 10 to 1000 characters")
+    run_uuid = uuid.UUID(run_id)
+    with pipeline_execution_lock():
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE pipeline_runs
+                    SET status = 'failed', finished_at = NOW(),
+                        error_type = 'OperatorRecovery', error_message = %s
+                    WHERE id = %s AND status NOT IN ('completed', 'failed')
+                    RETURNING id, status, current_stage
+                    """,
+                    (reason, run_uuid),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise ValueError("Run does not exist or is already terminal; nothing changed")
+                cur.execute(
+                    """
+                    INSERT INTO pipeline_events (run_id, stage, level, event_type, payload)
+                    VALUES (%s, %s, 'warning', 'operator_recovery', %s)
+                    """,
+                    (run_uuid, row["current_stage"], psycopg2.extras.Json({
+                        "reason": reason, "workers_stopped_confirmed": True,
+                    })),
+                )
+                return dict(row)
