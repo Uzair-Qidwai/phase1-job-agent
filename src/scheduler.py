@@ -40,6 +40,7 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         record_pipeline_event,
         record_source_health,
         save_cv_version,
+        source_has_consecutive_zero_results,
         start_pipeline_run,
         update_job_score,
         update_job_system_state,
@@ -75,6 +76,27 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                 source_counts[job.source] += 1
 
         record_source_health(run_id, source_counts)
+        for source, count in source_counts.items():
+            if count == 0 and source_has_consecutive_zero_results(
+                source,
+                runs=settings.source_zero_alert_runs,
+            ):
+                logger.warning(
+                    "[SourceHealth] %s returned zero jobs for %d consecutive runs",
+                    source,
+                    settings.source_zero_alert_runs,
+                )
+                record_pipeline_event(
+                    run_id,
+                    "source_zero_results_alert",
+                    stage=stage,
+                    level="warning",
+                    payload={
+                        "source": source,
+                        "consecutive_zero_runs": settings.source_zero_alert_runs,
+                    },
+                )
+
         update_pipeline_run(run_id, jobs_discovered=len(raw_jobs))
         record_pipeline_event(
             run_id,
