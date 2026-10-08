@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 
+import psycopg2
 import pytest
 
 from src.tracker import (
@@ -19,6 +20,7 @@ from src.tracker import (
     start_pipeline_run,
     update_job_score,
     update_job_system_state,
+    update_pipeline_run,
     upsert_job,
 )
 
@@ -237,3 +239,68 @@ def test_consecutive_zero_source_runs_trigger_health_detector() -> None:
     complete_pipeline_run(run_id)
 
     assert source_has_consecutive_zero_results("indeed", runs=3) is False
+
+
+def test_invalid_pipeline_trigger_is_rejected_before_database_write() -> None:
+    with pytest.raises(ValueError, match="Invalid pipeline trigger"):
+        start_pipeline_run("untrusted")
+
+
+def test_negative_pipeline_metrics_are_rejected_by_application_validation() -> None:
+    run_id = start_pipeline_run("manual")
+    try:
+        with pytest.raises(ValueError, match="non-negative"):
+            update_pipeline_run(run_id, jobs_discovered=-1)
+    finally:
+        complete_pipeline_run(run_id)
+
+
+def test_database_rejects_negative_pipeline_metrics() -> None:
+    run_id = start_pipeline_run("manual")
+    try:
+        with pytest.raises(psycopg2.errors.CheckViolation):
+            with get_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE pipeline_runs SET jobs_discovered = -1 WHERE id = %s",
+                        (run_id,),
+                    )
+    finally:
+        complete_pipeline_run(run_id)
+
+
+def test_database_rejects_invalid_pipeline_event_level() -> None:
+    run_id = start_pipeline_run("manual")
+    try:
+        with pytest.raises(psycopg2.errors.CheckViolation):
+            with get_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO pipeline_events (run_id, stage, level, event_type)
+                        VALUES (%s, 'ranking', 'debug', 'invalid_test_event')
+                        """,
+                        (run_id,),
+                    )
+    finally:
+        complete_pipeline_run(run_id)
+
+
+def test_database_enforces_match_score_range() -> None:
+    job_id, _ = upsert_job(
+        title="AI Engineer",
+        company="Example",
+        location="Toronto",
+        url="https://example.com/jobs/score-range",
+        description="Build AI systems.",
+        source="phase2-test",
+        source_job_id="score-range",
+    )
+
+    with pytest.raises(psycopg2.errors.CheckViolation):
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE jobs SET match_score = 1.5 WHERE id = %s",
+                    (job_id,),
+                )
