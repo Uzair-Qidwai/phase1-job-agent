@@ -144,3 +144,12 @@ allowance and repeated-read control were fixed and regression-tested; CI #282
 passed. Two live-derived fictional CV fixtures bring the factuality dataset to
 28 cases. Representative ranking/CV quality, live sources, email and target-host
 acceptance remain pending. Automatic agent mode is still disabled.
+
+## Current pre-pilot checkpoint
+
+[Checkpoint 5](CHECKPOINT_05.md) records the requested quality/source/email/deployment
+slice. Fictional ranking passed; the initial CV suite passed 1/3, then all 3/3
+passed after the observed reviewer/writer issue was corrected (one revision). Greenhouse/LinkedIn live checks passed; Indeed returned
+an explicit access block. Local backup/restore and protected API rehearsal passed.
+Real Gmail send and target-host acceptance remain pending; the pilot has not begun.
+Private PDF evidence is configured locally without committing or transmitting it.

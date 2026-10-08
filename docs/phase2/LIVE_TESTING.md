@@ -145,3 +145,28 @@ remains unchanged. Do not copy free-tier prices into a billing-enabled project.
 The normal live evaluators load the real master CV/profile. Do **not** run them
 for further free-tier tests unless personal-data use has been explicitly chosen.
 The successful synthetic trial is not permission to transmit the personal CV.
+
+## Separate fictional quality benchmark
+
+The following evaluator uses only `evals/fixtures/synthetic_quality.json`. It
+patches every master-CV/profile loader in the exercised paths, paces Gemini calls
+five seconds apart, preserves per-case failures, and enforces a shared request
+cap. It requires explicitly configured zero free-tier prices; it is not a paid
+cost-control tool. Use one evaluator at a time so pacing remains meaningful.
+
+```bash
+python -m evals.synthetic_quality --allow-live --phase ranking --max-calls 160 --output .local/synthetic-ranking-NEW.json
+python -m evals.synthetic_quality --allow-live --phase cv --max-calls 60 --output .local/synthetic-cv-NEW.json
+```
+
+This fixture's labels describe a fictional software candidate and cannot promote
+the actual candidate benchmark. Private personal evidence can be configured via
+`MASTER_CV_PATH` without committing it. Normal live evaluators will transmit that
+configured CV: obtain the personal-data-use decision before invoking them.
+
+Source smoke now reports raw duplicate counts and verifies the same normalized
+output used by production; overlapping search results are not themselves a
+failure when deduplication succeeds. Empty or invalid results still fail.
+
+For the local deployment and one-shot delivery rehearsal, see
+[PILOT_DEPLOYMENT.md](PILOT_DEPLOYMENT.md) and [GMAIL_SETUP.md](GMAIL_SETUP.md).

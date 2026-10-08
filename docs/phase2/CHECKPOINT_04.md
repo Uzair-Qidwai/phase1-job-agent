@@ -138,3 +138,9 @@ claimed fully validated. The local test model is now 3.1 Flash Lite. Automatic
 agent workflow remains disabled; no personal data, email or pipeline DB writes
 were involved. A single synthetic pass is not ranking promotion, representative
 quality acceptance, or proof of production reliability.
+
+## Subsequent pre-pilot work
+
+See [Checkpoint 5](CHECKPOINT_05.md) for the broader synthetic quality evaluation,
+live source findings, simulated delivery and local deployment rehearsal. These
+results supersede older pending-smoke notes but do not complete production exit.

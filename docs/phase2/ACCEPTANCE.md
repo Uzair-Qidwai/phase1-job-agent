@@ -1,108 +1,64 @@
-# Phase 2 acceptance review — recovery baseline
+# Phase 2 acceptance review
 
-Date: 2026-10-08. Branch: `phase2-foundation`. PR #1 stays Draft.
+Updated 2026-10-08. Branch `phase2-foundation`; PR #1 remains Draft.
 
-**Disposition: automated checks pass; live validation and exit approval remain
-pending. This report is not authorization to merge or enable semantic ranking.**
+**Disposition: implementation and bounded synthetic/local checks pass so far.
+Real email, real-candidate acceptance, hosting decision and pilot remain pending.
+This is not permission to merge or enable unattended operation.**
 
-## Current milestone map
+## Current evidence
 
-This report preserves recovery-baseline evidence. The user reassigned Checkpoint 3
-to the agent-workflow addition: [Checkpoint 3](CHECKPOINT_03.md) now records the
-completed provider/specialist implementation and CI #264 (150 tests). Its live
-promotion remains pending. The former checkpoint record is
-[RECOVERY_CHECKPOINT.md](RECOVERY_CHECKPOINT.md).
+- Original recovery evidence is preserved in [RECOVERY_CHECKPOINT.md](RECOVERY_CHECKPOINT.md).
+- [Checkpoint 3](CHECKPOINT_03.md) delivered the provider/specialist implementation.
+- [Checkpoint 4](CHECKPOINT_04.md) records offline hardening and the initial
+  successful synthetic Gemini workflow, including rejection/correction of an
+  invented employer/skill claim. It is not final production acceptance.
+- The 30-job **fictional** software-candidate benchmark passed on Gemini 3.1 Flash
+  Lite: Precision@5 1.0, pairwise accuracy 1.0 versus deterministic 1.0/0.975.
+  All six explicit exclusions used zero model requests. Total: 105 requests.
+  This does not validate the real candidate profile or authorize model promotion.
+- Greenhouse and LinkedIn bounded live checks returned valid descriptions and
+  identities. Overlapping LinkedIn search results were exercised through the
+  production normalizer. Indeed returned HTTP 403 with a blocked-page title;
+  it is unavailable in this environment, not accepted as healthy.
+- Local deployment rehearsal applied migrations twice, restored a synthetic
+  sentinel and migration ledger to a separate database, reapplied migrations,
+  compared data, and exercised four protected HTTP endpoints on a temporary
+  loopback server. All unauthenticated reads returned 401; authenticated reads 200.
+- A simulated delivery traversed the real durable attempt/notification boundary
+  in its own database. It sent no email. Automated tests cover crashes before
+  and after transport acknowledgement, blocked resends and operator reconciliation.
 
-[Checkpoint 4](CHECKPOINT_04.md) is the final live-validation, remaining-features
-and exit-review milestone. It remains unstarted, and no earlier offline results
-constitute live validation or permission to merge.
+## Implemented safeguards
 
-## Evidence
+HTTP admission is reserved in the database before subprocess spawning; the
+execution lock remains the final worker guard. Ordered migrations enforce history
+checksums and transactional application. Operational run/source reads are bounded.
+Delivery ambiguity is durably recorded before transport and blocks automatic
+resends. Shared call/spend limits include retries and revisions. CV validation
+checks whole-output evidence, qualifiers, relationship order and section context;
+a reviewer cannot override deterministic failure. These are tested mechanisms,
+not guarantees of semantic truth or exactly-once external delivery.
 
-- Full local regression suite: 125 passed against isolated PostgreSQL.
-- Implementation `81aa579` passed [CI #258](https://github.com/Uzair-Qidwai/phase1-job-agent/actions/runs/37738157620)
-  on Python 3.11/PostgreSQL 16, including the offline acceptance report.
-- Deterministic ranking: 30 labelled jobs, Precision@5 = 1.0, pairwise accuracy = 1.0.
-- CV factuality: all 22 golden cases matched their expected valid/invalid outcomes.
-- The ranking/CV report is [saved here](../../evals/reports/phase2_checkpoint03.json),
-  including dataset hashes. Reproduce with `python -m evals.run_offline_eval`;
-  this command also runs in CI. These are fixture metrics, not estimates of
-  real-world accuracy or model quality.
-- Worker recovery tests exercise an actual terminated process, a live pipeline
-  holding its lock through scraping, blocked competing workers, late admitted
-  children, temporary lock contention, explicit confirmation and audit history.
-- Existing tests cover HTTP admission, one-time reservation claims, migration
-  adoption/repeatability/order/drift/rollback/concurrency, operational reads,
-  generation validation, and stage-aware retry without repeated scraping.
+## Remaining acceptance gates
 
-## Acceptance mapping
+1. The initial synthetic CV suite passed 1/3 (41 requests). After diagnosing
+   unsupported rewrites and correcting review instructions, all 3/3 passed in
+   25 requests, including one revision. Original failures remain recorded.
+   Real-candidate evaluation and human CV approval remain pending.
+2. Review the newly provided private master CV and degree status; decide the
+   acceptable provider/data-use arrangement before transmitting personal evidence.
+   The actual-candidate ranking benchmark has not been promoted.
+3. Configure personal Gmail sender OAuth, send the single authorized test to the
+   chosen recipient and confirm inbox receipt. A university recipient needs no
+   OAuth consent. Resolve testing-mode token lifetime before unattended production.
+4. Confirm the pilot host and its DB account, backups, monitoring/alerts and
+   recovery procedure. Local disposable rehearsal does not certify a remote host.
+5. Decide how to handle Indeed unavailability in the pilot; no access bypass.
+6. Approve and run a small supervised pilot, review every CV/digest, then decide
+   on scheduling and final PR review/merge. Neither has been started or approved.
 
-| Workstream | Evidence / current behavior | Remaining qualification |
-| --- | --- | --- |
-| Foundation/configuration | clean install, lint, credential-independent tests, CI | live service configuration still pending |
-| Job identity | native source IDs and URL canonicalization goldens; DB uniqueness | live source changes are outside fixture guarantees |
-| Run ledger/admission/recovery | durable unique slot, per-stage history, execution lock, audited operator recovery | operators must verify shutdown; no automatic expiry or distributed fencing |
-| Source adapters | common RawJob contract and source-specific adapters | no live scraping was performed in this validation |
-| Profile/ranking | explainable deterministic ranking and 30-job benchmark | semantic mode remains disabled pending live promotion eval |
-| CV generation | typed output, v2 whole-output lexical coverage, complete evidence quotes, persisted metadata | real-provider smoke and semantic/context review pending; valid paraphrases may fail |
-| CV failure retry | failed generation leaves work shortlisted for a later run | no general application-level immediate retry/backoff policy |
-| Notification/API | committed delivery suppresses duplicate digests; protected mutations; safe HTML/URLs; bounded read responses | external send/DB commit ambiguity; reads require private network |
-| End-to-end | mocked external boundaries and fault injection | automated results do not establish live operational acceptance |
+See [PILOT_DEPLOYMENT.md](PILOT_DEPLOYMENT.md), [GMAIL_SETUP.md](GMAIL_SETUP.md),
+[LIVE_TESTING.md](LIVE_TESTING.md) and [OPERATIONS.md](OPERATIONS.md).
 
-## Operator recovery delivered
-
-[OPERATIONS.md](OPERATIONS.md) specifies shutdown verification, provider-state
-review, exact-run recovery, and a separate retry. `python -m src.recovery` requires
-`--confirm-workers-stopped` and an audit reason. It refuses live execution locks
-and terminal/missing runs. Successful recovery atomically records failure and
-an audit event while preserving the failed stage. Recovery never sends email.
-
-Deployment must stop old workers before adopting the lock protocol. Workers need
-a direct/session-pooled PostgreSQL connection, not transaction pooling. A lost
-DB connection cannot establish that a worker stopped, so the confirmation is an
-operational prerequisite, not an automatic liveness inference.
-
-## Still pending, not silently accepted
-
-1. **Live-provider smoke:** deferred at the user's request; this checkout has no
-   configured model credential or cost rates. Run the controlled smoke once
-   configured, inspect the generated result and factuality rejections, and save
-   measured usage/latency plus configured-price cost estimates. No provider calls
-   were made during this checkpoint.
-2. **Semantic promotion:** run the existing 30-job live comparison before enabling
-   semantic ranking. Deterministic ranking remains the default meanwhile.
-3. **Email ambiguity:** if sending succeeds and the worker dies before recording
-   delivery, retry can resend. Inspect provider records before a notifying-stage
-   recovery/retry. A reconciliation mechanism or explicit acceptance of this
-   limitation is still needed; database uniqueness does not provide exactly-once
-   external delivery.
-4. **CV semantic limits:** copying/reordering or lexical overlap can still alter
-   relationships or section context. Human review remains necessary.
-5. **Exit decision:** review these limitations, the private-network read policy,
-   migration deployment assumptions and deferred retry policy before marking the
-   PR ready. No merge has been performed or approved.
-
-## Checkpoint 4 offline readiness
-
-Delivery reconciliation, run-wide request/spend controls, bounded transient retry,
-CV relationship/section checks and live-test tooling are implemented. Existing
-worker-death/recovery and concurrent trigger checks remain green. Disposable DB
-backup/restore was rehearsed; production data/host deployment was not touched.
-
-See [LIVE_TESTING.md](LIVE_TESTING.md) for the staged commands and remaining gates.
-Live model/source quality, actual email delivery, target-host deployment and human
-CV acceptance remain **pending**. Checkpoint 4 is not an exit approval.
-
-Offline readiness implementation `1b789ce`: CI #274 passed 175 tests plus lint,
-migrations and deterministic evaluations. Evidence:
-`evals/reports/phase2_checkpoint04_offline.json`. This does not satisfy the live
-acceptance or target-host deployment gates.
-
-## Synthetic live evidence — Gemini
-
-`evals/reports/gemini_synthetic_checkpoint04.json` records the first successful
-live four-specialist pass on Gemini 3.1 Flash Lite. It used fictional inputs,
-19 requests and one revision; unsupported employer/skill attribution was caught
-and corrected. It validates the exercised SDK/tool/schema/review path only.
-Personal CV/profile transmission, representative model-quality promotion,
-source/delivery/deployment acceptance remain pending.
+Full current evidence and remaining gates: [Checkpoint 5](CHECKPOINT_05.md).

@@ -15,7 +15,7 @@ Use a personal Gmail account to send it. Setup itself sends nothing.
    .venv/bin/python scripts/configure_gmail.py \
      --client-file .local/gmail-client.json \
      --sender YOUR_PERSONAL_GMAIL_ADDRESS \
-     --recipient qidwai@engineering.upenn.edu
+     --recipient RECIPIENT_EMAIL
    ```
 
    Sign in to the personal sender account in the browser. The helper requests
@@ -26,7 +26,7 @@ Use a personal Gmail account to send it. Setup itself sends nothing.
 
    ```bash
    .venv/bin/python -m evals.delivery_smoke --allow-send \
-     --recipient qidwai@engineering.upenn.edu \
+     --recipient RECIPIENT_EMAIL \
      --output .local/delivery-live-01.json
    ```
 
