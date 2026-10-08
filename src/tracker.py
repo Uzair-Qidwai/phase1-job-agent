@@ -298,6 +298,62 @@ def add_note(job_id: str, note: str) -> bool:
             return cur.fetchone() is not None
 
 
+def save_ranking_result(
+    *,
+    job_id: str,
+    run_id: str | None,
+    total_score: float,
+    hard_mismatch: bool,
+    component_scores: dict[str, float],
+    explanation: list[str],
+    profile_version: str,
+    ranking_version: str,
+    model: str | None = None,
+    usage: dict[str, Any] | None = None,
+    estimated_cost_usd: float = 0.0,
+) -> int:
+    if not 0.0 <= total_score <= 100.0:
+        raise ValueError("total_score must be between 0 and 100")
+    if estimated_cost_usd < 0:
+        raise ValueError("estimated_cost_usd must be non-negative")
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO ranking_results (
+                    job_id,
+                    run_id,
+                    total_score,
+                    hard_mismatch,
+                    component_scores,
+                    explanation,
+                    profile_version,
+                    ranking_version,
+                    model,
+                    usage,
+                    estimated_cost_usd
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    uuid.UUID(job_id),
+                    uuid.UUID(run_id) if run_id else None,
+                    total_score,
+                    hard_mismatch,
+                    psycopg2.extras.Json(component_scores),
+                    psycopg2.extras.Json(explanation),
+                    profile_version,
+                    ranking_version,
+                    model,
+                    psycopg2.extras.Json(usage or {}),
+                    estimated_cost_usd,
+                ),
+            )
+            return int(cur.fetchone()["id"])
+
+
 def save_cv_version(
     job_id: str,
     tailored_cv: str,
