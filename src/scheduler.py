@@ -503,7 +503,12 @@ def start_scheduler(
 
 
 if __name__ == "__main__":
-    if "--run-now" in sys.argv:
+    if "--retry-run" in sys.argv:
+        index = sys.argv.index("--retry-run")
+        if index + 1 >= len(sys.argv):
+            raise SystemExit("--retry-run requires a failed run UUID")
+        resume_pipeline(sys.argv[index + 1])
+    elif "--run-now" in sys.argv:
         run_pipeline(trigger="manual")
     else:
         start_scheduler()
