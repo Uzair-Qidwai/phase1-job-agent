@@ -8,6 +8,8 @@ pending. This report is not authorization to merge or enable semantic ranking.**
 ## Evidence
 
 - Full local regression suite: 125 passed against isolated PostgreSQL.
+- Implementation `81aa579` passed [CI #258](https://github.com/Uzair-Qidwai/phase1-job-agent/actions/runs/37738157620)
+  on Python 3.11/PostgreSQL 16, including the offline acceptance report.
 - Deterministic ranking: 30 labelled jobs, Precision@5 = 1.0, pairwise accuracy = 1.0.
 - CV factuality: all 22 golden cases matched their expected valid/invalid outcomes.
 - The ranking/CV report is [saved here](../../evals/reports/phase2_checkpoint03.json),

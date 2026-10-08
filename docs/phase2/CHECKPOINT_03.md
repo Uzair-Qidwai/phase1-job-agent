@@ -20,8 +20,10 @@ Branch `phase2-foundation`; PR #1 remains Draft. No changes to `main`.
 ## Verification
 
 Local suite: 125 passed. Offline ranking: Precision@5 1.0 and pairwise accuracy
-1.0 over 30 fixture jobs. CV goldens: 22/22 matched expected outcomes. CI must be
-confirmed on the implementation commit before treating this checkpoint as green.
+1.0 over 30 fixture jobs. CV goldens: 22/22 matched expected outcomes.
+Implementation commit `81aa5799800bf5ed43bdec2df5b3a10d2f264b73` passed
+[CI #258](https://github.com/Uzair-Qidwai/phase1-job-agent/actions/runs/37738157620),
+including migrations, lint, 125 tests and offline acceptance metrics.
 
 See [ACCEPTANCE.md](ACCEPTANCE.md) for the evidence mapping and open decisions.
 Live provider and semantic promotion checks remain pending at the user's request;
