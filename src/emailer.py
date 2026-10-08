@@ -115,7 +115,7 @@ def _build_html(jobs: list[dict]) -> str:
     """
 
 
-def send_digest(jobs: list[dict]) -> bool:
+def send_digest(jobs: list[dict], *, message_id: str | None = None) -> bool:
     """Send the daily digest. Returns True on success."""
     if not jobs:
         logger.info("No jobs to digest — skipping email.")
@@ -127,6 +127,8 @@ def send_digest(jobs: list[dict]) -> bool:
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"📋 Job Digest — {len(jobs)} new match{'es' if len(jobs) != 1 else ''}"
+    if message_id:
+        msg["Message-ID"] = message_id
     msg["From"] = sender_email
     msg["To"] = recipient_email
     msg.attach(MIMEText(html_body, "html"))
@@ -141,5 +143,5 @@ def send_digest(jobs: list[dict]) -> bool:
         logger.info("Digest sent to %s (%d jobs)", recipient_email, len(jobs))
         return True
     except Exception as exc:
-        logger.error("Failed to send digest: %s", exc)
+        logger.error("Failed to send digest (%s)", type(exc).__name__)
         return False

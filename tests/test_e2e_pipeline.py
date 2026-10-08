@@ -21,6 +21,7 @@ pytestmark = pytest.mark.skipif(
 def _cleanup() -> None:
     with get_conn() as conn:
         with conn.cursor() as cur:
+            cur.execute("DELETE FROM delivery_attempts")
             cur.execute("DELETE FROM notifications")
             cur.execute("DELETE FROM pipeline_events")
             cur.execute("DELETE FROM pipeline_runs")
@@ -106,7 +107,7 @@ def test_full_pipeline_is_rank_first_and_idempotent(monkeypatch) -> None:
 
     delivered_batches: list[list[dict]] = []
 
-    def fake_send_digest(jobs):
+    def fake_send_digest(jobs, **kwargs):
         delivered_batches.append(list(jobs))
         return True
 
@@ -145,8 +146,7 @@ def test_full_pipeline_is_rank_first_and_idempotent(monkeypatch) -> None:
     assert second["jobs_notified"] == 0
 
     assert tailor_calls == ["Senior AI Engineer"]
-    assert len(delivered_batches) == 2
-    assert delivered_batches[1] == []
+    assert len(delivered_batches) == 1
 
 
 def test_pipeline_records_fatal_stage_failure(monkeypatch) -> None:
@@ -221,10 +221,14 @@ def test_failed_tailoring_is_retried_from_shortlisted_state(monkeypatch) -> None
 
     monkeypatch.setattr(scraper, "scrape_all", fake_scrape_all)
     monkeypatch.setattr(cv_agent, "tailor_cv", flaky_tailor_cv)
-    monkeypatch.setattr(emailer, "send_digest", lambda jobs: True)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs, **kwargs: True)
 
-    first_run = run_pipeline(trigger="manual")
-    assert first_run is not None
+    with pytest.raises(RuntimeError, match="CV job"):
+        run_pipeline(trigger="manual")
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT id FROM pipeline_runs ORDER BY started_at DESC LIMIT 1")
+        first_run = str(cur.fetchone()["id"])
+    assert get_pipeline_run(first_run)["status"] == "failed"
     first = get_pipeline_run(first_run)
     assert first["jobs_inserted"] == 1
     assert first["jobs_shortlisted"] == 1
@@ -307,7 +311,7 @@ def test_notification_failure_resumes_without_repeating_expensive_stages(monkeyp
             "validation": {"valid": True},
         }
 
-    def flaky_send_digest(jobs):
+    def flaky_send_digest(jobs, **kwargs):
         calls["send"] += 1
         return calls["send"] > 1
 
@@ -333,6 +337,14 @@ def test_notification_failure_resumes_without_repeating_expensive_stages(monkeyp
     assert failed["status"] == "failed"
     assert failed["current_stage"] == "notifying"
 
+    from src.delivery import list_attempts, reconcile
+    for attempt in list_attempts():
+        if attempt["status"] == "ambiguous":
+            with pytest.raises(RuntimeError, match="Unresolved delivery"):
+                resume_pipeline(str(failed["id"]))
+            assert calls["send"] == 1
+            reconcile(str(attempt["id"]), sent=False,
+                      reason="Test transport confirms no send occurred", workers_stopped=True)
     retry_id = resume_pipeline(str(failed["id"]))
     assert retry_id is not None
     retry = get_pipeline_run(retry_id)
@@ -401,7 +413,7 @@ def test_ranking_failure_resumes_from_filtering_without_rescraping(monkeypatch) 
     monkeypatch.setattr(scraper, "scrape_all", fake_scrape_all)
     monkeypatch.setattr(ranking_module, "rank_job", flaky_rank_job)
     monkeypatch.setattr(cv_agent, "tailor_cv", fake_tailor_cv)
-    monkeypatch.setattr(emailer, "send_digest", lambda jobs: True)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs, **kwargs: True)
 
     with pytest.raises(RuntimeError, match="simulated ranking provider failure"):
         run_pipeline(trigger="manual")
@@ -451,7 +463,7 @@ def test_admitted_retry_reuses_reserved_run_and_restart_stage(monkeypatch):
         pytest.fail("Notification retry must not scrape")
 
     monkeypatch.setattr(scraper, "scrape_all", unexpected_scrape)
-    monkeypatch.setattr(emailer, "send_digest", lambda jobs: True)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs, **kwargs: True)
     assert execute_admitted_run(reserved) == reserved
     run = get_pipeline_run(reserved)
     assert run["status"] == "completed"
@@ -478,7 +490,7 @@ def test_running_pipeline_holds_execution_lock_until_completion(monkeypatch):
         return []
 
     monkeypatch.setattr(scraper, "scrape_all", paused_scrape)
-    monkeypatch.setattr(emailer, "send_digest", lambda jobs: True)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs, **kwargs: True)
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(run_pipeline, "manual")
         try:
@@ -535,9 +547,16 @@ def test_agent_pipeline_persists_role_audit_and_accounts_rejected_work(monkeypat
     monkeypatch.setattr(workflow, "_load_master_cv", lambda: master)
     monkeypatch.setattr(semantic, "_load_master_cv", lambda: master)
     monkeypatch.setattr(scraper, "scrape_all", fake_scrape)
-    monkeypatch.setattr(emailer, "send_digest", lambda jobs: sent.extend(jobs) or True)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs, **kwargs: sent.extend(jobs) or True)
     try:
-        run_id = run_pipeline("manual")
+        if review_decision == "reject":
+            with pytest.raises(RuntimeError, match="CV job"):
+                run_pipeline("manual")
+            with get_conn() as conn, conn.cursor() as cur:
+                cur.execute("SELECT id FROM pipeline_runs ORDER BY started_at DESC LIMIT 1")
+                run_id = str(cur.fetchone()["id"])
+        else:
+            run_id = run_pipeline("manual")
         run = get_pipeline_run(run_id)
         assert run["model_input_tokens"] == 400
         assert run["model_output_tokens"] == 80

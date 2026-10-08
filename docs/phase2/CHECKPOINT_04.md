@@ -43,3 +43,17 @@ ambiguity has a tested reconciliation procedure or an explicitly accepted limit;
 CV outputs remain subject to human review; deployment/recovery is rehearsed;
 remaining limitations are consciously accepted. Credentials or live checks left
 pending mean this checkpoint is incomplete, even if offline CI passes.
+
+## Offline implementation progress
+
+- Delivery attempts are committed before transport; an uncertain send blocks
+  automatic resend. Stable Message-ID assists investigation, not deduplication.
+  Resolving `sent` records all notifications atomically; resolving `not-sent`
+  permits a later retry. Stop workers before reconciliation.
+- Use `python -m src.delivery list` and `python -m src.delivery reconcile UUID
+  --outcome sent|not-sent --reason 'Evidence recorded here'
+  --confirm-workers-stopped`. If evidence is inconclusive, leave it unresolved.
+- Tailoring failures now fail the run at the tailoring restart point after
+  delivering successful jobs. Rejected CVs remain shortlisted and unsent.
+- Local full suite: 154 tests pass, including send/record crash boundaries,
+  reconciliation exclusion, and stage-aware retries. Live sends remain deferred.

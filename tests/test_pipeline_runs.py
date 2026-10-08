@@ -36,6 +36,7 @@ pytestmark = pytest.mark.skipif(
 def clean_test_rows():
     with get_conn() as conn:
         with conn.cursor() as cur:
+            cur.execute("DELETE FROM delivery_attempts")
             cur.execute("DELETE FROM notifications")
             cur.execute("DELETE FROM pipeline_events")
             cur.execute("DELETE FROM pipeline_runs")
@@ -54,6 +55,7 @@ def clean_test_rows():
     yield
     with get_conn() as conn:
         with conn.cursor() as cur:
+            cur.execute("DELETE FROM delivery_attempts")
             cur.execute("DELETE FROM notifications")
             cur.execute("DELETE FROM pipeline_events")
             cur.execute("DELETE FROM pipeline_runs")

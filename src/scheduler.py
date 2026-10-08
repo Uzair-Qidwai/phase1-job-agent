@@ -74,7 +74,6 @@ def _run_pipeline(
         fail_pipeline_run,
         get_jobs_by_system_states,
         get_new_jobs_for_digest,
-        mark_jobs_notified,
         record_pipeline_event,
         record_source_health,
         save_cv_version,
@@ -114,6 +113,7 @@ def _run_pipeline(
     eligible_jobs: list[dict] = []
     filtered_count = 0
     newly_shortlisted = 0
+    tailoring_failures = 0
     tailored_count = 0
     notified_count = 0
     model_input_tokens = 0
@@ -444,6 +444,7 @@ def _run_pipeline(
                             record_pipeline_event(run_id, "agent_step", stage=stage,
                                                   payload={"job_id": job_id, **step_info})
                 except Exception as exc:
+                    tailoring_failures += 1
                     # Keep state as 'shortlisted' so the next run retries this job.
                     record_pipeline_event(
                         run_id,
@@ -486,16 +487,14 @@ def _run_pipeline(
             digest_jobs = get_new_jobs_for_digest(
                 min_score=settings.shortlist_threshold
             )
-            sent = send_digest(digest_jobs)
-            if not sent:
-                # Jobs remain 'tailored' and therefore eligible for the next digest.
-                raise RuntimeError("Digest delivery failed")
+            from src.delivery import deliver_digest
+            notified_count = deliver_digest(digest_jobs, run_id=run_id, send=send_digest)
 
-            notified_count = mark_jobs_notified(
-                [str(job["id"]) for job in digest_jobs],
-                run_id=run_id,
-                channel="email",
-            )
+        if tailoring_failures:
+            # Successful CVs can be delivered, but failed jobs must remain visible
+            # and resume from tailoring without scraping/ranking again.
+            stage = "tailoring"
+            raise RuntimeError(f"{tailoring_failures} CV job(s) failed; retry from tailoring")
 
         complete_pipeline_run(run_id, jobs_notified=notified_count)
         elapsed = time.perf_counter() - t0
