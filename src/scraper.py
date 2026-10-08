@@ -31,6 +31,7 @@ class RawJob:
     url: str
     description: str
     source: str
+    source_job_id: str | None = None
 
 
 async def _wait_and_text(page: Page, selector: str, timeout: int = 5000) -> str:
@@ -200,6 +201,7 @@ async def scrape_indeed(browser, max_per_query: int = 10) -> list[RawJob]:
                             url=job_url,
                             description=desc,
                             source="indeed",
+                            source_job_id=jk,
                         )
                     )
                     await _human_delay(0.5, 1.5)
@@ -273,6 +275,7 @@ async def scrape_greenhouse(max_per_board: int = 20) -> list[RawJob]:
                             url=job.get("absolute_url", ""),
                             description=content[:8000],
                             source="greenhouse",
+                            source_job_id=str(job.get("id")) if job.get("id") is not None else None,
                         )
                     )
             except Exception as exc:
@@ -304,6 +307,9 @@ async def scrape_all(headless: bool = True) -> list[RawJob]:
         identity = build_job_identity(job.url, job.source)
         if not identity.canonical_url:
             continue
+
+        if not job.source_job_id:
+            job.source_job_id = identity.source_job_id
 
         if identity.dedupe_key in seen:
             continue
