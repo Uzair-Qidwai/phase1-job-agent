@@ -15,7 +15,7 @@ from src.model_runtime import AgentRuntime
 from src.ranking import rank_job
 from src.semantic_ranking import rank_job_semantic
 
-WORKFLOW_VERSION = "specialists-v1"
+WORKFLOW_VERSION = "specialists-v2"
 
 
 class ResearchBrief(BaseModel):
@@ -47,6 +47,12 @@ section completeness and relevance. Search preferences are not credentials.
 Reject invented facts. Request a revision for fixable issues. Approve only when
 the deterministic evidence check is valid and no material issues remain. The
 application enforces that check independently; your approval cannot override it.
+Job-fit selection belongs to the analyst, not this review. Missing qualifications
+in the master CV must remain missing from the draft; a truthful warning that they
+are not documented is sufficient. Do not request adding absent required skills,
+changing a candidate title to the target title, or inventing matching experience.
+An unchanged factual CV can be approved when no supported tailoring is possible.
+For an unsupported rewrite, request restoration of the original source sentence.
 You cannot write to the database, send email, or submit applications."""
 
 

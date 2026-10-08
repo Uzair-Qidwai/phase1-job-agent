@@ -16,7 +16,7 @@ from src.model_runtime import AgentRuntime
 logger = logging.getLogger(__name__)
 
 MASTER_CV_PATH = Path(__file__).parent.parent / "data" / "master_cv.md"
-CV_PROMPT_VERSION = "phase2-cv-v3"
+CV_PROMPT_VERSION = "phase2-cv-v4"
 
 SYSTEM_PROMPT = """
 You are a CV tailoring assistant.
@@ -59,7 +59,16 @@ Rules:
    credentials; use it only for prioritization, never as factual CV evidence.
 5. Do not create a match score. Ranking is a separate system.
 6. If the job asks for experience the candidate does not have, do not imply it.
-   Put that concern in warnings when useful.
+   Put that concern in warnings when useful. Missing job requirements are not
+   permission to change the candidate's title or introduce a skill.
+7. Prefer copying the source CV unchanged over an unsupported rewrite. Tailoring
+   is optional; factual integrity is mandatory. Never prepend the target job title
+   to the summary unless it already appears there in the source.
+8. When revision feedback identifies unsupported text, remove it and restore the
+   original complete source statement. Do not replace it with another paraphrase.
+   Reviewer feedback asking for absent qualifications must be handled as a warning,
+   never as a new CV claim. Say "not documented in the source CV", not that the
+   candidate certainly lacks a skill.
 """.strip()
 
 

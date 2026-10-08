@@ -42,6 +42,7 @@ def main():
     parser.add_argument('--allow-live', action='store_true', required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--phase', choices=['ranking', 'cv'], required=True)
+    parser.add_argument('--cv-job-id', help='Inspect one fictional CV case; not a full quality gate')
     parser.add_argument('--max-calls', type=int, default=160)
     args = parser.parse_args()
     if args.output.exists() or not 1 <= args.max_calls <= 200:
@@ -59,6 +60,8 @@ def main():
         'model_spend_stop_usd': None,
     })
     dataset = json.loads(FIXTURE.read_text())
+    if args.cv_job_id and (args.phase != 'cv' or args.cv_job_id not in dataset['cv_job_ids']):
+        parser.error('--cv-job-id must select an existing fictional CV case')
     budget = RunBudget(args.max_calls)
     last_start = [0.0]
     steps = []
@@ -66,7 +69,7 @@ def main():
                   scope=dataset['scope'], personal_data_sent=False,
                   fixture_sha256=hashlib.sha256(FIXTURE.read_bytes()).hexdigest(),
                   request_cap=args.max_calls, cases=[], steps=steps,
-                  human_acceptance='pending', promotion_authorized=False)
+                  human_acceptance='pending', promotion_authorized=False, selected_cv_job=args.cv_job_id)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open('x') as stream:
         stream.write('{}\n')
@@ -98,11 +101,23 @@ def main():
         with fictional_evidence(dataset) as profile:
             baseline, candidate = {}, {}
             jobs = dataset['jobs'] if args.phase == 'ranking' else [
-                j for j in dataset['jobs'] if j['id'] in dataset['cv_job_ids']]
+                j for j in dataset['jobs'] if j['id'] in dataset['cv_job_ids']
+                and (not args.cv_job_id or j['id'] == args.cv_job_id)]
             for job in jobs:
                 row = dict(job_id=job['id'], label=job['label'], passed=False)
                 report['cases'].append(row)
-                runtime = AgentRuntime(settings=settings, run_budget=budget,
+                class CapturingRuntime(AgentRuntime):
+                    def run(self, role, **kwargs):
+                        result = super().run(role, **kwargs)
+                        captured = dict(role=role, output=result.output.model_dump())
+                        if role == 'writer':
+                            from src.cv_validation import validate_tailored_cv
+                            captured['validation'] = validate_tailored_cv(
+                                result.output, master_cv=dataset['master_cv'],
+                                candidate_profile_text=profile.model_dump_json()).model_dump()
+                        row.setdefault('synthetic_outputs', []).append(captured)
+                        return result
+                runtime = CapturingRuntime(settings=settings, run_budget=budget,
                                        model_factory=PacedModel, on_step=steps.append)
                 try:
                     with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):

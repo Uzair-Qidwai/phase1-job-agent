@@ -536,5 +536,53 @@
       ]
     },
     "expected_valid": true
+  },
+  {
+    "name": "live synthetic missing skill revision unsupported claim 1",
+    "master_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.\n",
+    "candidate_profile": "{\"version\": \"synthetic-quality-1\", \"target_roles\": [\"Software Engineer\"], \"role_keywords\": [\"Python\", \"SQL\", \"data\", \"testing\", \"financial\"], \"preferred_locations\": [\"Toronto\"], \"remote_allowed\": true, \"strict_locations\": true, \"excluded_companies\": [\"Excluded Example\"], \"excluded_title_keywords\": [\"Director\"]}",
+    "result": {
+      "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting. Experienced in developing data pipelines and automated reporting workflows.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+      "changes_made": "I emphasized the existing data pipeline and SQL reporting experience to better align with the data engineering focus of the role. The structure was preserved while highlighting relevant terminology.",
+      "evidence_used": [
+        {
+          "claim": "Built Python data pipelines and SQL reporting tools for finance teams.",
+          "source": "master_cv",
+          "source_text": "Built Python data pipelines and SQL reporting tools for finance teams."
+        }
+      ],
+      "keywords_added": [
+        "data pipelines",
+        "data workflows"
+      ],
+      "warnings": [
+        "The candidate's master CV does not list experience with Spark or Kafka, which were specified as requirements in the job description."
+      ]
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "live synthetic missing skill revision unsupported claim 2",
+    "master_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.\n",
+    "candidate_profile": "{\"version\": \"synthetic-quality-1\", \"target_roles\": [\"Software Engineer\"], \"role_keywords\": [\"Python\", \"SQL\", \"data\", \"testing\", \"financial\"], \"preferred_locations\": [\"Toronto\"], \"remote_allowed\": true, \"strict_locations\": true, \"excluded_companies\": [\"Excluded Example\"], \"excluded_title_keywords\": [\"Director\"]}",
+    "result": {
+      "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nData Engineer experienced in building Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+      "changes_made": "I updated the summary to align the candidate's core expertise in Python and SQL with the Data Engineer role title. No other structural changes were made to ensure factual integrity.",
+      "evidence_used": [
+        {
+          "claim": "Data Engineer experienced in building Python and SQL analytics systems for financial reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python and SQL analytics systems for financial reporting."
+        }
+      ],
+      "keywords_added": [
+        "Data Engineer"
+      ],
+      "warnings": [
+        "The candidate does not possess the Spark and Kafka experience explicitly required by the job description.",
+        "The candidate's title remains Software Engineer as per the master CV; it is only adjusted in the summary for relevance."
+      ]
+    },
+    "expected_valid": false
   }
 ]
