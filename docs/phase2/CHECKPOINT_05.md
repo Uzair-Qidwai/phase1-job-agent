@@ -11,7 +11,7 @@ started, and steps 1–4 are not all accepted yet. No merge or scheduler enablem
 |---|---|---|
 | Ranking/CV quality | Fictional 30-job ranking passed: P@5 1.0, pairwise 1.0 vs baseline 0.975; 105 requests. Initial CV suite passed 1/3 (41 requests); after a prompt correction all 3/3 passed (25 requests), with one revision. | Real-candidate evaluation and human review remain pending. |
 | Live sources | Greenhouse and LinkedIn returned usable data; shared production normalization verifies duplicates. Indeed explicitly blocked with HTTP 403. | Accept reduced source coverage or provide an approved Indeed access route. |
-| Email | Preview and isolated simulated durable delivery passed. Personal Gmail sender chosen; recipient authorized in chat. | Configure sender OAuth, send the one real digest, confirm receipt. |
+| Email | Preview, simulated delivery and one real synthetic digest passed; inbox receipt confirmed by user screenshot. | Resolve OAuth testing-mode token lifetime before unattended production. |
 | Deployment | Local backup/restore, repeated migrations, retained data and protected HTTP reads passed. Temporary API stopped. | Confirm host, production DB access/backup/alerts and target-host recovery. |
 
 Evidence: [sanitized report](../../evals/reports/pre_pilot_checkpoint05.json).
@@ -57,7 +57,15 @@ Implementation through `a6a22e5` passed CI #291 (189 tests; 30 CV gold cases), i
 isolation, private-source selection, source deduplication, recovery and delivery.
 See the final branch CI for subsequent report/diagnostic edits.
 
-Complete [Gmail setup](GMAIL_SETUP.md) and the outstanding quality/hosting decisions
+Gmail setup and the controlled real delivery test are complete. Resolve the outstanding quality/hosting decisions
 before advancing to the pilot. [Deployment preparation](PILOT_DEPLOYMENT.md) names
 what the local rehearsal proves and what production still needs. Preserve private
 reports/dumps locally; do not publish personal CVs, tokens or raw email evidence.
+
+## Email acceptance update — 2026-10-08
+
+Personal Gmail authorization completed. The first transport attempt failed while
+the Gmail API was disabled; its rejection was reconciled using the recorded API
+diagnostic. After activation, one controlled retry was acknowledged and exactly
+one notification recorded. The user supplied an inbox screenshot confirming the
+fictional digest arrived. No actual CV was sent, and no pilot/scheduler started.

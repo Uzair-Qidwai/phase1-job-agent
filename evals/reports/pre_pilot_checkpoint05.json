@@ -340,8 +340,10 @@
   },
   "delivery": {
     "simulation_passed": true,
-    "real_send": "pending personal Gmail OAuth configuration",
-    "inbox_confirmation": "pending"
+    "real_send": "passed; Gmail acknowledged one synthetic digest",
+    "inbox_confirmation": "confirmed by user-supplied screenshot on 2026-10-08",
+    "notifications_recorded": 1,
+    "prior_failure": "Gmail API initially disabled; rejection reconciled before controlled retry"
   },
   "implementation_ci": {
     "commit": "a6a22e5",
@@ -1012,7 +1014,6 @@
     "assistant_review": "All three final CVs preserve the fictional source statements and attribution. Missing job skills remain warnings. The third case required one correction of an invented PostgreSQL experience claim. Tailoring is conservative and mostly preserves source wording; human acceptance of real CV quality is pending."
   },
   "remaining": [
-    "Personal Gmail OAuth and one authorized real send/inbox confirmation",
     "Actual-candidate model/data-use choice and evaluation/human acceptance",
     "Pilot host confirmation and production configuration",
     "Indeed blocked: acknowledge reduced coverage or approved alternative",

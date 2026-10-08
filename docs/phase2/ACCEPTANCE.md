@@ -3,7 +3,7 @@
 Updated 2026-10-08. Branch `phase2-foundation`; PR #1 remains Draft.
 
 **Disposition: implementation and bounded synthetic/local checks pass so far.
-Real email, real-candidate acceptance, hosting decision and pilot remain pending.
+Real-candidate acceptance, hosting decision and pilot remain pending.
 This is not permission to merge or enable unattended operation.**
 
 ## Current evidence
@@ -49,9 +49,9 @@ not guarantees of semantic truth or exactly-once external delivery.
 2. Review the newly provided private master CV and degree status; decide the
    acceptable provider/data-use arrangement before transmitting personal evidence.
    The actual-candidate ranking benchmark has not been promoted.
-3. Configure personal Gmail sender OAuth, send the single authorized test to the
-   chosen recipient and confirm inbox receipt. A university recipient needs no
-   OAuth consent. Resolve testing-mode token lifetime before unattended production.
+3. Personal Gmail OAuth and the single authorized real digest passed, including
+   inbox confirmation by user screenshot. Resolve testing-mode token lifetime
+   before unattended production.
 4. Confirm the pilot host and its DB account, backups, monitoring/alerts and
    recovery procedure. Local disposable rehearsal does not certify a remote host.
 5. Decide how to handle Indeed unavailability in the pilot; no access bypass.
