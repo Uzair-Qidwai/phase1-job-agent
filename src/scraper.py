@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from urllib.parse import quote_plus
 
 import httpx
-import httpx
 from bs4 import BeautifulSoup
 from playwright.async_api import Page, async_playwright
 
