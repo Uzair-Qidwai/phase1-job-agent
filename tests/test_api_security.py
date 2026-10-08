@@ -9,6 +9,10 @@ import src.api as api_module
 from src.settings import get_settings
 
 
+def _auth_headers() -> dict[str, str]:
+    return {"Authorization": "Bearer phase2-test-secret-token-strong-enough"}
+
+
 @pytest.fixture(autouse=True)
 def configured_api_token(monkeypatch):
     monkeypatch.setenv("API_TOKEN", "phase2-test-secret-token-strong-enough")
@@ -84,3 +88,66 @@ def test_security_headers_are_present(monkeypatch) -> None:
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["x-frame-options"] == "DENY"
     assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
+
+
+def test_retry_endpoint_requires_bearer_token() -> None:
+    client = TestClient(api_module.app)
+    response = client.post(f"/pipeline/runs/{uuid4()}/retry")
+    assert response.status_code == 401
+
+
+def test_retry_endpoint_rejects_nonfailed_run(monkeypatch) -> None:
+    run_id = uuid4()
+    monkeypatch.setattr(api_module, "get_active_pipeline_run", lambda: None)
+    monkeypatch.setattr(
+        api_module,
+        "get_pipeline_run",
+        lambda value: {
+            "id": run_id,
+            "status": "completed",
+            "current_stage": "completed",
+        },
+    )
+
+    client = TestClient(api_module.app)
+    response = client.post(
+        f"/pipeline/runs/{run_id}/retry",
+        headers=_auth_headers(),
+    )
+
+    assert response.status_code == 409
+
+
+def test_retry_endpoint_launches_failed_run_recovery(monkeypatch) -> None:
+    run_id = uuid4()
+    launched = {}
+
+    monkeypatch.setattr(api_module, "get_active_pipeline_run", lambda: None)
+    monkeypatch.setattr(
+        api_module,
+        "get_pipeline_run",
+        lambda value: {
+            "id": run_id,
+            "status": "failed",
+            "current_stage": "notifying",
+        },
+    )
+
+    def fake_popen(args, **kwargs):
+        launched["args"] = args
+        launched["kwargs"] = kwargs
+        return object()
+
+    monkeypatch.setattr(api_module.subprocess, "Popen", fake_popen)
+
+    client = TestClient(api_module.app)
+    response = client.post(
+        f"/pipeline/runs/{run_id}/retry",
+        headers=_auth_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["retry_of_run_id"] == str(run_id)
+    assert body["failed_stage"] == "notifying"
+    assert launched["args"][-2:] == ["--retry-run", str(run_id)]
