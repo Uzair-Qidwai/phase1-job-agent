@@ -31,3 +31,8 @@ def test_required_credentials_fail_only_when_used(monkeypatch) -> None:
 def test_scheduler_time_is_validated() -> None:
     with pytest.raises(ValidationError):
         Settings(_env_file=None, PIPELINE_HOUR=25)
+
+
+def test_invalid_ranking_mode_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, RANKING_MODE="silent-auto-promote")
