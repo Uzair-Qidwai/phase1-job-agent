@@ -6,7 +6,7 @@ import json
 import unittest
 from unittest.mock import MagicMock
 
-from src.cv_agent import _parse_response, tailor_cv
+from src.cv_agent import MASTER_CV_PATH, _parse_response, tailor_cv
 
 
 EVIDENCE_TEXT = (
@@ -16,13 +16,7 @@ EVIDENCE_TEXT = (
 )
 
 SAMPLE_RESPONSE = {
-    "tailored_cv": (
-        "# Uzair Qidwai\n\n"
-        "Finance-trained AI/ML engineer with CFA designation, MBA (Imperial College London), "
-        "and Master of Applied Science – Computer Science with AI concentration "
-        "(MAS-CS, Penn Engineering).\n\n"
-        "## Skills\n**Languages:** Python, Solidity, SQL, TypeScript, LaTeX"
-    ),
+    "tailored_cv": MASTER_CV_PATH.read_text(),
     "changes_made": "Front-loaded the existing AI/ML background for relevance.",
     "evidence_used": [
         {
@@ -89,7 +83,7 @@ class TestTailorCV(unittest.TestCase):
             "Build AI systems.",
             client=fake_client(),
         )
-        self.assertEqual(result["prompt_version"], "phase2-cv-v2")
+        self.assertEqual(result["prompt_version"], "phase2-cv-v3")
         self.assertEqual(result["profile_version"], "1")
         self.assertTrue(result["model"])
 

@@ -16,7 +16,7 @@ from src.model_runtime import AgentRuntime
 logger = logging.getLogger(__name__)
 
 MASTER_CV_PATH = Path(__file__).parent.parent / "data" / "master_cv.md"
-CV_PROMPT_VERSION = "phase2-cv-v2"
+CV_PROMPT_VERSION = "phase2-cv-v3"
 
 SYSTEM_PROMPT = """
 You are a CV tailoring assistant.
@@ -44,7 +44,8 @@ Return one JSON object only, with this schema:
 }
 
 Rules:
-1. Prefer reordering complete source statements to improve relevance.
+1. Reorder complete source statements only WITHIN their original section/role.
+   Preserve source headings, employer attribution, and the factual word order.
 2. Do not introduce factual terms absent from the supporting source statement.
 3. Do not omit major CV sections.
 4. Every material factual claim that is newly emphasized or rewritten must have
@@ -132,6 +133,7 @@ Tailor the CV for this role. Respond only with the required JSON object.
 
     if not validation.valid:
         details = {
+            "context_errors": validation.context_errors,
             "invalid_evidence": validation.invalid_evidence,
             "unsupported_numeric_claims": validation.unsupported_numeric_claims,
             "unsupported_claims": validation.unsupported_claims,

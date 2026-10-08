@@ -24,8 +24,9 @@ class TailoredCVResult(BaseModel):
 
 class CVValidationResult(BaseModel):
     valid: bool
-    validation_version: str = "deterministic-cv-v2"
+    validation_version: str = "deterministic-cv-v3"
     output_claims_checked: int = 0
+    context_errors: list[str] = Field(default_factory=list)
     unsupported_claims: list[str] = Field(default_factory=list)
     evidence_items_checked: int
     invalid_evidence: list[str] = Field(default_factory=list)
@@ -116,10 +117,52 @@ def _fact_terms(text: str) -> set[str]:
     return set(re.findall(r"[a-z0-9]+(?:[+#]+)?", normalized.casefold())) - _GRAMMAR_WORDS
 
 
+def _ordered_terms(text: str) -> list[str]:
+    normalized = _NUMERIC_TOKEN.sub(lambda match: _normalize_number(match[0]), text.casefold())
+    return [term for term in re.findall(r"[a-z0-9]+(?:[+#]+)?", normalized)
+            if term not in _GRAMMAR_WORDS]
+
+
+def _same_order(claim: str, evidence: str) -> bool:
+    # A bag of words cannot distinguish who mentored whom or which metric
+    # belongs to which employer. Require factual terms in source order.
+    remaining = iter(_ordered_terms(evidence))
+    return all(any(term == candidate for candidate in remaining) for term in _ordered_terms(claim))
+
+
+def _contexts(text: str) -> tuple[dict[str, set[tuple[str, ...]]], set[str]]:
+    contexts: dict[str, set[tuple[str, ...]]] = {}
+    headings: set[str] = set()
+    stack: list[tuple[int, str]] = []
+    aliases = {"professional experience": "experience", "professional summary": "summary"}
+    for line in text.splitlines():
+        heading = re.match(r"^\s*(#{2,6})\s+(.+)$", line)
+        bold_heading = re.fullmatch(r"\s*\*\*([^*]+)\*\*\s*", line)
+        canonical = _canonical_claim(line)
+        if heading or bold_heading or canonical in _HEADINGS:
+            depth = len(heading[1]) if heading else (2 if canonical in _HEADINGS else 3)
+            label = aliases.get(canonical, canonical)
+            while stack and stack[-1][0] >= depth:
+                stack.pop()
+            stack.append((depth, label))
+            if canonical in _HEADINGS:
+                headings.add(label)
+        for segment in _claim_segments(line):
+            contexts.setdefault(segment, set()).add(tuple(label for _, label in stack))
+    return contexts, headings
+
+
+def _compatible_contexts(output: set[tuple[str, ...]], source: set[tuple[str, ...]]) -> bool:
+    # Unstructured source excerpts may gain neutral section headings, never an
+    # employer/role heading. Structured sources must retain their attribution.
+    return all(context in source or (() in source and all(label in _HEADINGS for label in context))
+               for context in output)
+
+
 def _supported_rewrite(claim: str, evidence: str) -> bool:
     claim_terms = _fact_terms(claim)
     evidence_terms = _fact_terms(evidence)
-    return (bool(claim_terms) and claim_terms <= evidence_terms
+    return (bool(claim_terms) and _same_order(claim, evidence) and claim_terms <= evidence_terms
             and (evidence_terms & _QUALIFIERS) <= claim_terms
             and _material_numeric_tokens(claim) <= _material_numeric_tokens(evidence))
 
@@ -141,6 +184,12 @@ def validate_tailored_cv(
     source_segments = set(_claim_segments(master_cv))
     output_segments = _claim_segments(result.tailored_cv)
     factual_segments = [segment for segment in output_segments if segment not in _HEADINGS]
+    source_contexts, source_headings = _contexts(master_cv)
+    output_contexts, output_headings = _contexts(result.tailored_cv)
+    context_errors = [f"Missing source section: {heading}" for heading in sorted(source_headings - output_headings)]
+    for claim in factual_segments:
+        if claim in source_segments and not _compatible_contexts(output_contexts.get(claim, set()), source_contexts.get(claim, set())):
+            context_errors.append(f"Source statement moved outside its section/role: {claim}")
     invalid_evidence: list[str] = []
     supported_claims: set[str] = set()
     for item in result.evidence_used:
@@ -161,6 +210,11 @@ def validate_tailored_cv(
         if not any(_supported_rewrite(claim, segment) for segment in evidence_segments):
             invalid_evidence.append(f"Evidence is not relevant or does not support all facts: '{item.claim}'")
             continue
+        supported_contexts = set().union(*(source_contexts.get(segment, set())
+                                          for segment in evidence_segments
+                                          if _supported_rewrite(claim, segment)))
+        if not _compatible_contexts(output_contexts.get(claim, set()), supported_contexts):
+            context_errors.append(f"Rewrite changes source section/role: {claim}")
         supported_claims.add(claim)
 
     unsupported_claims = [segment for segment in factual_segments
@@ -168,7 +222,8 @@ def validate_tailored_cv(
     unsupported_numbers = sorted(_material_numeric_tokens(result.tailored_cv)
                                  - _material_numeric_tokens(master_cv))
     return CVValidationResult(
-        valid=not invalid_evidence and not unsupported_numbers and not unsupported_claims,
+        valid=not invalid_evidence and not unsupported_numbers and not unsupported_claims and not context_errors,
+        context_errors=context_errors,
         evidence_items_checked=len(result.evidence_used),
         output_claims_checked=len(factual_segments),
         invalid_evidence=invalid_evidence,

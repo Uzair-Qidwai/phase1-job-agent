@@ -66,3 +66,9 @@ pending mean this checkpoint is incomplete, even if offline CI passes.
   explicit prices and stops on unknown usage; it is a spending stop threshold,
   potentially overshooting by the last response, not a guaranteed invoice cap.
 - Delivery slice CI #268 passed on `b74b960`.
+- Runtime slice CI #270 passed on `561e3ab`.
+- CV validator/prompt v3 preserves factual term order, structured section/role
+  attribution and major source sections. Four new gold cases cover reversed
+  relationships, employer swaps, intact structure and omitted sections. Neutral
+  headings may be added to otherwise unstructured excerpts. This conservative
+  lexical gate is not semantic entailment; live false-rejection review remains.

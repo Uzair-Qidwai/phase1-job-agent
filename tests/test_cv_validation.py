@@ -21,7 +21,7 @@ def test_cv_factuality_golden_cases(case) -> None:
     )
     assert validation.valid is case["expected_valid"], validation.model_dump()
     assert validation.output_claims_checked > 0
-    assert validation.validation_version == "deterministic-cv-v2"
+    assert validation.validation_version == "deterministic-cv-v3"
 
 
 def test_unsupported_numeric_claim_is_reported() -> None:

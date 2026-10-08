@@ -416,5 +416,73 @@
       ]
     },
     "expected_valid": false
+  },
+  {
+    "name": "reversing actor and recipient is rejected",
+    "master_cv": "Alex mentored Jordan while building production Python analytics systems.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Jordan mentored Alex while building production Python analytics systems.",
+      "changes_made": "Reordered for relevance.",
+      "evidence_used": [
+        {
+          "claim": "Jordan mentored Alex while building production Python analytics systems.",
+          "source": "master_cv",
+          "source_text": "Alex mentored Jordan while building production Python analytics systems."
+        }
+      ]
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "copied claims cannot swap employers",
+    "master_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\n### Employer Beta\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Alpha\nBuilt reliable SQL reporting systems for finance stakeholders.",
+      "changes_made": "Reordered for relevance.",
+      "evidence_used": [
+        {
+          "claim": "Alex mentored Jordan while building production Python analytics systems.",
+          "source": "master_cv",
+          "source_text": "Alex mentored Jordan while building production Python analytics systems."
+        }
+      ]
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "intact source sections retain attribution",
+    "master_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.",
+      "changes_made": "Reordered for relevance.",
+      "evidence_used": [
+        {
+          "claim": "Alex mentored Jordan while building production Python analytics systems.",
+          "source": "master_cv",
+          "source_text": "Alex mentored Jordan while building production Python analytics systems."
+        }
+      ]
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "section omission requires revision",
+    "master_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.\n## Education\nExpected degree in Computer Science.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.",
+      "changes_made": "Reordered for relevance.",
+      "evidence_used": [
+        {
+          "claim": "Alex mentored Jordan while building production Python analytics systems.",
+          "source": "master_cv",
+          "source_text": "Alex mentored Jordan while building production Python analytics systems."
+        }
+      ]
+    },
+    "expected_valid": false
   }
 ]
