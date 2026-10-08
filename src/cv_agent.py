@@ -60,6 +60,11 @@ def _load_master_cv() -> str:
     return MASTER_CV_PATH.read_text(encoding="utf-8")
 
 
+def _usage_int(usage, name: str) -> int:
+    value = getattr(usage, name, 0) if usage is not None else 0
+    return int(value) if isinstance(value, (int, float)) else 0
+
+
 def _parse_response(raw: str) -> dict:
     """Extract a JSON payload from bare JSON or an accidental markdown fence."""
     cleaned = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("`").strip()
@@ -132,6 +137,14 @@ Tailor the CV for this role. Respond only with the required JSON object.
         }
         raise ValueError(f"Tailored CV failed factuality validation: {details}")
 
+    settings = get_settings()
+    input_tokens = _usage_int(getattr(response, "usage", None), "input_tokens")
+    output_tokens = _usage_int(getattr(response, "usage", None), "output_tokens")
+    estimated_cost_usd = (
+        (input_tokens * settings.anthropic_input_cost_per_mtok)
+        + (output_tokens * settings.anthropic_output_cost_per_mtok)
+    ) / 1_000_000
+
     payload = result.model_dump()
     payload["model"] = model
     payload["prompt_version"] = CV_PROMPT_VERSION
@@ -139,6 +152,11 @@ Tailor the CV for this role. Respond only with the required JSON object.
     payload["source_cv_sha256"] = hashlib.sha256(
         master_cv.encode("utf-8")
     ).hexdigest()
+    payload["usage"] = {
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+    }
+    payload["estimated_cost_usd"] = round(estimated_cost_usd, 6)
     payload["validation"] = validation.model_dump()
     return payload
 
