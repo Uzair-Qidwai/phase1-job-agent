@@ -21,22 +21,29 @@ logger = logging.getLogger("scheduler")
 
 
 def run_pipeline(trigger: str = "scheduled") -> str | None:
-    """Run the current pipeline while persisting stage state and run metrics."""
+    """Run ingestion → filter → rank → tailor → notify with persisted state."""
+    from src.candidate_profile import load_candidate_profile
     from src.cv_agent import tailor_cv
     from src.emailer import send_digest
+    from src.eligibility import evaluate_eligibility
+    from src.ranking import rank_job
     from src.scraper import scrape_all
     from src.tracker import (
         PipelineAlreadyRunning,
+        attach_cv_version,
         complete_pipeline_run,
         fail_pipeline_run,
         get_new_jobs_for_digest,
         record_pipeline_event,
         save_cv_version,
         start_pipeline_run,
-        update_job_score_and_cv,
+        update_job_score,
         update_pipeline_run,
         upsert_job,
     )
+
+    settings = get_settings()
+    profile = load_candidate_profile()
 
     try:
         run_id = start_pipeline_run(trigger)
@@ -51,7 +58,7 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
     try:
         stage = "scraping"
         update_pipeline_run(run_id, status=stage, current_stage=stage)
-        logger.info("Step 1/4 — Scraping jobs …")
+        logger.info("Step 1/6 — Scraping jobs …")
         raw_jobs = asyncio.run(scrape_all(headless=True))
         update_pipeline_run(run_id, jobs_discovered=len(raw_jobs))
         record_pipeline_event(
@@ -60,11 +67,10 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
             stage=stage,
             payload={"jobs_discovered": len(raw_jobs)},
         )
-        logger.info("Scraped %d unique jobs", len(raw_jobs))
 
         stage = "persisting"
         update_pipeline_run(run_id, status=stage, current_stage=stage)
-        logger.info("Step 2/4 — Persisting to DB …")
+        logger.info("Step 2/6 — Persisting to DB …")
         new_job_records: list[dict] = []
 
         for raw_job in raw_jobs:
@@ -83,6 +89,7 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                         "id": job_id,
                         "title": raw_job.title,
                         "company": raw_job.company,
+                        "location": raw_job.location,
                         "description": raw_job.description,
                     }
                 )
@@ -94,16 +101,103 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
             stage=stage,
             payload={"jobs_inserted": len(new_job_records)},
         )
-        logger.info("%d new jobs inserted", len(new_job_records))
 
-        # Phase 2 will split eligibility/ranking from generation. Until that
-        # workstream lands, the current tailoring behavior remains intact.
+        stage = "filtering"
+        update_pipeline_run(run_id, status=stage, current_stage=stage)
+        logger.info("Step 3/6 — Applying deterministic eligibility filters …")
+        eligible_jobs: list[dict] = []
+
+        for job in new_job_records:
+            eligibility = evaluate_eligibility(
+                title=job["title"],
+                company=job["company"],
+                location=job["location"],
+                profile=profile,
+            )
+            if eligibility.eligible:
+                eligible_jobs.append(job)
+            else:
+                update_job_score(job["id"], 0.0)
+                record_pipeline_event(
+                    run_id,
+                    "job_filtered_out",
+                    stage=stage,
+                    payload={
+                        "job_id": job["id"],
+                        "reasons": eligibility.hard_mismatch_reasons,
+                    },
+                )
+
+        record_pipeline_event(
+            run_id,
+            "filter_complete",
+            stage=stage,
+            payload={
+                "eligible": len(eligible_jobs),
+                "filtered_out": len(new_job_records) - len(eligible_jobs),
+            },
+        )
+
+        stage = "ranking"
+        update_pipeline_run(run_id, status=stage, current_stage=stage)
+        logger.info("Step 4/6 — Ranking %d eligible jobs …", len(eligible_jobs))
+        shortlisted_jobs: list[dict] = []
+
+        for job in eligible_jobs:
+            ranking = rank_job(
+                title=job["title"],
+                company=job["company"],
+                location=job["location"],
+                description=job["description"],
+                profile=profile,
+            )
+            normalized_score = ranking.total_score / 100.0
+            update_job_score(job["id"], normalized_score)
+
+            record_pipeline_event(
+                run_id,
+                "job_ranked",
+                stage=stage,
+                payload={
+                    "job_id": job["id"],
+                    "score": normalized_score,
+                    "components": ranking.component_scores,
+                    "ranking_version": ranking.ranking_version,
+                    "profile_version": ranking.profile_version,
+                },
+            )
+
+            if (
+                not ranking.hard_mismatch
+                and normalized_score >= settings.shortlist_threshold
+            ):
+                shortlisted_jobs.append(job)
+
+        update_pipeline_run(
+            run_id,
+            jobs_ranked=len(eligible_jobs),
+            jobs_shortlisted=len(shortlisted_jobs),
+        )
+        record_pipeline_event(
+            run_id,
+            "ranking_complete",
+            stage=stage,
+            payload={
+                "jobs_ranked": len(eligible_jobs),
+                "jobs_shortlisted": len(shortlisted_jobs),
+                "shortlist_threshold": settings.shortlist_threshold,
+            },
+        )
+
         stage = "tailoring"
         update_pipeline_run(run_id, status=stage, current_stage=stage)
-        logger.info("Step 3/4 — Tailoring CVs for %d new jobs …", len(new_job_records))
+        logger.info(
+            "Step 5/6 — Tailoring CVs for %d shortlisted jobs …",
+            len(shortlisted_jobs),
+        )
 
         tailored_count = 0
-        for job in new_job_records:
+        for job in shortlisted_jobs:
             try:
                 result = tailor_cv(
                     job_title=job["title"],
@@ -115,18 +209,8 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                     tailored_cv=result["tailored_cv"],
                     changes_made=result["changes_made"],
                 )
-                update_job_score_and_cv(
-                    job_id=job["id"],
-                    match_score=result["match_score"],
-                    cv_version_id=cv_id,
-                )
+                attach_cv_version(job["id"], cv_id)
                 tailored_count += 1
-                logger.info(
-                    "  ✓ %s @ %s → score=%.2f",
-                    job["title"],
-                    job["company"],
-                    result["match_score"],
-                )
             except Exception as exc:
                 record_pipeline_event(
                     run_id,
@@ -151,8 +235,10 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
 
         stage = "notifying"
         update_pipeline_run(run_id, status=stage, current_stage=stage)
-        logger.info("Step 4/4 — Sending daily digest …")
-        digest_jobs = get_new_jobs_for_digest(min_score=0.6)
+        logger.info("Step 6/6 — Sending digest …")
+        digest_jobs = get_new_jobs_for_digest(
+            min_score=settings.shortlist_threshold
+        )
         send_digest(digest_jobs)
 
         complete_pipeline_run(run_id, jobs_notified=len(digest_jobs))
@@ -163,7 +249,16 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
             stage="completed",
             payload={"elapsed_seconds": round(elapsed, 3)},
         )
-        logger.info("━━━ Pipeline %s complete in %.1fs ━━━", run_id, elapsed)
+        logger.info(
+            "━━━ Pipeline %s complete in %.1fs | discovered=%d new=%d ranked=%d shortlisted=%d tailored=%d ━━━",
+            run_id,
+            elapsed,
+            len(raw_jobs),
+            len(new_job_records),
+            len(eligible_jobs),
+            len(shortlisted_jobs),
+            tailored_count,
+        )
         return run_id
 
     except Exception as exc:
@@ -188,7 +283,7 @@ def start_scheduler(
         CronTrigger(hour=hour, minute=minute, timezone=timezone),
         kwargs={"trigger": "scheduled"},
         id="daily_pipeline",
-        name="Daily job scrape + tailor + digest",
+        name="Daily job intelligence pipeline",
         misfire_grace_time=3600,
         replace_existing=True,
     )
