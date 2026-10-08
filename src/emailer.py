@@ -9,6 +9,8 @@ import base64
 import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from html import escape
+from urllib.parse import urlsplit
 
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
@@ -17,6 +19,14 @@ from googleapiclient.discovery import build
 from src.settings import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_http_url(value: str) -> str:
+    parts = urlsplit(value or "")
+    if parts.scheme.casefold() not in {"http", "https"} or not parts.netloc:
+        return "#"
+    return value
+
 
 def _get_gmail_service():
     client_id, client_secret, refresh_token, _, _ = (
@@ -48,23 +58,28 @@ def _build_html(jobs: list[dict]) -> str:
     rows = ""
     for job in jobs:
         score = job.get("match_score") or 0.0
-        changes = job.get("changes_made") or "—"
+        changes = escape(str(job.get("changes_made") or "—")[:200], quote=True)
+        title = escape(str(job.get("title") or ""), quote=True)
+        company = escape(str(job.get("company") or ""), quote=True)
+        location = escape(str(job.get("location") or "—"), quote=True)
+        source = escape(str(job.get("source") or "").title(), quote=True)
+        safe_url = escape(_safe_http_url(str(job.get("url") or "")), quote=True)
         rows += f"""
         <tr>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;">
-            <a href="{job['url']}" style="color:#3b82f6;font-weight:600;text-decoration:none;">
-              {job['title']}
+            <a href="{safe_url}" rel="noopener noreferrer" style="color:#3b82f6;font-weight:600;text-decoration:none;">
+              {title}
             </a><br>
-            <small style="color:#64748b;">{job['company']} · {job.get('location','—')}</small>
+            <small style="color:#64748b;">{company} · {location}</small>
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;text-align:center;">
             {_score_badge(score)}
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#475569;font-size:13px;">
-            {changes[:200]}…
+            {changes}…
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">
-            {job.get('source','').title()}
+            {source}
           </td>
         </tr>
         """
