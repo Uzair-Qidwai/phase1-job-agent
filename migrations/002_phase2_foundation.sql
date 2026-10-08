@@ -242,3 +242,31 @@ CREATE TABLE IF NOT EXISTS source_health (
 
 CREATE INDEX IF NOT EXISTS idx_source_health_source_created
     ON source_health (source, created_at DESC);
+
+
+CREATE TABLE IF NOT EXISTS ranking_results (
+    id                  BIGSERIAL PRIMARY KEY,
+    job_id              UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    run_id              UUID REFERENCES pipeline_runs(id) ON DELETE SET NULL,
+    total_score         NUMERIC(6,3) NOT NULL CHECK (
+                            total_score >= 0 AND total_score <= 100
+                        ),
+    hard_mismatch       BOOLEAN NOT NULL DEFAULT FALSE,
+    component_scores    JSONB NOT NULL DEFAULT '{}'::jsonb,
+    explanation         JSONB NOT NULL DEFAULT '[]'::jsonb,
+    profile_version     TEXT NOT NULL,
+    ranking_version     TEXT NOT NULL,
+    model               TEXT,
+    usage               JSONB NOT NULL DEFAULT '{}'::jsonb,
+    estimated_cost_usd  NUMERIC(12,6) NOT NULL DEFAULT 0 CHECK (
+                            estimated_cost_usd >= 0
+                        ),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ranking_results_job_created
+    ON ranking_results (job_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_ranking_results_run
+    ON ranking_results (run_id)
+    WHERE run_id IS NOT NULL;
