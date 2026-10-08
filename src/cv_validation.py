@@ -29,7 +29,12 @@ class CVValidationResult(BaseModel):
     unsupported_numeric_claims: list[str] = Field(default_factory=list)
 
 
-_NUMERIC_TOKEN = re.compile(r"(?<!\w)(?:[$€£]?\d[\d,]*(?:\.\d+)?%?)(?!\w)")
+# Captures material numeric claims including:
+# 100, 100+, 50%, $15,000, $100M+, 2.5B.
+# Magnitude suffixes matter: 100M and 250M are intentionally different tokens.
+_NUMERIC_TOKEN = re.compile(
+    r"(?<!\w)(?:[$€£]?\d[\d,]*(?:\.\d+)?(?:[kKmMbB])?(?:%|\+)?)(?!\w)"
+)
 
 
 def _normalize_text(value: str) -> str:
@@ -37,7 +42,17 @@ def _normalize_text(value: str) -> str:
 
 
 def _normalize_number(value: str) -> str:
-    return (\n        value.casefold()\n        .replace(",", "")\n        .replace("$", "")\n        .replace("€", "")\n        .replace("£", "")\n        .rstrip("+")\n    )
+    # A source claim of "$100M+" supports a conservative rewrite as "$100M".
+    # Currency symbols/commas are formatting differences; magnitude and percent
+    # suffixes remain meaningful.
+    return (
+        value.casefold()
+        .replace(",", "")
+        .replace("$", "")
+        .replace("€", "")
+        .replace("£", "")
+        .rstrip("+")
+    )
 
 
 def _material_numeric_tokens(value: str) -> set[str]:
@@ -45,10 +60,17 @@ def _material_numeric_tokens(value: str) -> set[str]:
     for raw in _NUMERIC_TOKEN.findall(value):
         normalized = _normalize_number(raw)
         digits = "".join(char for char in normalized if char.isdigit())
-        # Ignore incidental one-digit list numbering unless it is explicitly
-        # a percentage/currency-style value.
-        if len(digits) < 2 and "%" not in raw and raw[:1] not in "$€£":
+
+        # Ignore incidental one-digit list numbering unless the token carries
+        # percentage, currency, or magnitude semantics.
+        has_material_suffix = (
+            "%" in raw
+            or raw[:1] in "$€£"
+            or normalized.endswith(("k", "m", "b"))
+        )
+        if len(digits) < 2 and not has_material_suffix:
             continue
+
         tokens.add(normalized)
     return tokens
 
