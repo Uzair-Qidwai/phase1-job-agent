@@ -219,6 +219,10 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
         )
 
         tailored_count = 0
+        model_input_tokens = 0
+        model_output_tokens = 0
+        estimated_model_cost_usd = 0.0
+
         for job in tailoring_jobs:
             job_id = str(job["id"])
             try:
@@ -237,10 +241,19 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                     source_cv_sha256=result["source_cv_sha256"],
                     evidence=result["evidence_used"],
                     validation=result["validation"],
+                    usage=result.get("usage", {}),
+                    estimated_cost_usd=result.get("estimated_cost_usd", 0.0),
                 )
                 attach_cv_version(job_id, cv_id)
                 update_job_system_state(job_id, "tailored")
                 tailored_count += 1
+
+                usage = result.get("usage", {})
+                model_input_tokens += int(usage.get("input_tokens", 0) or 0)
+                model_output_tokens += int(usage.get("output_tokens", 0) or 0)
+                estimated_model_cost_usd += float(
+                    result.get("estimated_cost_usd", 0.0) or 0.0
+                )
             except Exception as exc:
                 # Keep state as 'shortlisted' so the next run retries this job.
                 record_pipeline_event(
@@ -256,12 +269,25 @@ def run_pipeline(trigger: str = "scheduled") -> str | None:
                 )
                 logger.exception("CV tailoring failed for job %s", job_id)
 
-        update_pipeline_run(run_id, jobs_tailored=tailored_count)
+        update_pipeline_run(
+            run_id,
+            jobs_tailored=tailored_count,
+            model_input_tokens=model_input_tokens,
+            model_output_tokens=model_output_tokens,
+            estimated_model_cost_usd=round(estimated_model_cost_usd, 6),
+        )
         record_pipeline_event(
             run_id,
             "tailoring_complete",
             stage=stage,
-            payload={"jobs_tailored": tailored_count},
+            payload={
+                "jobs_tailored": tailored_count,
+                "model_input_tokens": model_input_tokens,
+                "model_output_tokens": model_output_tokens,
+                "estimated_model_cost_usd": round(
+                    estimated_model_cost_usd, 6
+                ),
+            },
         )
 
         stage = "notifying"
