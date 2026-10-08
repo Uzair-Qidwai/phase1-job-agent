@@ -349,7 +349,11 @@ def save_cv_version(
             return str(cur.fetchone()["id"])
 
 
-def start_pipeline_run(trigger: str) -> str:
+def start_pipeline_run(
+    trigger: str,
+    *,
+    retry_of_run_id: str | None = None,
+) -> str:
     """Create a run and atomically acquire the cross-process active-run slot."""
     if trigger not in VALID_PIPELINE_TRIGGERS:
         raise ValueError(
@@ -357,16 +361,41 @@ def start_pipeline_run(trigger: str) -> str:
             f"{sorted(VALID_PIPELINE_TRIGGERS)}"
         )
 
+    if trigger == "retry" and not retry_of_run_id:
+        raise ValueError("Retry pipeline runs must reference a failed run")
+    if trigger != "retry" and retry_of_run_id is not None:
+        raise ValueError("retry_of_run_id is only valid for retry runs")
+
+    retry_uuid = uuid.UUID(retry_of_run_id) if retry_of_run_id else None
+
+    if retry_uuid is not None:
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT status FROM pipeline_runs WHERE id = %s",
+                    (retry_uuid,),
+                )
+                parent = cur.fetchone()
+                if not parent:
+                    raise ValueError("Retry parent run does not exist")
+                if parent["status"] != "failed":
+                    raise ValueError("Retry parent run must be failed")
+
     try:
         with get_conn() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO pipeline_runs (trigger, status, current_stage)
-                    VALUES (%s, 'created', 'created')
+                    INSERT INTO pipeline_runs (
+                        trigger,
+                        status,
+                        current_stage,
+                        retry_of_run_id
+                    )
+                    VALUES (%s, 'created', 'created', %s)
                     RETURNING id
                     """,
-                    (trigger,),
+                    (trigger, retry_uuid),
                 )
                 run_id = str(cur.fetchone()["id"])
                 cur.execute(
@@ -374,7 +403,15 @@ def start_pipeline_run(trigger: str) -> str:
                     INSERT INTO pipeline_events (run_id, stage, event_type, payload)
                     VALUES (%s, 'created', 'run_started', %s)
                     """,
-                    (uuid.UUID(run_id), psycopg2.extras.Json({"trigger": trigger})),
+                    (
+                        uuid.UUID(run_id),
+                        psycopg2.extras.Json(
+                            {
+                                "trigger": trigger,
+                                "retry_of_run_id": retry_of_run_id,
+                            }
+                        ),
+                    ),
                 )
                 return run_id
     except psycopg2.errors.UniqueViolation as exc:
