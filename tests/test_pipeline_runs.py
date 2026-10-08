@@ -11,7 +11,9 @@ from src.tracker import (
     get_conn,
     get_new_jobs_for_digest,
     get_pipeline_run,
+    get_source_health,
     mark_jobs_notified,
+    record_source_health,
     save_cv_version,
     start_pipeline_run,
     update_job_score,
@@ -146,6 +148,8 @@ def test_cv_version_audit_metadata_is_persisted() -> None:
             }
         ],
         validation={"valid": True},
+        usage={"input_tokens": 123, "output_tokens": 45},
+        estimated_cost_usd=0.012345,
     )
 
     with get_conn() as conn:
@@ -153,7 +157,7 @@ def test_cv_version_audit_metadata_is_persisted() -> None:
             cur.execute(
                 """
                 SELECT model, prompt_version, profile_version, source_cv_sha256,
-                       evidence, validation
+                       evidence, validation, usage, estimated_cost_usd
                 FROM cv_versions
                 WHERE id = %s
                 """,
@@ -167,6 +171,9 @@ def test_cv_version_audit_metadata_is_persisted() -> None:
     assert row["source_cv_sha256"] == "abc123"
     assert row["validation"]["valid"] is True
     assert row["evidence"][0]["claim"] == "Python experience"
+    assert row["usage"]["input_tokens"] == 123
+    assert row["usage"]["output_tokens"] == 45
+    assert float(row["estimated_cost_usd"]) == pytest.approx(0.012345)
 
 
 def test_digest_notification_is_exactly_once() -> None:
@@ -195,3 +202,21 @@ def test_digest_notification_is_exactly_once() -> None:
 
     duplicate = mark_jobs_notified([job_id], run_id=None, channel="email")
     assert duplicate == 0
+
+
+def test_source_health_is_persisted_per_run() -> None:
+    run_id = start_pipeline_run("manual")
+    record_source_health(
+        run_id,
+        {"linkedin": 12, "indeed": 0, "greenhouse": 7},
+    )
+    complete_pipeline_run(run_id)
+
+    rows = get_source_health(limit=10)
+    by_source = {row["source"]: row for row in rows}
+
+    assert by_source["linkedin"]["jobs_discovered"] == 12
+    assert by_source["linkedin"]["zero_results"] is False
+    assert by_source["indeed"]["jobs_discovered"] == 0
+    assert by_source["indeed"]["zero_results"] is True
+    assert by_source["greenhouse"]["jobs_discovered"] == 7
