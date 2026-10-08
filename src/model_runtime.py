@@ -166,7 +166,10 @@ class AgentRuntime:
                 output_type=output_type, tools=tools,
                 model_settings=ModelSettings(max_tokens=config.max_output_tokens,
                                              retry=ModelRetrySettings(max_retries=0),
-                                             parallel_tool_calls=False),
+                                             # Gemini cannot disable parallel calls when multiple
+                                             # tools are declared. All exposed tools are read-only.
+                                             parallel_tool_calls=(None if config.provider == "gemini"
+                                                                  and len(tools) > 1 else False)),
             )
             result = await Runner.run(
                 agent, prompt, max_turns=self.settings.agent_max_turns,

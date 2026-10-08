@@ -89,3 +89,19 @@ Implementation commit `1b789ce` passed [CI #274](https://github.com/Uzair-Qidwai
 remain Precision@5 1.0 and pairwise accuracy 1.0 across 30 ranking fixtures; all
 26 CV gold cases match expected outcomes. Machine-readable evidence is in
 `evals/reports/phase2_checkpoint04_offline.json`. Live acceptance remains pending.
+
+## Gemini synthetic live testing
+
+A user-confirmed free-tier project authenticated successfully. Gemini 2.5 Flash
+returned an explicit new-user restriction despite appearing in the model list.
+Gemini 3.8 Flash and 3.5 Flash Lite intermittently returned 503; a sanitized
+provider diagnostic explicitly attributed this to high demand. 3.5 Flash Lite
+passed basic typed output, native function calling, and an SDK tool round trip
+with bounded backoff. No personal CV/profile, DB writes or email was involved.
+
+The four-specialist smoke exposed a LiteLLM/Gemini incompatibility:
+`parallel_tool_calls=False` is rejected when multiple tools are declared. The
+runtime now omits that option for Gemini multi-tool agents; all exposed tools
+remain read-only and request/turn limits still apply. Other providers and Gemini
+single-tool requests retain the previous setting. Four regression cases cover
+these branches. Full workflow live acceptance remains pending rerun.

@@ -228,3 +228,29 @@ def test_full_request_size_is_bounded_before_network():
         runtime.run("writer", instructions="x" * 2000, prompt="test", output_type=Answer,
                     prompt_version="test")
     assert model.inputs == []
+
+
+@pytest.mark.parametrize("provider, tool_count, expected", [
+    ("gemini", 2, None), ("gemini", 1, False),
+    ("openai", 2, False), ("anthropic", 2, False),
+])
+def test_multiple_tools_use_provider_compatible_parallel_setting(provider, tool_count, expected):
+    @function_tool
+    def read_job() -> str:
+        """Read captured job data."""
+        return "Synthetic job"
+
+    @function_tool
+    def read_cv() -> str:
+        """Read candidate evidence."""
+        return "Synthetic evidence"
+
+    class ContractModel(FakeModel):
+        async def get_response(self, *args, **kwargs):
+            assert kwargs["model_settings"].parallel_tool_calls is expected
+            return await super().get_response(*args, **kwargs)
+
+    model = ContractModel([message({"answer": "ok"})])
+    settings = Settings(_env_file=None, MODEL_PROVIDER=provider, MODEL_NAME="test-model")
+    runtime = AgentRuntime(settings=settings, model_factory=lambda _: model)
+    assert invoke(runtime, tools=[read_job, read_cv][:tool_count]).output.answer == "ok"
