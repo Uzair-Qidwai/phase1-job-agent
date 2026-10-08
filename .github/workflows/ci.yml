@@ -44,7 +44,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Apply migrations and verify Phase 2 migration is repeatable
+      - name: Apply migrations twice to verify repeatability
         run: |
           python - <<'PY'
           import os
@@ -53,9 +53,11 @@ jobs:
 
           conn = psycopg2.connect(os.environ["POSTGRES_URL"])
           try:
-              with conn.cursor() as cur:
-                  cur.execute(Path("migrations/001_jobs.sql").read_text())
-              conn.commit()
+              initial = Path("migrations/001_jobs.sql").read_text()
+              for _ in range(2):
+                  with conn.cursor() as cur:
+                      cur.execute(initial)
+                  conn.commit()
 
               phase2 = Path("migrations/002_phase2_foundation.sql").read_text()
               for _ in range(2):
