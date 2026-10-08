@@ -24,6 +24,9 @@ class TailoredCVResult(BaseModel):
 
 class CVValidationResult(BaseModel):
     valid: bool
+    validation_version: str = "deterministic-cv-v2"
+    output_claims_checked: int = 0
+    unsupported_claims: list[str] = Field(default_factory=list)
     evidence_items_checked: int
     invalid_evidence: list[str] = Field(default_factory=list)
     unsupported_numeric_claims: list[str] = Field(default_factory=list)
@@ -35,34 +38,9 @@ class CVValidationResult(BaseModel):
 _NUMERIC_TOKEN = re.compile(
     r"(?<!\w)(?:[$€£]?\d[\d,]*(?:\.\d+)?(?:[kKmMbB])?(?:%|\+)?)(?!\w)"
 )
-_CLAIM_TERM = re.compile(r"[a-z][a-z0-9+#.-]{2,}")
-_CLAIM_STOPWORDS = {
-    "and",
-    "the",
-    "with",
-    "for",
-    "from",
-    "that",
-    "this",
-    "into",
-    "using",
-    "used",
-    "role",
-    "work",
-    "experience",
-}
-
 
 def _normalize_text(value: str) -> str:
     return " ".join(value.casefold().split())
-
-
-def _meaningful_terms(value: str) -> set[str]:
-    return {
-        term
-        for term in _CLAIM_TERM.findall(value.casefold())
-        if term not in _CLAIM_STOPWORDS
-    }
 
 
 def _normalize_number(value: str) -> str:
@@ -99,43 +77,101 @@ def _material_numeric_tokens(value: str) -> set[str]:
     return tokens
 
 
+# Only generic structural headings may bypass factual coverage. A heading such
+# as "Stanford PhD" is still a claim, even when formatted as Markdown.
+_HEADINGS = {
+    "summary", "professional summary", "experience", "professional experience",
+    "education", "skills", "technical skills", "certifications", "awards",
+    "certifications & awards", "projects", "contact", "publications",
+}
+# Keep these terms when comparing claims: dropping them can reverse meaning or
+# turn tentative/supporting work into a credential or ownership claim.
+_QUALIFIERS = {
+    "no", "not", "never", "without", "expected", "pursuing", "pursued",
+    "applicant", "applied", "aspiring", "planned", "proposed", "assisted",
+    "supported", "helped", "contributed", "intern", "volunteer", "supervised",
+    "pending", "learning", "studying", "introductory", "basic", "limited", "unable",
+}
+_GRAMMAR_WORDS = {"a", "an", "the", "and", "of", "in", "on", "at", "for", "to", "with"}
+
+
+def _canonical_claim(text: str) -> str:
+    text = re.sub(r"^\s*(?:#{1,6}\s+|[-*+]\s+|\d+[.)]\s+)", "", text)
+    text = text.replace("**", "").strip(" *_")
+    # Preserve meaning-bearing punctuation such as + and % in the claim text.
+    return _normalize_text(text).rstrip(".!?")
+
+
+def _claim_segments(text: str) -> list[str]:
+    # Split on line/sentence boundaries, not decimal points or abbreviations
+    # lacking a following space. Preserve semicolon-connected relationships.
+    return [part for raw in re.split(r"\n+|(?<=[.!?])\s+", text)
+            if (part := _canonical_claim(raw)) and set(part) - {"-", "_", "*"}]
+
+
+def _fact_terms(text: str) -> set[str]:
+    text = re.sub(r"n[’']t\b", " not", text.casefold())
+    text = re.sub(r"\bcannot\b", "can not", text)
+    normalized = _NUMERIC_TOKEN.sub(lambda match: _normalize_number(match[0]), text)
+    return set(re.findall(r"[a-z0-9]+(?:[+#]+)?", normalized.casefold())) - _GRAMMAR_WORDS
+
+
+def _supported_rewrite(claim: str, evidence: str) -> bool:
+    claim_terms = _fact_terms(claim)
+    evidence_terms = _fact_terms(evidence)
+    return (bool(claim_terms) and claim_terms <= evidence_terms
+            and (evidence_terms & _QUALIFIERS) <= claim_terms
+            and _material_numeric_tokens(claim) <= _material_numeric_tokens(evidence))
+
+
 def validate_tailored_cv(
     result: TailoredCVResult,
     *,
     master_cv: str,
     candidate_profile_text: str,
 ) -> CVValidationResult:
-    """Validate source evidence and detect newly invented numeric claims."""
+    """Conservative lexical coverage gate, not a semantic entailment proof.
 
-    corpora = {
-        "master_cv": _normalize_text(master_cv),
-        "candidate_profile": _normalize_text(candidate_profile_text),
-    }
-
+    Copied source sentences are covered automatically. Rewritten full sentences
+    or bullets need a citation to a complete source statement, with all factual
+    terms supported in that one statement and qualifiers retained. Current
+    candidate profiles contain targeting preferences, not factual credentials.
+    """
+    del candidate_profile_text
+    source_segments = set(_claim_segments(master_cv))
+    output_segments = _claim_segments(result.tailored_cv)
+    factual_segments = [segment for segment in output_segments if segment not in _HEADINGS]
     invalid_evidence: list[str] = []
+    supported_claims: set[str] = set()
     for item in result.evidence_used:
-        source_text = _normalize_text(item.source_text)
-        if source_text not in corpora[item.source]:
-            invalid_evidence.append(
-                f"{item.source}: evidence not found for claim '{item.claim}'"
-            )
+        claim = _canonical_claim(item.claim)
+        if item.source != "master_cv":
+            invalid_evidence.append("candidate_profile contains preferences, not CV facts")
             continue
+        if _normalize_text(item.source_text) not in _normalize_text(master_cv):
+            invalid_evidence.append(f"master_cv: evidence not found for claim '{item.claim}'")
+            continue
+        evidence_segments = _claim_segments(item.source_text)
+        if not evidence_segments or any(segment not in source_segments for segment in evidence_segments):
+            invalid_evidence.append(f"Evidence must quote complete source statements: '{item.claim}'")
+            continue
+        if claim not in factual_segments:
+            invalid_evidence.append(f"Evidence claim is not a complete output statement: '{item.claim}'")
+            continue
+        if not any(_supported_rewrite(claim, segment) for segment in evidence_segments):
+            invalid_evidence.append(f"Evidence is not relevant or does not support all facts: '{item.claim}'")
+            continue
+        supported_claims.add(claim)
 
-        claim_terms = _meaningful_terms(item.claim)
-        evidence_terms = _meaningful_terms(item.source_text)
-        if claim_terms and not claim_terms.intersection(evidence_terms):
-            invalid_evidence.append(
-                f"{item.source}: evidence is not relevant to claim '{item.claim}'"
-            )
-
-    allowed_numbers = _material_numeric_tokens(master_cv)
-    allowed_numbers |= _material_numeric_tokens(candidate_profile_text)
-    output_numbers = _material_numeric_tokens(result.tailored_cv)
-    unsupported_numbers = sorted(output_numbers - allowed_numbers)
-
+    unsupported_claims = [segment for segment in factual_segments
+                          if segment not in source_segments and segment not in supported_claims]
+    unsupported_numbers = sorted(_material_numeric_tokens(result.tailored_cv)
+                                 - _material_numeric_tokens(master_cv))
     return CVValidationResult(
-        valid=not invalid_evidence and not unsupported_numbers,
+        valid=not invalid_evidence and not unsupported_numbers and not unsupported_claims,
         evidence_items_checked=len(result.evidence_used),
+        output_claims_checked=len(factual_segments),
         invalid_evidence=invalid_evidence,
         unsupported_numeric_claims=unsupported_numbers,
+        unsupported_claims=unsupported_claims,
     )

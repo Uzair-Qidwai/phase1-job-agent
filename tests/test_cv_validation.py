@@ -3,23 +3,25 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from src.cv_validation import TailoredCVResult, validate_tailored_cv
 
 
 GOLD = Path(__file__).parent.parent / "evals" / "cv_gold.json"
 
 
-def test_cv_factuality_golden_cases() -> None:
-    cases = json.loads(GOLD.read_text(encoding="utf-8"))
-
-    for case in cases:
-        result = TailoredCVResult.model_validate(case["result"])
-        validation = validate_tailored_cv(
-            result,
-            master_cv=case["master_cv"],
-            candidate_profile_text=case["candidate_profile"],
-        )
-        assert validation.valid is case["expected_valid"], case["name"]
+@pytest.mark.parametrize("case", json.loads(GOLD.read_text(encoding="utf-8")), ids=lambda case: case["name"])
+def test_cv_factuality_golden_cases(case) -> None:
+    result = TailoredCVResult.model_validate(case["result"])
+    validation = validate_tailored_cv(
+        result,
+        master_cv=case["master_cv"],
+        candidate_profile_text=case["candidate_profile"],
+    )
+    assert validation.valid is case["expected_valid"], validation.model_dump()
+    assert validation.output_claims_checked > 0
+    assert validation.validation_version == "deterministic-cv-v2"
 
 
 def test_unsupported_numeric_claim_is_reported() -> None:
@@ -50,13 +52,12 @@ def test_numeric_magnitude_suffixes_are_compared() -> None:
     supported = TailoredCVResult.model_validate(
         {
             "tailored_cv": (
-                "Engineer who helped build a protocol with $100M lifetime volume "
-                "and supported 100 students."
+                "Reached $100M lifetime volume and taught 100 students."
             ),
             "changes_made": "Rephrased existing metrics.",
             "evidence_used": [
                 {
-                    "claim": "Protocol volume",
+                    "claim": "Reached $100M lifetime volume and taught 100 students.",
                     "source": "master_cv",
                     "source_text": "Reached $100M+ lifetime volume and taught 100+ students.",
                 }
@@ -97,7 +98,7 @@ def test_irrelevant_evidence_is_rejected() -> None:
             "changes_made": "Strengthened leadership framing.",
             "evidence_used": [
                 {
-                    "claim": "Managed engineering teams",
+                    "claim": "Engineering leader who managed platform delivery across teams and owned technical execution.",
                     "source": "master_cv",
                     "source_text": "Python, SQL, FastAPI",
                 }

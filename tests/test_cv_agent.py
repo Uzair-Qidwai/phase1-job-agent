@@ -21,12 +21,12 @@ SAMPLE_RESPONSE = {
         "Finance-trained AI/ML engineer with CFA designation, MBA (Imperial College London), "
         "and Master of Applied Science – Computer Science with AI concentration "
         "(MAS-CS, Penn Engineering).\n\n"
-        "## Skills\nPython, Solidity, SQL, PyTorch, FastAPI"
+        "## Skills\n**Languages:** Python, Solidity, SQL, TypeScript, LaTeX"
     ),
     "changes_made": "Front-loaded the existing AI/ML background for relevance.",
     "evidence_used": [
         {
-            "claim": "Finance-trained AI/ML engineer with CFA, MBA, and Penn CS background",
+            "claim": EVIDENCE_TEXT,
             "source": "master_cv",
             "source_text": EVIDENCE_TEXT,
         }
@@ -89,7 +89,7 @@ class TestTailorCV(unittest.TestCase):
             "Build AI systems.",
             client=fake_client(),
         )
-        self.assertEqual(result["prompt_version"], "phase2-cv-v1")
+        self.assertEqual(result["prompt_version"], "phase2-cv-v2")
         self.assertEqual(result["profile_version"], "1")
         self.assertTrue(result["model"])
 
@@ -107,6 +107,12 @@ class TestTailorCV(unittest.TestCase):
                 "Build AI systems.",
                 client=fake_client(bad),
             )
+
+    def test_uncited_nonnumeric_claim_is_blocked(self):
+        bad = {**SAMPLE_RESPONSE, "tailored_cv": SAMPLE_RESPONSE["tailored_cv"]
+               + "\nAwarded a Stanford doctorate in quantum computing."}
+        with self.assertRaisesRegex(ValueError, "unsupported_claims"):
+            tailor_cv("Engineer", "Example", "Build systems", client=fake_client(bad))
 
     def test_job_description_is_marked_untrusted_in_system_prompt(self):
         client = fake_client()

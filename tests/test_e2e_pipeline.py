@@ -437,3 +437,29 @@ def test_ranking_failure_resumes_from_filtering_without_rescraping(monkeypatch) 
     assert calls["scrape"] == 1
     assert calls["rank"] == 2
     assert calls["tailor"] == 1
+
+
+def test_admitted_retry_reuses_reserved_run_and_restart_stage(monkeypatch):
+    from src.scheduler import execute_admitted_run
+    from src.tracker import start_pipeline_run, fail_pipeline_run
+
+    parent = start_pipeline_run("manual")
+    fail_pipeline_run(parent, "notifying", RuntimeError("email unavailable"))
+    reserved = start_pipeline_run("retry", retry_of_run_id=parent)
+
+    async def unexpected_scrape(**kwargs):
+        pytest.fail("Notification retry must not scrape")
+
+    monkeypatch.setattr(scraper, "scrape_all", unexpected_scrape)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs: True)
+    assert execute_admitted_run(reserved) == reserved
+    run = get_pipeline_run(reserved)
+    assert run["status"] == "completed"
+    assert str(run["retry_of_run_id"]) == parent
+    with pytest.raises(ValueError, match="already claimed"):
+        execute_admitted_run(reserved)
+    assert get_pipeline_run(reserved)["status"] == "completed"
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT count(*) AS n FROM pipeline_runs")
+            assert cur.fetchone()["n"] == 2

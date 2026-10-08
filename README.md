@@ -150,3 +150,15 @@ Missing run IDs return 404, empty history returns `[]`. Ordering uses timestamp
 then ID; offset pages may shift as new runs arrive. Source zero counts describe
 observations, not proof that an upstream service is healthy. HTTP trigger and
 retry responses now include the admitted `run_id` for polling.
+
+### CV evidence gate
+
+The v2 gate checks all output statements, including factual headings, against the
+master CV. Prefer copying/reordering complete statements. Rewrites need an exact
+full-output claim and a complete source quote; all factual terms must be supported
+within one quoted statement, retaining negation and qualifiers such as expected,
+applicant, and assisted. Search preferences in the candidate profile are not
+credentials. Failed coverage blocks generation and reports unsupported claims.
+This conservative lexical check can reject valid paraphrases and cannot prove
+semantic relationships or section context. Review generated CVs before use.
+See `docs/phase2/CHECKPOINT_02.md` for test coverage and remaining limitations.

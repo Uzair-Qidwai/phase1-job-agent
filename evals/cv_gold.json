@@ -1,6 +1,6 @@
 [
   {
-    "name": "supported evidence and existing metric passes",
+    "name": "target role and combined source facts do not prove output claims",
     "master_cv": "Built a protocol that processed $100M in lifetime volume. Python and Solidity.",
     "candidate_profile": "{\"target_roles\":[\"DeFi Engineer\"]}",
     "result": {
@@ -13,10 +13,12 @@
           "source_text": "Built a protocol that processed $100M in lifetime volume."
         }
       ],
-      "keywords_added": ["DeFi"],
+      "keywords_added": [
+        "DeFi"
+      ],
       "warnings": []
     },
-    "expected_valid": true
+    "expected_valid": false
   },
   {
     "name": "invented metric fails",
@@ -51,8 +53,367 @@
           "source_text": "Led a 20 person ML team"
         }
       ],
-      "keywords_added": ["machine learning"],
+      "keywords_added": [
+        "machine learning"
+      ],
       "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "copied statement passes",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "conservative shortening with full citation passes",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "valid evidence does not cover invented uncited sentence",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting.\nWon the Turing Award.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "invented employer with overlapping terms fails",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting at Google.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting at Google.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "invented skill with overlapping terms fails",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python and Rust systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python and Rust systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "responsibility inflation fails",
+    "master_cv": "Assisted with Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Led Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Led Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Assisted with Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "supporting qualifier cannot be dropped",
+    "master_cv": "Assisted with Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Assisted with Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "expected degree cannot become completed degree",
+    "master_cv": "Master of Applied Science in Computer Science at Example University (expected).",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Master of Applied Science in Computer Science at Example University.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Master of Applied Science in Computer Science at Example University.",
+          "source": "master_cv",
+          "source_text": "Master of Applied Science in Computer Science at Example University (expected)."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "applicant qualifier cannot be removed",
+    "master_cv": "Open Source Fund Applicant at Example Foundation for technical research.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Open Source Fund at Example Foundation for technical research.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Open Source Fund at Example Foundation for technical research.",
+          "source": "master_cv",
+          "source_text": "Open Source Fund Applicant at Example Foundation for technical research."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "negation cannot be removed",
+    "master_cv": "Did not manage engineering teams delivering financial reporting platforms.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Did manage engineering teams delivering financial reporting platforms.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Did manage engineering teams delivering financial reporting platforms.",
+          "source": "master_cv",
+          "source_text": "Did not manage engineering teams delivering financial reporting platforms."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "truncated evidence cannot erase negation",
+    "master_cv": "Did not manage engineering teams delivering financial reporting platforms.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Manage engineering teams delivering financial reporting platforms.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Manage engineering teams delivering financial reporting platforms.",
+          "source": "master_cv",
+          "source_text": "manage engineering teams delivering financial reporting platforms."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "existing number cannot transfer between claims",
+    "master_cv": "Taught 100 students in systems courses. Reached 50 enterprise customers.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Taught 50 students in systems courses for enterprise customers.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Taught 50 students in systems courses for enterprise customers.",
+          "source": "master_cv",
+          "source_text": "Taught 100 students in systems courses. Reached 50 enterprise customers."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "detached evidence claim fails",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Invented disconnected claim",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "invented factual heading fails",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "# Stanford PhD\nBuilt Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "preferences cannot establish experience",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{\"target_roles\":[\"Machine Learning Engineer\"]}",
+    "result": {
+      "tailored_cv": "Machine Learning Engineer building financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Machine Learning Engineer building financial analytics and reporting.",
+          "source": "candidate_profile",
+          "source_text": "Machine Learning Engineer"
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "multiple source statements with matching output passes",
+    "master_cv": "Built Python systems for financial analytics. Led reporting platform delivery.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\nBuilt Python systems for financial analytics.\nLed reporting platform delivery.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "single digit tenure cannot be invented",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting for 5 years.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting for 5 years.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "cited shortening keeps supported factual terms",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\nBuilt Python systems for financial analytics.",
+      "changes_made": "Prioritized financial analytics.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ]
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "contracted negation cannot be dropped",
+    "master_cv": "Did not build reporting platforms. Didn't manage financial analytics teams.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Professional Experience\nManage financial analytics teams.",
+      "changes_made": "Reframed experience.",
+      "evidence_used": [
+        {
+          "claim": "Manage financial analytics teams.",
+          "source": "master_cv",
+          "source_text": "Didn't manage financial analytics teams."
+        }
+      ]
     },
     "expected_valid": false
   }
