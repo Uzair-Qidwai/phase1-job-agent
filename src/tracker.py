@@ -189,8 +189,13 @@ def get_new_jobs_for_digest(min_score: float = 0.6) -> list[dict[str, Any]]:
                        cv.changes_made
                 FROM jobs j
                 LEFT JOIN cv_versions cv ON cv.id = j.cv_version_id
+                LEFT JOIN notifications n
+                  ON n.job_id = j.id
+                 AND n.channel = 'email'
+                 AND n.status = 'sent'
                 WHERE j.found_at >= NOW() - INTERVAL '24 hours'
                   AND j.match_score >= %s
+                  AND n.id IS NULL
                 ORDER BY j.match_score DESC
                 """,
                 (min_score,),
@@ -435,3 +440,35 @@ def get_pipeline_run(run_id: str) -> dict[str, Any] | None:
             )
             row = cur.fetchone()
             return dict(row) if row else None
+
+
+def mark_jobs_notified(
+    job_ids: list[str],
+    *,
+    run_id: str | None,
+    channel: str = "email",
+) -> int:
+    """Persist successful delivery state; duplicate job/channel pairs are ignored."""
+    if not job_ids:
+        return 0
+
+    inserted = 0
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            for job_id in job_ids:
+                cur.execute(
+                    """
+                    INSERT INTO notifications (job_id, run_id, channel, status)
+                    VALUES (%s, %s, %s, 'sent')
+                    ON CONFLICT (job_id, channel) DO NOTHING
+                    RETURNING id
+                    """,
+                    (
+                        uuid.UUID(job_id),
+                        uuid.UUID(run_id) if run_id else None,
+                        channel,
+                    ),
+                )
+                if cur.fetchone():
+                    inserted += 1
+    return inserted
