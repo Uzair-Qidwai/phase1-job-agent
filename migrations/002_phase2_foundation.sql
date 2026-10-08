@@ -2,8 +2,23 @@
 -- Run after 001_jobs.sql.
 
 ALTER TABLE jobs
-    ADD COLUMN IF NOT EXISTS source_job_id TEXT,
-    ADD COLUMN IF NOT EXISTS system_state TEXT NOT NULL DEFAULT 'discovered';
+    ADD COLUMN IF NOT EXISTS source_job_id TEXT;
+
+DO $phase2$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'jobs'
+          AND column_name = 'system_state'
+    ) THEN
+        ALTER TABLE jobs ADD COLUMN system_state TEXT;
+        UPDATE jobs SET system_state = 'legacy';
+        ALTER TABLE jobs ALTER COLUMN system_state SET DEFAULT 'discovered';
+        ALTER TABLE jobs ALTER COLUMN system_state SET NOT NULL;
+    END IF;
+END
+$phase2$;
 
 ALTER TABLE cv_versions
     ADD COLUMN IF NOT EXISTS model TEXT,
@@ -13,12 +28,7 @@ ALTER TABLE cv_versions
     ADD COLUMN IF NOT EXISTS evidence JSONB NOT NULL DEFAULT '[]'::jsonb,
     ADD COLUMN IF NOT EXISTS validation JSONB NOT NULL DEFAULT '{}'::jsonb;
 
-UPDATE jobs
-SET system_state = 'tailored'
-WHERE cv_version_id IS NOT NULL
-  AND system_state = 'discovered';
-
-DO $
+DO $phase2state$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'jobs_system_state_valid'
@@ -27,6 +37,7 @@ BEGIN
             ADD CONSTRAINT jobs_system_state_valid
             CHECK (
                 system_state IN (
+                    'legacy',
                     'discovered',
                     'filtered_out',
                     'ranked_out',
@@ -37,7 +48,8 @@ BEGIN
             )
             NOT VALID;
     END IF;
-END $;
+END
+$phase2state$;
 
 ALTER TABLE jobs VALIDATE CONSTRAINT jobs_system_state_valid;
 
