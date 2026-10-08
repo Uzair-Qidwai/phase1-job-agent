@@ -1,0 +1,85 @@
+{
+  "jobs": [
+    {
+      "id": "ai-platform",
+      "title": "Senior AI Engineer",
+      "company": "Example AI",
+      "location": "Toronto, Canada",
+      "description": "Build production AI and machine learning systems in Python, evaluation tooling, APIs and model infrastructure.",
+      "label": "strong"
+    },
+    {
+      "id": "ml-engineer",
+      "title": "Machine Learning Engineer",
+      "company": "Example Labs",
+      "location": "Remote - Canada",
+      "description": "Develop machine learning products in Python and production ML infrastructure.",
+      "label": "strong"
+    },
+    {
+      "id": "defi-engineer",
+      "title": "DeFi Engineer",
+      "company": "Protocol Labs Example",
+      "location": "Remote",
+      "description": "Build blockchain and web3 protocols using Solidity and Python.",
+      "label": "strong"
+    },
+    {
+      "id": "quant-analyst",
+      "title": "Quantitative Analyst",
+      "company": "Example Capital",
+      "location": "Toronto, Canada",
+      "description": "Quantitative research, Python modelling, machine learning and financial data analysis.",
+      "label": "strong"
+    },
+    {
+      "id": "technical-pm",
+      "title": "Technical Product Manager, AI",
+      "company": "Example Product",
+      "location": "New York, NY",
+      "description": "Own AI product strategy with engineering and machine learning teams.",
+      "label": "strong"
+    },
+    {
+      "id": "generic-pm",
+      "title": "Product Manager",
+      "company": "Example Retail",
+      "location": "New York, NY",
+      "description": "Manage roadmap, stakeholder communication and ecommerce product delivery.",
+      "label": "borderline"
+    },
+    {
+      "id": "backend-engineer",
+      "title": "Backend Engineer",
+      "company": "Example SaaS",
+      "location": "Remote",
+      "description": "Build Java microservices and internal APIs.",
+      "label": "borderline"
+    },
+    {
+      "id": "account-exec",
+      "title": "Account Executive",
+      "company": "Example Sales",
+      "location": "Toronto, Canada",
+      "description": "Own enterprise pipeline, quota and customer relationships.",
+      "label": "weak"
+    },
+    {
+      "id": "nurse",
+      "title": "Registered Nurse",
+      "company": "Example Health",
+      "location": "Toronto, Canada",
+      "description": "Provide clinical nursing care in an acute care environment.",
+      "label": "weak"
+    }
+  ],
+  "preferred_pairs": [
+    ["ai-platform", "generic-pm"],
+    ["ml-engineer", "backend-engineer"],
+    ["defi-engineer", "account-exec"],
+    ["quant-analyst", "account-exec"],
+    ["technical-pm", "generic-pm"],
+    ["generic-pm", "nurse"],
+    ["backend-engineer", "nurse"]
+  ]
+}
