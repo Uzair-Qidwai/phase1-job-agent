@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
@@ -135,6 +136,9 @@ Tailor the CV for this role. Respond only with the required JSON object.
     payload["model"] = model
     payload["prompt_version"] = CV_PROMPT_VERSION
     payload["profile_version"] = profile.version
+    payload["source_cv_sha256"] = hashlib.sha256(
+        master_cv.encode("utf-8")
+    ).hexdigest()
     payload["validation"] = validation.model_dump()
     return payload
 
