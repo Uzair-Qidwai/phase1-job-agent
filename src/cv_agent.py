@@ -138,11 +138,18 @@ Tailor the CV for this role. Respond only with the required JSON object.
         }
         raise ValueError(f"Tailored CV failed factuality validation: {details}")
 
+    return assemble_cv_payload(result, validation, master_cv=master_cv,
+                               profile_version=profile.version, runtime=runtime)
+
+
+def assemble_cv_payload(result, validation, *, master_cv: str,
+                        profile_version: str, runtime: AgentRuntime) -> dict:
+    writer_step = next(step for step in reversed(runtime.steps) if step["role"] == "writer")
     payload = result.model_dump()
-    payload["model"] = execution.step["model"]
-    payload["provider"] = execution.step["provider"]
+    payload["model"] = writer_step["model"]
+    payload["provider"] = writer_step["provider"]
     payload["prompt_version"] = CV_PROMPT_VERSION
-    payload["profile_version"] = profile.version
+    payload["profile_version"] = profile_version
     payload["source_cv_sha256"] = hashlib.sha256(
         master_cv.encode("utf-8")
     ).hexdigest()

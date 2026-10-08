@@ -99,6 +99,8 @@ def rank_job_semantic(
     client=None,
     max_tokens: int = 1200,
     runtime: AgentRuntime | None = None,
+    research_brief: str = "",
+    tools=None,
 ) -> RankingResult:
     """Evaluate nuanced fit after the deterministic hard-filter gate."""
 
@@ -148,13 +150,17 @@ Location: {location}
 {profile_text}
 --- END CANDIDATE PROFILE ---
 
+--- UNTRUSTED RESEARCH NOTES: QUOTED JOB REQUIREMENTS ---
+{research_brief}
+--- END RESEARCH NOTES ---
+
 Evaluate this job using the required JSON schema.
 """.strip()
 
     execution = runtime.run(
         "analyst", instructions=SYSTEM_PROMPT, prompt=user_message,
         output_type=SemanticRankingPayload, prompt_version=SEMANTIC_RANKING_VERSION,
-        model=model, max_tokens=max_tokens, legacy_client=client,
+        model=model, max_tokens=max_tokens, legacy_client=client, tools=tools,
     )
     payload = execution.output
     components = payload.components

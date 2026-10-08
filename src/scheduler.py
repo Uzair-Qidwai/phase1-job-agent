@@ -120,6 +120,22 @@ def _run_pipeline(
     model_output_tokens = 0
     estimated_model_cost_usd = 0.0
 
+    def agent_runtime(job_id: str):
+        from src.model_runtime import AgentRuntime
+
+        def on_step(step):
+            nonlocal model_input_tokens, model_output_tokens, estimated_model_cost_usd
+            record_pipeline_event(run_id, "agent_step", stage=stage,
+                                  level="info" if step["status"] == "completed" else "error",
+                                  payload={"job_id": job_id, **step})
+            model_input_tokens += step["input_tokens"]
+            model_output_tokens += step["output_tokens"]
+            estimated_model_cost_usd += step["estimated_cost_usd"] or 0
+            update_pipeline_run(run_id, model_input_tokens=model_input_tokens,
+                                model_output_tokens=model_output_tokens,
+                                estimated_model_cost_usd=estimated_model_cost_usd)
+        return AgentRuntime(settings=settings, on_step=on_step)
+
     if resume_from_stage != "scraping":
         update_pipeline_run(
             run_id,
@@ -260,7 +276,7 @@ def _run_pipeline(
             logger.info(
                 "Step 4/6 — Ranking %d eligible jobs with %s mode …",
                 len(eligible_jobs),
-                settings.ranking_mode,
+                "agentic" if settings.agent_workflow_enabled else settings.ranking_mode,
             )
             newly_shortlisted = 0
             model_input_tokens = 0
@@ -272,25 +288,35 @@ def _run_pipeline(
                 else rank_job
             )
 
+            if settings.agent_workflow_enabled:
+                from src.agent_workflow import rank_job_agentic
+                ranker = rank_job_agentic
+
             for job in eligible_jobs:
+                runtime = agent_runtime(str(job["id"])) if (settings.agent_workflow_enabled or settings.ranking_mode == "semantic") else None
                 ranking = ranker(
                     title=job["title"],
                     company=job["company"],
                     location=job["location"],
                     description=job["description"],
                     profile=profile,
+                    **({"runtime": runtime} if runtime else {}),
                 )
                 normalized_score = ranking.total_score / 100.0
                 ranking_usage = ranking.usage or {}
-                model_input_tokens += int(
-                    ranking_usage.get("input_tokens", 0) or 0
-                )
-                model_output_tokens += int(
-                    ranking_usage.get("output_tokens", 0) or 0
-                )
-                estimated_model_cost_usd += float(
-                    ranking.estimated_cost_usd or 0.0
-                )
+                if runtime is None or not runtime.steps:
+                    model_input_tokens += int(
+                        ranking_usage.get("input_tokens", 0) or 0
+                    )
+                    model_output_tokens += int(
+                        ranking_usage.get("output_tokens", 0) or 0
+                    )
+                    estimated_model_cost_usd += float(
+                        ranking.estimated_cost_usd or 0.0
+                    )
+                    for step_info in ranking.agent_steps:
+                        record_pipeline_event(run_id, "agent_step", stage=stage,
+                                              payload={"job_id": str(job["id"]), **step_info})
                 job_id = str(job["id"])
                 save_ranking_result(
                     job_id=job_id,
@@ -329,6 +355,8 @@ def _run_pipeline(
                         "ranking_version": ranking.ranking_version,
                         "profile_version": ranking.profile_version,
                         "model": ranking.model,
+                        "provider": ranking.provider,
+                        "cost_estimate_complete": ranking.cost_estimate_complete,
                         "usage": ranking.usage,
                         "estimated_cost_usd": ranking.estimated_cost_usd,
                     },
@@ -350,7 +378,7 @@ def _run_pipeline(
                     "jobs_ranked": len(eligible_jobs),
                     "jobs_shortlisted": newly_shortlisted,
                     "shortlist_threshold": settings.shortlist_threshold,
-                    "ranking_mode": settings.ranking_mode,
+                    "ranking_mode": "agentic" if settings.agent_workflow_enabled else settings.ranking_mode,
                     "model_input_tokens": model_input_tokens,
                     "model_output_tokens": model_output_tokens,
                     "estimated_model_cost_usd": round(
@@ -370,13 +398,20 @@ def _run_pipeline(
 
             tailored_count = 0
 
+            tailorer = tailor_cv
+            if settings.agent_workflow_enabled:
+                from src.agent_workflow import tailor_cv_agentic
+                tailorer = tailor_cv_agentic
+
             for job in tailoring_jobs:
                 job_id = str(job["id"])
                 try:
-                    result = tailor_cv(
+                    runtime = agent_runtime(job_id)
+                    result = tailorer(
                         job_title=job["title"],
                         company=job["company"],
                         description=job["description"],
+                        runtime=runtime,
                     )
                     cv_id = save_cv_version(
                         job_id=job_id,
@@ -387,7 +422,10 @@ def _run_pipeline(
                         profile_version=result["profile_version"],
                         source_cv_sha256=result["source_cv_sha256"],
                         evidence=result["evidence_used"],
-                        validation=result["validation"],
+                        validation={**result["validation"],
+                                    "provider": result.get("provider"),
+                                    "cost_estimate_complete": result.get("cost_estimate_complete", False),
+                                    "agent_steps": result.get("agent_steps", [])},
                         usage=result.get("usage", {}),
                         estimated_cost_usd=result.get("estimated_cost_usd", 0.0),
                     )
@@ -396,11 +434,15 @@ def _run_pipeline(
                     tailored_count += 1
 
                     usage = result.get("usage", {})
-                    model_input_tokens += int(usage.get("input_tokens", 0) or 0)
-                    model_output_tokens += int(usage.get("output_tokens", 0) or 0)
-                    estimated_model_cost_usd += float(
-                        result.get("estimated_cost_usd", 0.0) or 0.0
-                    )
+                    if not runtime.steps:
+                        model_input_tokens += int(usage.get("input_tokens", 0) or 0)
+                        model_output_tokens += int(usage.get("output_tokens", 0) or 0)
+                        estimated_model_cost_usd += float(
+                            result.get("estimated_cost_usd", 0.0) or 0.0
+                        )
+                        for step_info in result.get("agent_steps", []):
+                            record_pipeline_event(run_id, "agent_step", stage=stage,
+                                                  payload={"job_id": job_id, **step_info})
                 except Exception as exc:
                     # Keep state as 'shortlisted' so the next run retries this job.
                     record_pipeline_event(

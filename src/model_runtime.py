@@ -6,6 +6,7 @@ import json
 import os
 import re
 import time
+from uuid import uuid4
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -41,6 +42,7 @@ class StepUsage:
     input_tokens: int = 0
     output_tokens: int = 0
     complete: bool = True
+    tool_calls: list[str] = field(default_factory=list)
 
 
 class BudgetedModel(Model):
@@ -55,6 +57,8 @@ class BudgetedModel(Model):
         except BaseException:
             self.usage.complete = False
             raise
+        self.usage.tool_calls.extend(item.name for item in response.output
+                                     if getattr(item, "type", None) == "function_call")
         self.usage.input_tokens += response.usage.input_tokens
         self.usage.output_tokens += response.usage.output_tokens
         if response.usage.input_tokens + response.usage.output_tokens == 0:
@@ -79,6 +83,7 @@ class AgentRuntime:
     model_factory: Callable[[AgentModelConfig], Model] | None = None
     on_step: Callable[[dict], None] | None = None
     steps: list[dict] = field(default_factory=list)
+    execution_id: str = field(default_factory=lambda: str(uuid4()))
     budget: RequestBudget = field(init=False)
 
     def __post_init__(self):
@@ -132,7 +137,7 @@ class AgentRuntime:
         config = self.settings.agent_config(role, model=model, max_tokens=max_tokens)
         usage = StepUsage()
         start = time.perf_counter()
-        step = {"role": role, "provider": config.provider, "model": config.model,
+        step = {"execution_id": self.execution_id, "sequence": len(self.steps) + 1, "role": role, "provider": config.provider, "model": config.model,
                 "prompt_version": prompt_version, "status": "failed"}
         try:
             if legacy_client is not None:
@@ -171,7 +176,8 @@ class AgentRuntime:
             step.update({"model_requests": usage.requests, "input_tokens": usage.input_tokens,
                          "output_tokens": usage.output_tokens, "usage_complete": known,
                          "estimated_cost_usd": round(cost, 6) if cost is not None else None,
-                         "latency_seconds": round(time.perf_counter() - start, 3)})
+                         "latency_seconds": round(time.perf_counter() - start, 3),
+                         "tool_calls": list(usage.tool_calls)})
             self.steps.append(step)
             if self.on_step:
                 self.on_step(dict(step))

@@ -79,7 +79,7 @@ def test_full_pipeline_is_rank_first_and_idempotent(monkeypatch) -> None:
 
     tailor_calls: list[str] = []
 
-    def fake_tailor_cv(*, job_title, company, description):
+    def fake_tailor_cv(*, job_title, company, description, runtime=None):
         tailor_calls.append(job_title)
         return {
             "tailored_cv": (
@@ -192,7 +192,7 @@ def test_failed_tailoring_is_retried_from_shortlisted_state(monkeypatch) -> None
 
     attempts = {"count": 0}
 
-    def flaky_tailor_cv(*, job_title, company, description):
+    def flaky_tailor_cv(*, job_title, company, description, runtime=None):
         attempts["count"] += 1
         if attempts["count"] == 1:
             raise RuntimeError("simulated CV provider failure")
@@ -282,7 +282,7 @@ def test_notification_failure_resumes_without_repeating_expensive_stages(monkeyp
         calls["scrape"] += 1
         return [strong]
 
-    def fake_tailor_cv(*, job_title, company, description):
+    def fake_tailor_cv(*, job_title, company, description, runtime=None):
         calls["tailor"] += 1
         return {
             "tailored_cv": (
@@ -373,7 +373,7 @@ def test_ranking_failure_resumes_from_filtering_without_rescraping(monkeypatch) 
             raise RuntimeError("simulated ranking provider failure")
         return real_rank_job(**kwargs)
 
-    def fake_tailor_cv(*, job_title, company, description):
+    def fake_tailor_cv(*, job_title, company, description, runtime=None):
         calls["tailor"] += 1
         return {
             "tailored_cv": (
@@ -492,3 +492,76 @@ def test_running_pipeline_holds_execution_lock_until_completion(monkeypatch):
             release.set()
         run_id = future.result(timeout=10)
     assert get_pipeline_run(run_id)["status"] == "completed"
+
+
+@pytest.mark.parametrize("review_decision", ["approve", "reject"])
+def test_agent_pipeline_persists_role_audit_and_accounts_rejected_work(monkeypatch, review_decision):
+    import src.agent_workflow as workflow
+    import src.model_runtime as runtime_module
+    import src.semantic_ranking as semantic
+    from evals.fake_models import FakeModel, message
+    from src.settings import get_settings
+
+    master = "Built Python systems for financial analytics and reporting."
+    description = "Build AI and machine learning systems in Python."
+    draft = {"tailored_cv": master, "changes_made": "Prioritized supported evidence.",
+             "evidence_used": [{"claim": master, "source": "master_cv", "source_text": master}],
+             "keywords_added": [], "warnings": []}
+    ranking = {"components": {name: 90 for name in ("role_fit", "technical_fit", "experience_fit",
+                                                    "domain_fit", "seniority_fit", "location_fit")},
+               "explanation": ["Strong supported fit"], "warnings": []}
+    fake = FakeModel([
+        message({"requirement_quotes": [description], "missing_information": []}),
+        message(ranking), message(draft),
+        message({"decision": review_decision, "issues": [] if review_decision == "approve" else ["Requires review"],
+                 "reason": "Evidence review completed"}),
+    ])
+    original = runtime_module.AgentRuntime
+    class OfflineRuntime(original):
+        def __post_init__(self):
+            super().__post_init__()
+            self.model_factory = lambda config: fake
+
+    async def fake_scrape(**kwargs):
+        return [scraper.RawJob(title="AI Engineer", company="Example", location="Toronto",
+                               url="https://example.com/agent-flow", description=description,
+                               source="phase2-e2e", source_job_id="agent-flow")]
+    sent = []
+    monkeypatch.setenv("AGENT_WORKFLOW_ENABLED", "true")
+    monkeypatch.setenv("MODEL_PROVIDER", "openai")
+    monkeypatch.setenv("MODEL_NAME", "offline-model")
+    get_settings.cache_clear()
+    monkeypatch.setattr(runtime_module, "AgentRuntime", OfflineRuntime)
+    monkeypatch.setattr(workflow, "_load_master_cv", lambda: master)
+    monkeypatch.setattr(semantic, "_load_master_cv", lambda: master)
+    monkeypatch.setattr(scraper, "scrape_all", fake_scrape)
+    monkeypatch.setattr(emailer, "send_digest", lambda jobs: sent.extend(jobs) or True)
+    try:
+        run_id = run_pipeline("manual")
+        run = get_pipeline_run(run_id)
+        assert run["model_input_tokens"] == 400
+        assert run["model_output_tokens"] == 80
+        assert run["jobs_tailored"] == (1 if review_decision == "approve" else 0)
+        assert len(sent) == (1 if review_decision == "approve" else 0)
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT payload FROM pipeline_events WHERE run_id = %s AND event_type = 'agent_step' ORDER BY id", (run_id,))
+                steps = [row["payload"] for row in cur.fetchall()]
+                assert [step["role"] for step in steps] == ["researcher", "analyst", "writer", "reviewer"]
+                assert all(step["provider"] == "openai" for step in steps)
+                assert all(step["estimated_cost_usd"] is None for step in steps)
+                assert master not in str(steps)
+                cur.execute("SELECT system_state, cv_version_id FROM jobs WHERE source = 'phase2-e2e'")
+                job = cur.fetchone()
+                if review_decision == "reject":
+                    assert job["system_state"] == "shortlisted"
+                    assert job["cv_version_id"] is None
+                else:
+                    assert job["system_state"] == "notified"
+                    cur.execute("SELECT validation, usage FROM cv_versions WHERE id = %s", (job["cv_version_id"],))
+                    cv = cur.fetchone()
+                    assert cv["validation"]["agent_review"]["reviews"][0]["decision"] == "approve"
+                    assert cv["validation"]["provider"] == "openai"
+                    assert cv["usage"]["input_tokens"] == 200
+    finally:
+        get_settings.cache_clear()

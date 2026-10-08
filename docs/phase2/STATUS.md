@@ -2,7 +2,9 @@
 
 This document tracks implementation against the Phase 2 architecture and evaluation plan.
 
-Updated after Checkpoint 2 and operator-recovery hardening. Automated checks pass;
+Updated for Checkpoint 3 specialist-workflow implementation. The former recovery
+checkpoint is preserved in [RECOVERY_CHECKPOINT.md](RECOVERY_CHECKPOINT.md).
+[Checkpoint 4](CHECKPOINT_04.md) is the planned live-validation/exit milestone. Automated checks pass;
 Phase 2 exit approval is still pending. See [acceptance report](ACCEPTANCE.md).
 
 | Workstream | Runtime implementation | Evaluation / test gate | Status |
@@ -33,6 +35,16 @@ Phase 2 exit approval is still pending. See [acceptance report](ACCEPTANCE.md).
 | Source health telemetry | per-source persisted counts and consecutive-zero warning events | DB integration tests | Complete |
 | Model usage/cost telemetry | ranking/CV tokens persisted per artifact and run; cost rates configurable | unit + DB integration assertions | Complete |
 | Live provider smoke | one semantic rank + one evidence-gated CV, no DB/email side effects | explicit opt-in command | Ready for live run |
+
+## Checkpoint 3 specialist addition
+
+- Provider-independent Agents SDK runtime with OpenAI, Anthropic and Gemini routing.
+- Per-role explicit models and price configuration; no automatic vendor fallback.
+- Opt-in researcher/analyst/writer/reviewer workflow, with bounded revisions.
+- Deterministic CV gate enforced after every draft regardless of reviewer approval.
+- Sanitized role execution events and persisted review metadata; failed/rejected
+  work remains accounted for. Unknown costs are explicitly incomplete.
+- Provider routing and SDK tool loops are tested offline, not live-certified.
 
 ## Current Phase 2 runtime flow
 
@@ -97,8 +109,9 @@ python -m evals.live_provider_smoke
 python -m evals.run_semantic_eval
 ```
 
-The first command performs one ranking and one CV-generation call without DB or
-email side effects. The second evaluates the candidate semantic model on the
+The first command performs ranking and CV generation without DB or email side
+effects. With `AGENT_WORKFLOW_ENABLED=true` it runs all four specialists, including
+bounded tool loops and possible revisions, so it can make multiple model calls. The second evaluates the candidate semantic model on the
 same 30-job labelled benchmark as the deterministic baseline and exits non-zero
 if Precision@5 or pairwise preference accuracy regresses.
 
@@ -107,7 +120,7 @@ if Precision@5 or pairwise preference accuracy regresses.
 Phase 2 acceptance is not yet approved. Two provider-dependent checks are
 pending at the user’s request while credentials and cost rates are unavailable:
 
-1. run the controlled live-provider smoke with real credentials;
+1. run the controlled live-provider smoke with selected role/provider credentials;
 2. run the 30-job semantic promotion evaluation and inspect quality/cost before
    enabling semantic ranking.
 

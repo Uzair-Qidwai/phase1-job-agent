@@ -3,8 +3,8 @@
 Usage:
     python -m evals.live_provider_smoke
 
-Requires configured specialist provider credentials. This performs one semantic ranking call and one CV
-generation call. It does not write to PostgreSQL and does not send email.
+Requires configured specialist provider credentials. This performs ranking and CV generation; when AGENT_WORKFLOW_ENABLED is true it
+uses the four bounded specialists (and can make multiple model/tool calls). It does not write to PostgreSQL and does not send email.
 """
 
 from __future__ import annotations
@@ -23,14 +23,20 @@ GOLD = Path(__file__).parent / "ranking_gold.json"
 
 def main() -> int:
     settings = get_settings()
-    for role in ("analyst", "writer"):
+    roles = ("researcher", "analyst", "writer", "reviewer") if settings.agent_workflow_enabled else ("analyst", "writer")
+    for role in roles:
         settings.require_model_key(settings.agent_config(role).provider)
 
     dataset = json.loads(GOLD.read_text(encoding="utf-8"))
     job = next(item for item in dataset["jobs"] if item["id"] == "ai-platform")
     profile = load_candidate_profile()
 
-    ranking = rank_job_semantic(
+    ranker, tailorer = rank_job_semantic, tailor_cv
+    if settings.agent_workflow_enabled:
+        from src.agent_workflow import rank_job_agentic, tailor_cv_agentic
+        ranker, tailorer = rank_job_agentic, tailor_cv_agentic
+
+    ranking = ranker(
         title=job["title"],
         company=job["company"],
         location=job["location"],
@@ -38,7 +44,7 @@ def main() -> int:
         profile=profile,
     )
 
-    tailored = tailor_cv(
+    tailored = tailorer(
         job_title=job["title"],
         company=job["company"],
         description=job["description"],
@@ -46,6 +52,8 @@ def main() -> int:
 
     report = {
         "job_id": job["id"],
+        "agent_workflow_enabled": settings.agent_workflow_enabled,
+        "agent_steps": ranking.agent_steps + tailored["agent_steps"],
         "semantic_ranking": {
             "score": ranking.total_score,
             "version": ranking.ranking_version,

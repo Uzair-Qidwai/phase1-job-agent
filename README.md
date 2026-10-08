@@ -170,3 +170,47 @@ host crash. Recovery requires verified worker shutdown and refuses a live
 execution lock; it records failure without retrying or sending email. Never
 unlock by age alone. See [Phase 2 acceptance](docs/phase2/ACCEPTANCE.md) for the
 current validation evidence and pending live checks.
+
+
+### Checkpoint 3: specialist agents and provider choice
+
+The default stays deterministic ranking plus validated CV generation. The new
+four-specialist workflow is opt-in pending live validation:
+
+```dotenv
+AGENT_WORKFLOW_ENABLED=true
+MODEL_PROVIDER=openai
+MODEL_NAME=your-explicit-model-id
+OPENAI_API_KEY=your-local-secret
+```
+
+Use `MODEL_PROVIDER=anthropic` with `ANTHROPIC_API_KEY`, or `MODEL_PROVIDER=gemini`
+with `GEMINI_API_KEY`, to select those adapters. Keep model names unprefixed.
+OpenAI/Gemini model names must be explicit; Anthropic preserves the existing
+`RANKING_MODEL` fallback. This uses provider APIs, not a ChatGPT browser session.
+
+Per-role overrides go in the JSON `AGENT_MODELS` setting, e.g. entries named
+`researcher`, `analyst`, `writer`, and `reviewer`, each containing `provider`,
+`model`, optional `max_output_tokens`, and optional `input_cost_per_mtok` /
+`output_cost_per_mtok`. Prices must match the selected model. Missing prices are
+reported as unknown, not free; numeric database totals contain known subtotals.
+Global `MODEL_INPUT_COST_PER_MTOK` and `MODEL_OUTPUT_COST_PER_MTOK` apply only to
+the global model configuration. Explicit role overrides have their own prices.
+
+With the feature enabled, researcher/analyst replace the ranking model path;
+writer/reviewer replace single-call tailoring. Research uses source descriptions
+captured by existing adapters. Read-only tools expose that data, master CV and
+search preferences. The reviewer can request at most `AGENT_MAX_REVISIONS`
+rewrites and cannot override deterministic validation. Agents cannot send mail,
+write to the database, or submit applications. The scheduler retains those duties.
+
+`AGENT_MAX_MODEL_CALLS` limits each job-stage execution (ranking or tailoring),
+`AGENT_MAX_TURNS` limits each specialist, and `AGENT_TIMEOUT_SECONDS` bounds each
+specialist run. Output caps default to 1200 for research/analysis, 4096 for writing,
+and 1800 for review, unless overridden per role. SDK/provider automatic retries
+are disabled; existing persisted-state retries remain available. Production SDK
+tracing exports are disabled; sanitized execution metadata is stored locally in
+pipeline events. No live-provider compatibility claim is made before Checkpoint 4.
+
+See [Checkpoint 3](docs/phase2/CHECKPOINT_03.md) and
+[Checkpoint 4](docs/phase2/CHECKPOINT_04.md) for delivery and acceptance gates.

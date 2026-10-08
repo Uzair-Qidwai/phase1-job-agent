@@ -1,11 +1,9 @@
-import json
-
 import pytest
-from agents import Model, ModelResponse, function_tool
-from agents.usage import Usage
-from openai.types.responses import ResponseFunctionToolCall, ResponseOutputMessage, ResponseOutputText
+from agents import function_tool
+from openai.types.responses import ResponseFunctionToolCall
 from pydantic import BaseModel, ValidationError
 
+from evals.fake_models import FakeModel, message
 from src.model_runtime import AgentRuntime, SpecialistError
 from src.settings import Settings
 
@@ -13,27 +11,6 @@ from src.settings import Settings
 class Answer(BaseModel):
     answer: str
 
-
-def message(payload):
-    return ResponseOutputMessage(id="msg_1", type="message", role="assistant", status="completed",
-                                 content=[ResponseOutputText(type="output_text", text=json.dumps(payload), annotations=[])])
-
-
-class FakeModel(Model):
-    def __init__(self, outputs):
-        self.outputs = list(outputs)
-        self.inputs = []
-
-    async def get_response(self, *args, **kwargs):
-        self.inputs.append(kwargs.get("input"))
-        value = self.outputs.pop(0)
-        if isinstance(value, Exception):
-            raise value
-        return ModelResponse(output=[value], usage=Usage(requests=1, input_tokens=100, output_tokens=20), response_id=None)
-
-    async def stream_response(self, *args, **kwargs):
-        raise NotImplementedError
-        yield
 
 
 def config(**kwargs):
@@ -157,3 +134,33 @@ def test_provider_adapter_routing_without_network(provider, monkeypatch):
         assert seen["closed"] is True
     else:
         assert seen["api_key"] == "test-key"
+
+
+def test_malformed_structured_output_is_rejected_but_usage_is_kept():
+    runtime = AgentRuntime(settings=config(), model_factory=lambda _: FakeModel([message({"wrong_field": "bad"})]))
+    with pytest.raises(SpecialistError):
+        invoke(runtime)
+    assert runtime.steps[0]["status"] == "failed"
+    assert runtime.steps[0]["input_tokens"] == 100
+    assert runtime.steps[0]["usage_complete"] is True
+
+
+def test_sdk_turn_limit_stops_tool_loop():
+    @function_tool
+    def read_evidence() -> str:
+        """Read evidence."""
+        return "source"
+    model = FakeModel([ResponseFunctionToolCall(type="function_call", call_id="one", name="read_evidence", arguments="{}"),
+                       message({"answer": "must not reach"})])
+    runtime = AgentRuntime(settings=config(AGENT_MAX_TURNS=1), model_factory=lambda _: model)
+    with pytest.raises(SpecialistError, match="MaxTurnsExceeded"):
+        invoke(runtime, tools=[read_evidence])
+    assert len(model.inputs) == 1
+    assert runtime.steps[0]["tool_calls"] == ["read_evidence"]
+
+
+def test_explicit_model_override_does_not_inherit_another_models_prices():
+    settings = config(MODEL_INPUT_COST_PER_MTOK=1, MODEL_OUTPUT_COST_PER_MTOK=2)
+    override = settings.agent_config("writer", model="different-model")
+    assert override.input_cost_per_mtok is None
+    assert override.output_cost_per_mtok is None

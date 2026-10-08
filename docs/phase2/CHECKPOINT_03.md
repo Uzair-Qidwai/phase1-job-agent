@@ -1,6 +1,6 @@
 # Checkpoint 3 — Provider-independent specialist workflow
 
-Status: implementation in progress. Branch `phase2-foundation`; PR #1 stays Draft.
+Status: implementation complete locally; final integration CI pending. Branch `phase2-foundation`; PR #1 stays Draft.
 The earlier recovery checkpoint is preserved in [RECOVERY_CHECKPOINT.md](RECOVERY_CHECKPOINT.md).
 
 ## Delivery slices
@@ -42,3 +42,32 @@ clients remain a compatibility/test seam. Real SDK loops with fake models verify
 tools, usage, budgets, timeouts and sanitized failures. Adapter routing is tested
 without live providers. Production calls use the SDK; no implicit model choice
 is made when selecting OpenAI/Gemini. CI confirmation follows on the slice commit.
+
+## Integration delivered
+
+Provider slice `0e3e558` passed CI #262. The opt-in pipeline now runs researcher →
+analyst during ranking, then writer → reviewer during tailoring, with at most the
+configured number of revision cycles. Tools are read-only views of the captured
+job, master CV, preferences, and deterministic draft validation. No model controls
+DB writes, recovery, notifications, or application submission.
+
+Role executions are stored as `agent_step` pipeline events, including provider,
+model, prompt version, execution ID/sequence, tool names, request/token counts,
+latency, completeness flags and nullable cost estimate. Raw prompts/responses are
+not stored in these events. CV validation metadata stores review results and
+writer/reviewer provenance. Failed and rejected model work contributes to run
+usage even when no CV is saved. Existing audit JSON/event tables suffice; no new
+migration or edits to applied migration files were needed.
+
+Limits apply per job-stage execution: one budget for research/analysis and another
+for writing/reviewing; retries receive a new budget. Each specialist has a turn
+cap, output-token cap, and wall-clock timeout. A per-pipeline dollar cap is not
+implemented; it remains Checkpoint 4 budget work. Unknown prices or missing usage
+produce null step estimates and an incomplete-cost flag; numeric legacy totals
+are only known subtotals. Estimates exclude cached/reasoning-specific rate tiers.
+
+The Agents SDK and LiteLLM adapter versions are pinned. Native OpenAI Responses
+and Anthropic/Gemini adapters are exercised with offline fake responses only;
+real provider availability, tool/schema behavior and quality await Checkpoint 4.
+No automatic provider fallback or model promotion is enabled. Default baseline
+is preserved: `AGENT_WORKFLOW_ENABLED=false`, deterministic ranking.

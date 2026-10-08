@@ -51,6 +51,11 @@ def main() -> int:
     estimated_cost_usd = 0.0
     cost_estimate_complete = True
 
+    ranker = rank_job_semantic
+    if settings.agent_workflow_enabled:
+        from src.agent_workflow import rank_job_agentic
+        ranker = rank_job_agentic
+
     for job in dataset["jobs"]:
         common = {
             "title": job["title"],
@@ -60,7 +65,7 @@ def main() -> int:
             "profile": profile,
         }
         baseline = rank_job(**common)
-        candidate = rank_job_semantic(
+        candidate = ranker(
             **common,
 
         )
@@ -85,6 +90,7 @@ def main() -> int:
     report = {
         "ranking_model": config.model,
         "provider": config.provider,
+        "agent_workflow_enabled": settings.agent_workflow_enabled,
         "profile_version": profile.version,
         "dataset_jobs": len(dataset["jobs"]),
         "baseline": baseline_metrics,

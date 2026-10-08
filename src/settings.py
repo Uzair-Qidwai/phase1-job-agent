@@ -19,7 +19,7 @@ class AgentModelConfig(BaseModel):
     model: str = Field(min_length=1)
     input_cost_per_mtok: float | None = Field(default=None, ge=0)
     output_cost_per_mtok: float | None = Field(default=None, ge=0)
-    max_output_tokens: int = Field(default=4096, ge=128, le=16384)
+    max_output_tokens: int | None = Field(default=None, ge=128, le=16384)
 
 
 class Settings(BaseSettings):
@@ -98,13 +98,16 @@ class Settings(BaseSettings):
             config = self.agent_models[role]
             if model and model != config.model:
                 raise ValueError("Model override conflicts with configured specialist")
-            return config
+            return config.model_copy(update={"max_output_tokens": config.max_output_tokens or max_tokens})
         selected = model or self.model_name
         if not selected and self.model_provider == "anthropic":
             selected = self.ranking_model  # Preserve the existing baseline explicitly.
         if not selected:
             raise ValueError("MODEL_NAME or a per-role AGENT_MODELS entry is required")
         input_rate, output_rate = self.model_input_cost_per_mtok, self.model_output_cost_per_mtok
+        configured_name = self.model_name or (self.ranking_model if self.model_provider == "anthropic" else None)
+        if model and model != configured_name:
+            input_rate = output_rate = None  # Never reuse another model's configured price.
         if self.model_provider == "anthropic" and selected == self.ranking_model:
             if input_rate is None and self.anthropic_input_cost_per_mtok > 0:
                 input_rate = self.anthropic_input_cost_per_mtok
