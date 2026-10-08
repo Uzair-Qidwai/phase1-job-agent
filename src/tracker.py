@@ -295,6 +295,8 @@ def save_cv_version(
     source_cv_sha256: str | None = None,
     evidence: list[dict[str, Any]] | None = None,
     validation: dict[str, Any] | None = None,
+    usage: dict[str, Any] | None = None,
+    estimated_cost_usd: float = 0.0,
 ) -> str:
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -309,9 +311,11 @@ def save_cv_version(
                     profile_version,
                     source_cv_sha256,
                     evidence,
-                    validation
+                    validation,
+                    usage,
+                    estimated_cost_usd
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 (
@@ -324,6 +328,8 @@ def save_cv_version(
                     source_cv_sha256,
                     psycopg2.extras.Json(evidence or []),
                     psycopg2.extras.Json(validation or {}),
+                    psycopg2.extras.Json(usage or {}),
+                    estimated_cost_usd,
                 ),
             )
             return str(cur.fetchone()["id"])
@@ -368,6 +374,9 @@ def update_pipeline_run(
     jobs_shortlisted: int | None = None,
     jobs_tailored: int | None = None,
     jobs_notified: int | None = None,
+    model_input_tokens: int | None = None,
+    model_output_tokens: int | None = None,
+    estimated_model_cost_usd: float | None = None,
 ) -> None:
     fields: list[str] = []
     values: list[Any] = []
@@ -381,6 +390,9 @@ def update_pipeline_run(
         ("jobs_shortlisted", jobs_shortlisted),
         ("jobs_tailored", jobs_tailored),
         ("jobs_notified", jobs_notified),
+        ("model_input_tokens", model_input_tokens),
+        ("model_output_tokens", model_output_tokens),
+        ("estimated_model_cost_usd", estimated_model_cost_usd),
     ):
         if value is not None:
             fields.append(f"{column} = %s")
