@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     pipeline_timezone: str = Field(default="America/Toronto", alias="PIPELINE_TIMEZONE")
     pipeline_hour: int = Field(default=8, ge=0, le=23, alias="PIPELINE_HOUR")
     pipeline_minute: int = Field(default=0, ge=0, le=59, alias="PIPELINE_MINUTE")
+    shortlist_threshold: float = Field(
+        default=0.65,
+        ge=0.0,
+        le=1.0,
+        alias="SHORTLIST_THRESHOLD",
+    )
 
     def require_postgres_url(self) -> str:
         if not self.postgres_url:
