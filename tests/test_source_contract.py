@@ -31,6 +31,7 @@ def test_raw_job_contract_accepts_valid_job() -> None:
         ("company", "company is required"),
         ("url", "url is required"),
         ("source", "source is required"),
+        ("description", "description is required"),
     ],
 )
 def test_raw_job_contract_rejects_missing_required_fields(field: str, expected: str) -> None:
@@ -74,3 +75,18 @@ def test_live_overlapping_search_results_use_production_deduplication():
     assert report['unique_jobs'] == 1
     assert report['dedupe_passed'] and report['passed']
     assert normalize_jobs(rows)[0].url == 'https://www.linkedin.com/jobs/view/123'
+
+
+def test_normalization_rejects_blank_description_without_losing_complete_duplicate():
+    from src.scraper import normalize_jobs
+    rows = [
+        RawJob('AI Engineer', 'Example', 'Toronto',
+               'https://www.linkedin.com/jobs/view/123?trk=incomplete', '  \n', 'linkedin'),
+        RawJob('AI Engineer', 'Example', 'Toronto',
+               'https://www.linkedin.com/jobs/view/123?trk=complete',
+               'Build evaluation systems.', 'linkedin'),
+    ]
+    normalized = normalize_jobs(rows)
+    assert len(normalized) == 1
+    assert normalized[0].description == 'Build evaluation systems.'
+    assert normalized[0].url == 'https://www.linkedin.com/jobs/view/123'

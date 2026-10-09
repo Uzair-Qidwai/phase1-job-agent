@@ -52,6 +52,8 @@ def validate_raw_job(job: RawJob) -> list[str]:
         errors.append("company is required")
     if not job.url.strip():
         errors.append("url is required")
+    if not job.description.strip():
+        errors.append("description is required")
     if not job.source.strip():
         errors.append("source is required")
     return errors
