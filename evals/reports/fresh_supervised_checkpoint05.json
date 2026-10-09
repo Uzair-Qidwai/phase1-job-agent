@@ -66,5 +66,15 @@
     "Model warnings and summaries can contain unsupported commentary despite CV body validation",
     "Tailoring remains conservative; one profile statement omitted",
     "Indeed not retested; hosting deferred"
-  ]
+  ],
+  "approved_delivery_followup": {
+    "explicitly_authorized": true,
+    "email_messages": 1,
+    "jobs_notified": 3,
+    "status": "transport_acknowledged",
+    "inbox_confirmation": "pending",
+    "duplicate_candidates_after_send": 0,
+    "new_model_calls": 0,
+    "cv_attachments": false
+  }
 }

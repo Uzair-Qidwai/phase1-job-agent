@@ -128,3 +128,13 @@ deferred, and no scheduler or model-ranking promotion was enabled.
 This is a bounded rehearsal using current-session capture and an intercepted send
 boundary, not proof of an unmodified unattended pipeline. Evidence:
 [fresh supervised report](../../evals/reports/fresh_supervised_checkpoint05.json).
+
+
+### Approved fresh-batch delivery
+
+After preview review, the user authorized the three-job digest. Gmail acknowledged
+one email with the reviewed claim-difference summaries and no CV attachments.
+Three notifications were recorded and zero candidates remained for repeat delivery.
+No additional model calls were made. Inbox receipt is pending. The earlier no-send
+rehearsal evidence remains unchanged; this is a separate approved delivery action.
+A private post-delivery backup was saved. No scheduler or hosting change.
