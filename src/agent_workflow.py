@@ -15,7 +15,7 @@ from src.model_runtime import AgentRuntime
 from src.ranking import rank_job
 from src.semantic_ranking import rank_job_semantic
 
-WORKFLOW_VERSION = "specialists-v2"
+WORKFLOW_VERSION = "specialists-v3"
 
 
 class ResearchBrief(BaseModel):
