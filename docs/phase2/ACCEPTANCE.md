@@ -87,3 +87,8 @@ A fresh saved-review pilot completed with three validated, source-preserving CVs
 and a pending snapshot, without sending mail. Matching acceptance remains open:
 high keyword scores did not establish required skill/experience coverage. Keep
 manual qualification review and resolve this gap before unattended delivery.
+
+Qualification triage now exposes documented mentions and gaps separately from role
+relevance. It does not certify proficiency or replace matching-quality acceptance.
+Evaluate extraction coverage and human usefulness before considering automatic
+qualification decisions; existing ranking benchmark labels/weights are unchanged.

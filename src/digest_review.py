@@ -43,7 +43,7 @@ def list_batches(limit: int = 20) -> list[dict]:
         return [dict(r) for r in cur.fetchall()]
 
 
-def _current_jobs(job_ids: list[str], *, observed_summaries: bool = True) -> list[dict]:
+def _current_jobs(job_ids: list[str], *, observed_summaries: bool = True, qualifications: bool = False) -> list[dict]:
     from src.cv_changes import describe_changes
     source = _load_master_cv()
     source_hash = hashlib.sha256(source.encode()).hexdigest()
@@ -75,6 +75,9 @@ def _current_jobs(job_ids: list[str], *, observed_summaries: bool = True) -> lis
         }
         if observed_summaries:
             item['observed_changes'] = changes
+        if qualifications:
+            from src.qualifications import assess_qualifications
+            item['qualifications'] = assess_qualifications(row['description'], source)
         result.append(item)
     return result
 
@@ -86,10 +89,10 @@ def _validate(batch: dict, expected: str) -> None:
     snap = batch['snapshot']
     if (settings.gmail_sender, settings.digest_recipient) != (snap['sender'], snap['recipient']):
         raise ValueError("Sender or recipient changed; cancel and prepare a new batch")
-    if snap.get('version') not in {1, 2}:
+    if snap.get('version') not in {1, 2, 3}:
         raise ValueError('Unknown preview version; prepare a new batch')
     if _current_jobs([j['id'] for j in snap['jobs']],
-                     observed_summaries=snap['version'] >= 2) != snap['jobs']:
+                     observed_summaries=snap['version'] >= 2, qualifications=snap['version'] >= 3) != snap['jobs']:
         raise ValueError("Job or CV preview changed; cancel and prepare a new batch")
 
 
@@ -122,10 +125,10 @@ def _prepare_batch(job_ids: list[str] | None = None, *, limit: int = 5) -> dict 
         raise ValueError("Configure sender and recipient before preparing a preview")
     if any(c in settings.gmail_sender + settings.digest_recipient for c in '\r\n'):
         raise ValueError("Invalid email address")
-    jobs = _current_jobs(job_ids)
-    snapshot = {'version': 2, 'sender': settings.gmail_sender,
+    jobs = _current_jobs(job_ids, qualifications=True)
+    snapshot = {'version': 3, 'sender': settings.gmail_sender,
                 'recipient': settings.digest_recipient, 'jobs': jobs,
-                'subject': f"📋 Job Digest — {len(jobs)} new match{'es' if len(jobs) != 1 else ''}",
+                'subject': f"📋 Job Digest — {len(jobs)} role{'s' if len(jobs) != 1 else ''} for review",
                 'html': _build_html(jobs, reviewed=True)}
     with tracker.get_conn() as conn, conn.cursor() as cur:
         cur.execute("""INSERT INTO digest_batches(id,snapshot,fingerprint)

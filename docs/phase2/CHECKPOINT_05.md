@@ -200,3 +200,19 @@ The capture was bounded outside the scheduler; omitted-source zero counts are no
 live failure evidence. This is not an unmodified end-to-end discovery run. Delivery
 histories remain separate and were both checked. No scheduler, merge or email.
 [Sanitized report](../../evals/reports/saved_review_live_checkpoint05.json).
+
+## Qualification evidence triage — 2026-10-09
+
+New saved previews distinguish role relevance from documented qualifications.
+Deterministic extraction preserves requirement text, optional/required classification,
+skill evidence excerpts and experience-duration review flags. No evidence is treated
+as undocumented, not a hard mismatch; a keyword mention cannot certify proficiency.
+Ranking events retain the assessment, and version-3 snapshots bind it into review
+and email content. Version-1/2 approvals remain compatible. Ranking weights and
+benchmark labels remain unchanged; qualification extraction is deliberately bounded.
+
+Validation: full regression suite passed 240 tests, followed by an additional passing
+regression for mixed mandatory/optional clauses (241 total). Lint and fictional
+browser review/approval/send checks passed. Local replay of the three captured pilot
+listings exposes undocumented Python in all three and preserves requirement context.
+No live model requests or emails were needed. Human matching acceptance remains open.

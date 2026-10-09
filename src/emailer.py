@@ -65,6 +65,9 @@ def _build_html(jobs: list[dict], *, reviewed: bool = False) -> str:
         location = escape(str(job.get("location") or "—"), quote=True)
         source = escape(str(job.get("source") or "").title(), quote=True)
         safe_url = escape(_safe_http_url(str(job.get("url") or "")), quote=True)
+        qualification_note = escape((job.get('qualifications') or {}).get('summary', ''), quote=True)
+        badge = (f"Role relevance: {score * 100:.0f}/100<br><small>{qualification_note}</small>"
+                 if job.get('qualifications') else _score_badge(score))
         rows += f"""
         <tr>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;">
@@ -74,7 +77,7 @@ def _build_html(jobs: list[dict], *, reviewed: bool = False) -> str:
             <small style="color:#64748b;">{company} · {location}</small>
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;text-align:center;">
-            {_score_badge(score)}
+            {badge}
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#475569;font-size:13px;">
             {changes}
@@ -97,7 +100,7 @@ def _build_html(jobs: list[dict], *, reviewed: bool = False) -> str:
       <div style="max-width:860px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1);">
         <div style="background:#1e293b;color:white;padding:20px 24px;">
           <h2 style="margin:0;">📋 Daily Job Digest</h2>
-          <p style="margin:4px 0 0;color:#94a3b8;font-size:14px;">{len(jobs)} new matches above threshold · sorted by score</p>
+          <p style="margin:4px 0 0;color:#94a3b8;font-size:14px;">{len(jobs)} roles for review · sorted by relevance</p>
         </div>
         <table style="width:100%;border-collapse:collapse;">
           <thead>

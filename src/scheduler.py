@@ -305,6 +305,12 @@ def _run_pipeline(
                     profile=profile,
                     **({"runtime": runtime} if runtime else {}),
                 )
+                from src.cv_agent import _load_master_cv
+                from src.qualifications import assess_qualifications
+                qualifications = assess_qualifications(job["description"], _load_master_cv())
+                record_pipeline_event(run_id, "qualification_review", stage=stage,
+                                      payload={"job_id": str(job["id"]), **qualifications})
+                ranking.explanation.append(qualifications["summary"])
                 normalized_score = ranking.total_score / 100.0
                 ranking_usage = ranking.usage or {}
                 if runtime is None or not runtime.steps:

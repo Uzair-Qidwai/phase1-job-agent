@@ -85,3 +85,20 @@ All endpoints below require the bearer token and return `Cache-Control: no-store
 
 This is a single-user operator interface using the existing API token. It is not
 a multi-user login system or a publicly deployed service.
+
+## Qualification evidence
+
+Version-3 snapshots include deterministic requirement/source-CV evidence triage.
+The score is labelled role relevance, not verified fit. Each detected requirement
+retains its exact text, required/preferred/unspecified category, named skill mentions
+with source excerpts, and a flag for explicit experience durations. Missing evidence
+means not documented, not unqualified. Mentions do not prove proficiency, completed
+degrees, duration or that alternatives are all required. Unknown requirements stay
+for human review; extraction is bounded and may miss requirements. No automatic
+rejection, rank-formula change or numerical qualification probability is introduced.
+
+The same assessment is recorded in pipeline ranking events and explanations. New
+reviewed email bodies include the evidence warning without a celebratory percentage
+badge. Snapshot validation binds these assessments to source and job text. Existing
+version-1/2 snapshots retain their exact approved contents; cancel and prepare anew
+when a pending older preview should receive qualification evidence.

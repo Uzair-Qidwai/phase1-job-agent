@@ -204,3 +204,11 @@ The capture was bounded outside the scheduler; omitted-source zero counts are no
 live failure evidence. This is not an unmodified end-to-end discovery run. Delivery
 histories remain separate and were both checked. No scheduler, merge or email.
 [Sanitized report](../../evals/reports/saved_review_live_checkpoint05.json).
+
+## Qualification review evidence
+
+Qualification evidence triage now accompanies ranking events and new saved previews.
+Role relevance remains the existing keyword score; required/preferred requirement
+text, missing skill documentation, source excerpts and duration flags are separate.
+Human qualification review is still required. Captured-pilot replay flags gaps on all
+three jobs without model calls. See Checkpoint 5 and DIGEST_REVIEW.md for limits.
