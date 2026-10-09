@@ -52,6 +52,10 @@ in the master CV must remain missing from the draft; a truthful warning that the
 are not documented is sufficient. Do not request adding absent required skills,
 changing a candidate title to the target title, or inventing matching experience.
 An unchanged factual CV can be approved when no supported tailoring is possible.
+The application handles section emphasis. Ask for exact restoration of complete
+source wording, not removal of a source fact merely because its evidence mapping
+is malformed. An evidence entry must identify one complete output statement, not
+a multi-sentence paragraph. Deterministic failure must be corrected before approval.
 For an unsupported rewrite, request restoration of the original source sentence.
 You cannot write to the database, send email, or submit applications."""
 

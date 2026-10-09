@@ -186,7 +186,7 @@ must separately isolate/intercept delivery until explicitly authorized.
 
 ### Source-preserving presentation and summaries
 
-Writer v5 retains heading depth and employer attribution. The application can
+Writer v6 preserves complete source wording, heading depth and employer attribution. The application can
 reorder whole Markdown level-two sections for engineering, product or quantitative
 roles, preserving each section's complete text. Unknown layouts/roles are unchanged.
 This fixed presentation heuristic runs before deterministic validation and reviewer

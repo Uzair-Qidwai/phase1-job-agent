@@ -83,7 +83,7 @@ class TestTailorCV(unittest.TestCase):
             "Build AI systems.",
             client=fake_client(),
         )
-        self.assertEqual(result["prompt_version"], "phase2-cv-v5")
+        self.assertEqual(result["prompt_version"], "phase2-cv-v6")
         self.assertEqual(result["profile_version"], "1")
         self.assertTrue(result["model"])
 
