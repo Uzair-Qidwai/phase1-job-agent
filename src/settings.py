@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     gmail_refresh_token: str | None = Field(default=None, repr=False, alias="GMAIL_REFRESH_TOKEN")
     gmail_sender: str | None = Field(default=None, alias="GMAIL_SENDER")
     digest_recipient: str | None = Field(default=None, alias="DIGEST_RECIPIENT")
+    digest_delivery_mode: Literal["review", "automatic"] = Field(
+        default="review", alias="DIGEST_DELIVERY_MODE"
+    )
 
     app_base_url: str = Field(default="http://localhost:8000", alias="APP_BASE_URL")
     api_token: str | None = Field(

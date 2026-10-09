@@ -22,12 +22,16 @@ def list_attempts(limit: int = 20) -> list[dict]:
         return [dict(row) for row in cur.fetchall()]
 
 
-def prepare_attempt(job_ids: list[str], run_id: str) -> dict:
+def prepare_attempt(job_ids: list[str], run_id: str, *, conn=None) -> dict:
+    """Optionally share a transaction with the reviewed-batch state transition."""
     import psycopg2
+    if conn is None:
+        with get_conn() as owned:
+            return prepare_attempt(job_ids, run_id, conn=owned)
     attempt_id = uuid4()
     message_id = f"<job-agent-{attempt_id}@job-agent.local>"
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        with conn.cursor() as cur:
             cur.execute("""INSERT INTO delivery_attempts (id, run_id, job_ids, message_id, status)
                 VALUES (%s, %s, %s, %s, 'ambiguous') RETURNING *""",
                         (attempt_id, UUID(run_id), [UUID(j) for j in job_ids], message_id))
@@ -54,16 +58,30 @@ def finish_attempt(attempt_id: str, *, sent: bool, reason: str) -> int:
         cur.execute("""UPDATE delivery_attempts SET status = %s, resolved_at = NOW(),
             resolution_reason = %s WHERE id = %s""",
                     ("sent" if sent else "not_sent", reason, UUID(attempt_id)))
+        cur.execute("""UPDATE digest_batches SET status = %s,
+            approved_fingerprint = CASE WHEN %s THEN approved_fingerprint ELSE NULL END,
+            approved_at = CASE WHEN %s THEN approved_at ELSE NULL END
+            WHERE attempt_id = %s""",
+                    ("sent" if sent else "pending", sent, sent, UUID(attempt_id)))
     return inserted
 
 
 def deliver_digest(jobs: list[dict], *, run_id: str, send) -> int:
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM digest_batches WHERE status IN ('pending','approved','sending') LIMIT 1")
+        if cur.fetchone():
+            raise DeliveryAmbiguous("Open review batch exists; use reviewed delivery or cancel it first")
     if not jobs:
         # Even an empty digest must surface unresolved delivery for operations.
         if any(a["status"] == "ambiguous" for a in list_attempts(100)):
             raise DeliveryAmbiguous("Unresolved delivery exists; reconcile before completing")
         return 0
     attempt = prepare_attempt([str(j["id"]) for j in jobs], run_id)
+    return send_prepared_attempt(attempt, jobs, send=send)
+
+
+def send_prepared_attempt(attempt: dict, jobs: list[dict], *, send) -> int:
+    """Transport an already committed attempt; caller owns execution admission."""
     try:
         sent = send(jobs, message_id=attempt["message_id"])
     except Exception:

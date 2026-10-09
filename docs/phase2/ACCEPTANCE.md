@@ -68,3 +68,9 @@ Fresh rehearsal follow-up: three CV bodies now pass after one recorded failed ru
 and a two-job reviewer retry. No new email was sent. Model commentary may still
 infer unsupported skills; private review notes flag the observed example. See
 Checkpoint 5 for scope, source failures and sanitized evidence.
+
+
+Saved review workflow is now implemented (2026-10-09), with review as the delivery
+default and browser/API/CLI approval of exact saved content. This closes the
+one-off-script workflow gap; it does not establish CV tailoring usefulness or
+unattended-production readiness. See DIGEST_REVIEW.md and Checkpoint 5.

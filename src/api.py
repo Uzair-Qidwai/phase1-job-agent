@@ -14,7 +14,7 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.settings import get_settings
 from src.tracker import (
@@ -82,6 +82,8 @@ def _safe_http_url(value: str) -> str:
 @app.middleware("http")
 async def security_headers(request, call_next):
     response: Response = await call_next(request)
+    if request.url.path.startswith(("/digests", "/review")):
+        response.headers["Cache-Control"] = "no-store"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
@@ -99,6 +101,67 @@ async def security_headers(request, call_next):
 def require_read_auth(authorization: str | None = Header(default=None)) -> None:
     if get_settings().api_require_read_auth:
         require_write_auth(authorization)
+
+
+class DigestSelection(BaseModel):
+    job_ids: list[UUID] | None = Field(default=None, min_length=1, max_length=20)
+    limit: int = Field(default=5, ge=1, le=20)
+
+
+class DigestApproval(BaseModel):
+    fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+def _review_action(action, *args, **kwargs):
+    from src.delivery import DeliveryAmbiguous
+    try:
+        return action(*args, **kwargs)
+    except (ValueError, PipelineAlreadyRunning, DeliveryAmbiguous) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
+
+
+@app.get("/review", response_class=HTMLResponse)
+def review_page():
+    # Public shell only. All private data and actions below always require auth.
+    return HTMLResponse(Path(__file__).with_name("review_page.html").read_text())
+
+
+@app.get("/digests", dependencies=[Depends(require_write_auth)])
+def digest_batches(limit: int = Query(20, ge=1, le=100)):
+    from src.digest_review import list_batches
+    return list_batches(limit)
+
+
+@app.post("/digests", dependencies=[Depends(require_write_auth)])
+def prepare_digest(selection: DigestSelection):
+    from src.digest_review import prepare_batch
+    ids = [str(j) for j in selection.job_ids] if selection.job_ids else None
+    return _review_action(prepare_batch, ids, limit=selection.limit)
+
+
+@app.get("/digests/{batch_id}", dependencies=[Depends(require_write_auth)])
+def digest_batch(batch_id: UUID):
+    from src.digest_review import get_batch
+    return _review_action(get_batch, str(batch_id))
+
+
+@app.post("/digests/{batch_id}/approve", dependencies=[Depends(require_write_auth)])
+def approve_digest(batch_id: UUID, approval: DigestApproval):
+    from src.digest_review import approve_batch
+    return _review_action(approve_batch, str(batch_id), approval.fingerprint)
+
+
+@app.post("/digests/{batch_id}/send", dependencies=[Depends(require_write_auth)])
+def send_approved_digest(batch_id: UUID, approval: DigestApproval):
+    from src.digest_review import send_batch
+    return {"jobs_notified": _review_action(send_batch, str(batch_id), approval.fingerprint)}
+
+
+@app.post("/digests/{batch_id}/cancel", dependencies=[Depends(require_write_auth)])
+def cancel_digest(batch_id: UUID):
+    from src.digest_review import cancel_batch
+    _review_action(cancel_batch, str(batch_id))
+    return {"status": "cancelled"}
 
 
 @app.get("/jobs", dependencies=[Depends(require_read_auth)])
@@ -349,6 +412,7 @@ def dashboard(
                 flex-wrap:wrap;margin-bottom:20px;">
       <div>
         <h1 style="font-size:22px;font-weight:700;">Job Search Dashboard</h1>
+        <a href="/review">Review saved digests</a>
         <p style="color:#64748b;font-size:14px;">{len(jobs)} jobs</p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">

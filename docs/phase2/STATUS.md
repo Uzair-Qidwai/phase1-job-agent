@@ -152,3 +152,13 @@ writer/reviewer retry. No repeat scrape/rank or new email occurred. Independent
 `CV_REVIEW_ENABLED` supports this configuration; missing source descriptions are
 now rejected. Raw model warnings/summaries still require review, and final CV
 usefulness remains a release gate. See Checkpoint 5 for preserved failures/limits.
+
+
+## Saved review workflow — 2026-10-09
+
+Pipeline delivery now defaults to `review`: immutable content snapshots are saved
+for explicit approval and one-shot send. Browser UI, authenticated APIs and CLI
+replace one-off preview/delivery scripts. Changed job/CV/source evidence or recipient
+invalidates sending; concurrent attempts and ambiguous delivery remain guarded.
+See [DIGEST_REVIEW.md](DIGEST_REVIEW.md). No new live email or model calls were made
+for this implementation. CV utility, ongoing pilot observation and hosting remain.

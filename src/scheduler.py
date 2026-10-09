@@ -486,12 +486,19 @@ def _run_pipeline(
         if _stage_enabled("notifying", resume_from_stage):
             stage = "notifying"
             update_pipeline_run(run_id, status=stage, current_stage=stage)
-            logger.info("Step 6/6 — Sending digest …")
+            logger.info("Step 6/6 — Preparing digest (%s) …", settings.digest_delivery_mode)
             digest_jobs = get_new_jobs_for_digest(
                 min_score=settings.shortlist_threshold
             )
             from src.delivery import deliver_digest
-            notified_count = deliver_digest(digest_jobs, run_id=run_id, send=send_digest)
+            if settings.digest_delivery_mode == "review":
+                from src.digest_review import _prepare_batch
+                batch = _prepare_batch()
+                record_pipeline_event(run_id, "digest_awaiting_review", stage=stage,
+                                      payload={"batch_id": str(batch["id"]) if batch else None,
+                                               "emails_sent": 0})
+            else:
+                notified_count = deliver_digest(digest_jobs, run_id=run_id, send=send_digest)
 
         if tailoring_failures:
             # Successful CVs can be delivered, but failed jobs must remain visible

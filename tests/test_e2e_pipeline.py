@@ -40,10 +40,15 @@ def _cleanup() -> None:
 
 
 @pytest.fixture(autouse=True)
-def clean_e2e_rows():
+def clean_e2e_rows(monkeypatch):
+    # Existing tests explicitly exercise the legacy automatic delivery path.
+    from src.settings import get_settings
+    monkeypatch.setenv("DIGEST_DELIVERY_MODE", "automatic")
+    get_settings.cache_clear()
     _cleanup()
     yield
     _cleanup()
+    get_settings.cache_clear()
 
 
 @pytest.mark.asyncio

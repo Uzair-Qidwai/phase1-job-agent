@@ -210,3 +210,27 @@ def test_optional_read_auth_blocks_private_reads(monkeypatch):
 def test_delivery_history_requires_auth():
     client = TestClient(api_module.app)
     assert client.get("/deliveries").status_code == 401
+
+
+@pytest.mark.parametrize('method,path,body', [
+    ('get','/digests',None),
+    ('get',f'/digests/{uuid4()}',None),
+    ('post','/digests',{}),
+    ('post',f'/digests/{uuid4()}/approve',{'fingerprint':'0'*64}),
+    ('post',f'/digests/{uuid4()}/send',{'fingerprint':'0'*64}),
+    ('post',f'/digests/{uuid4()}/cancel',{}),
+])
+def test_digest_review_always_requires_auth(method,path,body):
+    client=TestClient(api_module.app)
+    response=client.request(method,path,json=body)
+    assert response.status_code==401
+    assert response.headers['cache-control']=='no-store'
+
+
+def test_review_shell_contains_no_private_data():
+    response=TestClient(api_module.app).get('/review')
+    assert response.status_code==200
+    assert 'Send approved email' in response.text
+    assert 'localStorage' not in response.text
+    assert 'sandbox=""' in response.text
+    assert response.headers['cache-control']=='no-store'

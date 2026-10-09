@@ -138,3 +138,23 @@ Three notifications were recorded and zero candidates remained for repeat delive
 No additional model calls were made. Inbox receipt is pending. The earlier no-send
 rehearsal evidence remains unchanged; this is a separate approved delivery action.
 A private post-delivery backup was saved. No scheduler or hosting change.
+
+
+## Saved approval workflow — 2026-10-09
+
+Migration 004 adds saved digest snapshots and approval/delivery state. The pipeline
+now defaults to preparing a review batch, with separate approve/send actions in
+the browser, authenticated API and CLI. Approval binds recipient, rendered email,
+job requirements and CV versions; changed data or prior delivery prevents sending.
+An ambiguous send remains blocked, and a reconciled not-sent attempt requires
+fresh approval. Snapshot state and delivery-attempt admission commit atomically.
+
+Reviewed emails currently exclude unverified model commentary and use a neutral
+CV-review notice. The UI displays the captured requirements and exact CV bodies;
+CVs are not attached. Unit/integration tests cover stale previews, concurrent sends,
+crashes, reconciliation, authentication and MIME contents. A local browser rehearsal
+used fictional responses and verified approval/send controls; no real mail or model
+requests were made. See [workflow documentation](DIGEST_REVIEW.md).
+
+Validation: 220 tests and lint passed locally; migration 004 applied and repeated
+on the disposable database. [Sanitized verification report](../../evals/reports/saved_digest_review_checkpoint05.json).

@@ -100,7 +100,7 @@ def test_actual_legacy_upgrade_preserves_job_and_adds_delivery_ledger():
             with conn, conn.cursor() as cur:
                 cur.execute((MIGRATIONS / "001_jobs.sql").read_text())
                 cur.execute("INSERT INTO jobs (title, company, url, source) VALUES ('Legacy Engineer', 'Example', 'https://example.com/legacy', 'test')")
-                assert len(apply_migrations(conn)) == 3
+                assert len(apply_migrations(conn)) == 4
                 cur.execute("SELECT title FROM jobs WHERE url = 'https://example.com/legacy'")
                 assert cur.fetchone()["title"] == "Legacy Engineer"
                 cur.execute("SELECT count(*) AS n FROM delivery_attempts")

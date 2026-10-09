@@ -51,7 +51,7 @@ def _score_badge(score: float) -> str:
     return f'<span style="background:#94a3b8;color:white;padding:2px 8px;border-radius:999px;font-size:12px;">{score:.0%}</span>'
 
 
-def _build_html(jobs: list[dict]) -> str:
+def _build_html(jobs: list[dict], *, reviewed: bool = False) -> str:
     if not jobs:
         return "<p>No unsent high-score jobs are waiting for delivery.</p>"
 
@@ -84,6 +84,11 @@ def _build_html(jobs: list[dict]) -> str:
         </tr>
         """
 
+    footer = (
+        "Scores are search signals, not verified qualifications. CVs are not attached."
+        if reviewed else
+        f'Dashboard → <a href="{escape(_safe_http_url(get_settings().app_base_url.rstrip("/") + "/dashboard"), quote=True)}" style="color:#3b82f6;">Open dashboard</a>'
+    )
     return f"""
     <!DOCTYPE html>
     <html>
@@ -107,7 +112,7 @@ def _build_html(jobs: list[dict]) -> str:
           </tbody>
         </table>
         <div style="padding:16px 24px;color:#94a3b8;font-size:12px;">
-          Dashboard → <a href="{get_settings().app_base_url.rstrip('/')}/dashboard" style="color:#3b82f6;">Open dashboard</a>
+          {footer}
         </div>
       </div>
     </body>
@@ -125,22 +130,33 @@ def send_digest(jobs: list[dict], *, message_id: str | None = None) -> bool:
     _, _, _, sender_email, recipient_email = settings.require_gmail_credentials()
     html_body = _build_html(jobs)
 
+    return send_snapshot({
+        "sender": sender_email, "recipient": recipient_email,
+        "subject": f"📋 Job Digest — {len(jobs)} new match{'es' if len(jobs) != 1 else ''}",
+        "html": html_body,
+    }, message_id=message_id)
+
+
+def send_snapshot(snapshot: dict, *, message_id: str | None = None) -> bool:
+    """Send saved content verbatim; never regenerate an approved email."""
+    _, _, _, sender_email, recipient_email = get_settings().require_gmail_credentials()
+    if (snapshot["sender"], snapshot["recipient"]) != (sender_email, recipient_email):
+        raise ValueError("Sender or recipient changed; prepare a new review batch")
+    for field in ("sender", "recipient", "subject"):
+        if any(c in snapshot[field] for c in "\r\n"):
+            raise ValueError("Invalid email header")
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"📋 Job Digest — {len(jobs)} new match{'es' if len(jobs) != 1 else ''}"
+    msg["Subject"] = snapshot["subject"]
     if message_id:
         msg["Message-ID"] = message_id
-    msg["From"] = sender_email
-    msg["To"] = recipient_email
-    msg.attach(MIMEText(html_body, "html"))
-
+    msg["From"] = snapshot["sender"]
+    msg["To"] = snapshot["recipient"]
+    msg.attach(MIMEText(snapshot["html"], "html"))
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-
     try:
         service = _get_gmail_service()
-        service.users().messages().send(
-            userId="me", body={"raw": raw}
-        ).execute()
-        logger.info("Digest sent to %s (%d jobs)", recipient_email, len(jobs))
+        service.users().messages().send(userId="me", body={"raw": raw}).execute()
+        logger.info("Digest transport acknowledged")
         return True
     except Exception as exc:
         logger.error("Failed to send digest (%s)", type(exc).__name__)

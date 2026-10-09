@@ -1,6 +1,6 @@
 # Phase 1 — Job Search & CV Agent
 
-Scrapes LinkedIn, Indeed, and Greenhouse daily → tailors your CV per listing via Claude API → tracks applications in PostgreSQL → sends HTML email digest → serves a live dashboard.
+Collects jobs from configured sources → ranks and prepares evidence-constrained CVs → tracks history in PostgreSQL → saves a digest for review and explicit approval → sends the approved email. Providers include Gemini, OpenAI and Anthropic.
 
 ---
 
@@ -216,3 +216,12 @@ See [Checkpoint 3](docs/phase2/CHECKPOINT_03.md) and
 [Checkpoint 4](docs/phase2/CHECKPOINT_04.md) for delivery and acceptance gates.
 
 Phase 2 live-test preparation and remaining acceptance gates: [Checkpoint 4 live-test handoff](docs/phase2/LIVE_TESTING.md).
+
+
+## Saved digest approval
+
+Pipeline runs now default to saving an unsent review batch. Open `/review` to
+inspect the exact email and CVs, approve the batch, then send it once. No email is
+sent merely by running the pipeline. Apply migration 004 before upgrading.
+See [the review workflow](docs/phase2/DIGEST_REVIEW.md) for browser/CLI usage,
+configuration, authentication and uncertain-delivery recovery.
