@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-09",
+  "feature": "Observed CV differences and source-preserving section order",
+  "tests_passed": 232,
+  "lint_passed": true,
+  "implementation_commit": "bb410a8",
+  "ci_runs": [
+    37888497821,
+    37888494005
+  ],
+  "versions": {
+    "writer": "phase2-cv-v6",
+    "workflow": "specialists-v3",
+    "layout": "section-emphasis-v1",
+    "diff": "observed-cv-diff-v1"
+  },
+  "earlier_trial": {
+    "writer": "phase2-cv-v5",
+    "passed": 0,
+    "cases": 2,
+    "requests": 28,
+    "failures": [
+      "Unsupported paraphrases and split source statements",
+      "Invalid evidence mapping; reviewer approval could not bypass deterministic rejection"
+    ]
+  },
+  "retry": {
+    "passed": 2,
+    "cases": 2,
+    "requests": 10,
+    "elapsed_seconds": 54.85,
+    "families": [
+      "engineering",
+      "product"
+    ],
+    "claims_checked_per_case": 42,
+    "added_or_revised_passages": 0,
+    "omitted_or_replaced_passages": 0,
+    "revisions": 0,
+    "listings": "Previously captured; not a new source scrape"
+  },
+  "emails_sent": 0,
+  "database_writes": 0,
+  "human_usefulness_acceptance": "pending",
+  "limits": [
+    "Section ordering only; profile wording remains unchanged",
+    "Two cases do not establish broader model reliability",
+    "Model commentary remains unverified and excluded from displayed summaries",
+    "Deterministic ranking retained; no scheduler or merge"
+  ]
+}

@@ -1,0 +1,346 @@
+{
+  "jobs": [
+    {
+      "id": "ai-platform",
+      "title": "Senior AI Engineer",
+      "company": "Example AI",
+      "location": "Toronto, Canada",
+      "description": "Build production AI and machine learning systems in Python, evaluation tooling, APIs and model infrastructure.",
+      "label": "strong"
+    },
+    {
+      "id": "ml-engineer",
+      "title": "Machine Learning Engineer",
+      "company": "Example Labs",
+      "location": "Remote - Canada",
+      "description": "Develop machine learning products in Python and production ML infrastructure.",
+      "label": "strong"
+    },
+    {
+      "id": "defi-engineer",
+      "title": "DeFi Engineer",
+      "company": "Protocol Labs Example",
+      "location": "Remote",
+      "description": "Build blockchain and web3 protocols using Solidity and Python.",
+      "label": "strong"
+    },
+    {
+      "id": "quant-analyst",
+      "title": "Quantitative Analyst",
+      "company": "Example Capital",
+      "location": "Toronto, Canada",
+      "description": "Quantitative research, Python modelling, machine learning and financial data analysis.",
+      "label": "strong"
+    },
+    {
+      "id": "technical-pm",
+      "title": "Technical Product Manager, AI",
+      "company": "Example Product",
+      "location": "New York, NY",
+      "description": "Own AI product strategy with engineering and machine learning teams.",
+      "label": "strong"
+    },
+    {
+      "id": "ai-infra",
+      "title": "AI Infrastructure Engineer",
+      "company": "Example Compute",
+      "location": "Remote",
+      "description": "Build AI infrastructure, Python services, machine learning evaluation and model APIs.",
+      "label": "strong"
+    },
+    {
+      "id": "web3-solidity",
+      "title": "DeFi Smart Contract Engineer",
+      "company": "Example Protocol",
+      "location": "Canada",
+      "description": "Build DeFi blockchain protocols and Solidity smart contracts across web3 networks.",
+      "label": "strong"
+    },
+    {
+      "id": "ml-platform",
+      "title": "Machine Learning Platform Engineer",
+      "company": "Example Models",
+      "location": "Toronto, Canada",
+      "description": "Own Python ML platform infrastructure, model serving, evaluation and APIs.",
+      "label": "strong"
+    },
+    {
+      "id": "quant-ml",
+      "title": "Quantitative ML Engineer",
+      "company": "Example Markets",
+      "location": "Remote",
+      "description": "Build quantitative machine learning research systems and Python trading models.",
+      "label": "strong"
+    },
+    {
+      "id": "technical-pm-crypto",
+      "title": "Technical Product Manager, Crypto",
+      "company": "Example Crypto",
+      "location": "Toronto, Canada",
+      "description": "Lead technical product management for blockchain and web3 engineering teams.",
+      "label": "strong"
+    },
+    {
+      "id": "generic-pm",
+      "title": "Product Manager",
+      "company": "Example Retail",
+      "location": "New York, NY",
+      "description": "Manage roadmap, stakeholder communication and ecommerce product delivery.",
+      "label": "borderline"
+    },
+    {
+      "id": "backend-engineer",
+      "title": "Backend Engineer",
+      "company": "Example SaaS",
+      "location": "Remote",
+      "description": "Build Java microservices and internal APIs.",
+      "label": "borderline"
+    },
+    {
+      "id": "data-engineer",
+      "title": "Data Engineer",
+      "company": "Example Data",
+      "location": "Toronto, Canada",
+      "description": "Build SQL and cloud ETL pipelines for analytics teams.",
+      "label": "borderline"
+    },
+    {
+      "id": "software-java",
+      "title": "Software Engineer",
+      "company": "Example Enterprise",
+      "location": "London, UK",
+      "description": "Build enterprise Java services, distributed systems and APIs.",
+      "label": "borderline"
+    },
+    {
+      "id": "product-owner",
+      "title": "Technical Product Owner",
+      "company": "Example Systems",
+      "location": "Toronto, Canada",
+      "description": "Own backlog and delivery for internal business systems.",
+      "label": "borderline"
+    },
+    {
+      "id": "data-analyst",
+      "title": "Data Analyst",
+      "company": "Example Analytics",
+      "location": "Toronto, Canada",
+      "description": "Analyze business data using SQL dashboards and reporting tools.",
+      "label": "borderline"
+    },
+    {
+      "id": "blockchain-ops",
+      "title": "Blockchain Operations Analyst",
+      "company": "Example Chain",
+      "location": "Remote",
+      "description": "Monitor blockchain infrastructure, validators and operational incidents.",
+      "label": "borderline"
+    },
+    {
+      "id": "risk-analyst",
+      "title": "Risk Analyst",
+      "company": "Example Bank",
+      "location": "Toronto, Canada",
+      "description": "Perform portfolio risk reporting, scenario analysis and financial controls.",
+      "label": "borderline"
+    },
+    {
+      "id": "fintech-pm",
+      "title": "Product Manager, Fintech",
+      "company": "Example Payments",
+      "location": "Canada",
+      "description": "Lead payments roadmap with engineers and financial operations teams.",
+      "label": "borderline"
+    },
+    {
+      "id": "solutions-eng",
+      "title": "Solutions Engineer",
+      "company": "Example Cloud",
+      "location": "Remote",
+      "description": "Support enterprise integrations, APIs and technical customer implementations.",
+      "label": "borderline"
+    },
+    {
+      "id": "account-exec",
+      "title": "Account Executive",
+      "company": "Example Sales",
+      "location": "Toronto, Canada",
+      "description": "Own enterprise sales pipeline, quota and customer relationships.",
+      "label": "weak"
+    },
+    {
+      "id": "nurse",
+      "title": "Registered Nurse",
+      "company": "Example Health",
+      "location": "Toronto, Canada",
+      "description": "Provide clinical nursing care in an acute care environment.",
+      "label": "weak"
+    },
+    {
+      "id": "physician",
+      "title": "Physician",
+      "company": "Example Clinic",
+      "location": "Toronto, Canada",
+      "description": "Provide medical diagnosis and patient care.",
+      "label": "weak"
+    },
+    {
+      "id": "dentist",
+      "title": "Dentist",
+      "company": "Example Dental",
+      "location": "Toronto, Canada",
+      "description": "Provide dental treatment and clinical care.",
+      "label": "weak"
+    },
+    {
+      "id": "recruiter",
+      "title": "Technical Recruiter",
+      "company": "Example Hiring",
+      "location": "Remote",
+      "description": "Source candidates, run interviews and manage hiring pipelines.",
+      "label": "weak"
+    },
+    {
+      "id": "marketing",
+      "title": "Marketing Manager",
+      "company": "Example Brand",
+      "location": "Toronto, Canada",
+      "description": "Own campaigns, brand strategy and content performance.",
+      "label": "weak"
+    },
+    {
+      "id": "accountant",
+      "title": "Senior Accountant",
+      "company": "Example Finance",
+      "location": "Toronto, Canada",
+      "description": "Prepare financial statements, reconciliations and month-end reporting.",
+      "label": "weak"
+    },
+    {
+      "id": "customer-success",
+      "title": "Customer Success Manager",
+      "company": "Example SaaS",
+      "location": "Remote",
+      "description": "Manage renewals, onboarding and customer relationships.",
+      "label": "weak"
+    },
+    {
+      "id": "office-manager",
+      "title": "Office Manager",
+      "company": "Example Office",
+      "location": "Toronto, Canada",
+      "description": "Manage facilities, vendors and administrative operations.",
+      "label": "weak"
+    },
+    {
+      "id": "legal-counsel",
+      "title": "Legal Counsel",
+      "company": "Example Legal",
+      "location": "Canada",
+      "description": "Draft commercial agreements and advise on regulatory matters.",
+      "label": "weak"
+    }
+  ],
+  "preferred_pairs": [
+    [
+      "ai-platform",
+      "generic-pm"
+    ],
+    [
+      "ml-engineer",
+      "backend-engineer"
+    ],
+    [
+      "defi-engineer",
+      "blockchain-ops"
+    ],
+    [
+      "quant-analyst",
+      "risk-analyst"
+    ],
+    [
+      "technical-pm",
+      "fintech-pm"
+    ],
+    [
+      "ai-infra",
+      "data-engineer"
+    ],
+    [
+      "web3-solidity",
+      "blockchain-ops"
+    ],
+    [
+      "ml-platform",
+      "solutions-eng"
+    ],
+    [
+      "quant-ml",
+      "data-analyst"
+    ],
+    [
+      "technical-pm-crypto",
+      "product-owner"
+    ],
+    [
+      "generic-pm",
+      "account-exec"
+    ],
+    [
+      "backend-engineer",
+      "recruiter"
+    ],
+    [
+      "data-engineer",
+      "accountant"
+    ],
+    [
+      "software-java",
+      "marketing"
+    ],
+    [
+      "product-owner",
+      "customer-success"
+    ],
+    [
+      "data-analyst",
+      "office-manager"
+    ],
+    [
+      "blockchain-ops",
+      "legal-counsel"
+    ],
+    [
+      "risk-analyst",
+      "nurse"
+    ],
+    [
+      "fintech-pm",
+      "physician"
+    ],
+    [
+      "solutions-eng",
+      "dentist"
+    ],
+    [
+      "ai-platform",
+      "marketing"
+    ],
+    [
+      "defi-engineer",
+      "recruiter"
+    ],
+    [
+      "quant-analyst",
+      "accountant"
+    ],
+    [
+      "technical-pm-crypto",
+      "customer-success"
+    ],
+    [
+      "ml-platform",
+      "office-manager"
+    ]
+  ]
+}

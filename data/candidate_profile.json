@@ -1,0 +1,38 @@
+{
+  "version": "1",
+  "target_roles": [
+    "AI Engineer",
+    "Machine Learning Engineer",
+    "DeFi Engineer",
+    "Quantitative Analyst",
+    "Technical Product Manager"
+  ],
+  "role_keywords": [
+    "ai",
+    "artificial intelligence",
+    "machine learning",
+    "ml",
+    "engineer",
+    "python",
+    "defi",
+    "blockchain",
+    "web3",
+    "solidity",
+    "quant",
+    "quantitative",
+    "technical product manager"
+  ],
+  "preferred_locations": [
+    "Toronto",
+    "Canada",
+    "Remote"
+  ],
+  "remote_allowed": true,
+  "strict_locations": false,
+  "excluded_companies": [],
+  "excluded_title_keywords": [
+    "registered nurse",
+    "physician",
+    "dentist"
+  ]
+}

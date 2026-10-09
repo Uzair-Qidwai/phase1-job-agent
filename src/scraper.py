@@ -11,18 +11,20 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
-import time
 from dataclasses import dataclass
 from urllib.parse import quote_plus
+from typing import Protocol
 
+import httpx
 from bs4 import BeautifulSoup
 from playwright.async_api import Page, async_playwright
 
+from src.job_identity import build_job_identity
+
 logger = logging.getLogger(__name__)
 
-# ─────────────────────────────────────────────
-# Data model
-# ─────────────────────────────────────────────
+SOURCE_NAMES = ("greenhouse", "linkedin", "indeed")
+
 
 @dataclass
 class RawJob:
@@ -32,11 +34,30 @@ class RawJob:
     url: str
     description: str
     source: str
+    source_job_id: str | None = None
 
 
-# ─────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────
+class JobSource(Protocol):
+    name: str
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        ...
+
+
+def validate_raw_job(job: RawJob) -> list[str]:
+    errors: list[str] = []
+    if not job.title.strip():
+        errors.append("title is required")
+    if not job.company.strip():
+        errors.append("company is required")
+    if not job.url.strip():
+        errors.append("url is required")
+    if not job.description.strip():
+        errors.append("description is required")
+    if not job.source.strip():
+        errors.append("source is required")
+    return errors
+
 
 async def _wait_and_text(page: Page, selector: str, timeout: int = 5000) -> str:
     try:
@@ -50,10 +71,6 @@ async def _wait_and_text(page: Page, selector: str, timeout: int = 5000) -> str:
 async def _human_delay(lo: float = 1.5, hi: float = 3.5) -> None:
     await asyncio.sleep(lo + (hi - lo) * __import__("random").random())
 
-
-# ─────────────────────────────────────────────
-# LinkedIn scraper
-# ─────────────────────────────────────────────
 
 LINKEDIN_SEARCH_TERMS = [
     "AI Engineer",
@@ -80,7 +97,7 @@ async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
             url = (
                 "https://www.linkedin.com/jobs/search/?"
                 f"keywords={quote_plus(term)}&location={quote_plus(loc)}"
-                "&f_TPR=r86400&sortBy=DD"   # last 24 h, most recent
+                "&f_TPR=r86400&sortBy=DD"
             )
             logger.info("[LinkedIn] %s | %s", term, loc)
             page = await context.new_page()
@@ -89,7 +106,6 @@ async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
                 await page.goto(url, timeout=30_000, wait_until="domcontentloaded")
                 await _human_delay()
 
-                # Scroll to trigger lazy-load
                 for _ in range(3):
                     await page.keyboard.press("End")
                     await _human_delay(0.8, 1.5)
@@ -102,7 +118,8 @@ async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
                     link_tag = card.select_one("a.base-card__full-link")
                     if not link_tag:
                         continue
-                    job_url = link_tag.get("href", "").split("?")[0]
+
+                    job_url = link_tag.get("href", "")
                     title_tag = card.select_one("h3.base-search-card__title")
                     company_tag = card.select_one("h4.base-search-card__subtitle")
                     loc_tag = card.select_one("span.job-search-card__location")
@@ -110,7 +127,6 @@ async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
                     if not job_url or not title_tag:
                         continue
 
-                    # Fetch description from job page
                     desc = await _fetch_linkedin_description(context, job_url)
 
                     jobs.append(
@@ -151,10 +167,6 @@ async def _fetch_linkedin_description(context, job_url: str) -> str:
         await page.close()
 
 
-# ─────────────────────────────────────────────
-# Indeed scraper
-# ─────────────────────────────────────────────
-
 INDEED_SEARCH_TERMS = [
     "AI Engineer",
     "DeFi blockchain engineer",
@@ -188,13 +200,13 @@ async def scrape_indeed(browser, max_per_query: int = 10) -> list[RawJob]:
 
                 html = await page.content()
                 soup = BeautifulSoup(html, "html.parser")
-
-                # Indeed uses data-jk as the job key
                 cards = soup.select("div.job_seen_beacon")[:max_per_query]
+
                 for card in cards:
                     link = card.select_one("a[data-jk]")
                     if not link:
                         continue
+
                     jk = link.get("data-jk", "")
                     job_url = f"https://ca.indeed.com/viewjob?jk={jk}"
                     title_tag = card.select_one("h2.jobTitle span[title]")
@@ -214,6 +226,7 @@ async def scrape_indeed(browser, max_per_query: int = 10) -> list[RawJob]:
                             url=job_url,
                             description=desc,
                             source="indeed",
+                            source_job_id=jk,
                         )
                     )
                     await _human_delay(0.5, 1.5)
@@ -242,12 +255,6 @@ async def _fetch_indeed_description(context, job_url: str) -> str:
         await page.close()
 
 
-# ─────────────────────────────────────────────
-# Greenhouse scraper (API-based, no JS needed)
-# ─────────────────────────────────────────────
-
-import httpx
-
 GREENHOUSE_BOARDS = [
     "anthropic",
     "openai",
@@ -275,11 +282,13 @@ async def scrape_greenhouse(max_per_board: int = 20) -> list[RawJob]:
                 resp = await client.get(url)
                 if resp.status_code != 200:
                     continue
+
                 data = resp.json()
                 for job in data.get("jobs", [])[:max_per_board]:
                     title = job.get("title", "")
                     if not GREENHOUSE_KEYWORDS.search(title):
                         continue
+
                     content = BeautifulSoup(
                         job.get("content", ""), "html.parser"
                     ).get_text(separator="\n")
@@ -291,47 +300,110 @@ async def scrape_greenhouse(max_per_board: int = 20) -> list[RawJob]:
                             url=job.get("absolute_url", ""),
                             description=content[:8000],
                             source="greenhouse",
+                            source_job_id=str(job.get("id")) if job.get("id") is not None else None,
                         )
                     )
             except Exception as exc:
                 logger.warning("[Greenhouse] %s failed: %s", board, exc)
+
     logger.info("[Greenhouse] Total raw jobs: %d", len(jobs))
     return jobs
 
 
-# ─────────────────────────────────────────────
-# Main entry point
-# ─────────────────────────────────────────────
+class LinkedInSource:
+    name = "linkedin"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        if browser is None:
+            raise ValueError("LinkedInSource requires a browser")
+        return await scrape_linkedin(browser)
+
+
+class IndeedSource:
+    name = "indeed"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        if browser is None:
+            raise ValueError("IndeedSource requires a browser")
+        return await scrape_indeed(browser)
+
+
+class GreenhouseSource:
+    name = "greenhouse"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        return await scrape_greenhouse()
+
 
 async def scrape_all(headless: bool = True) -> list[RawJob]:
-    """Run all scrapers and return deduplicated RawJob list."""
-    greenhouse_jobs = await scrape_greenhouse()
+    """Run source adapters and return validated, source-aware unique jobs."""
+
+    greenhouse_source = GreenhouseSource()
+    linkedin_source = LinkedInSource()
+    indeed_source = IndeedSource()
+
+    greenhouse_jobs = await greenhouse_source.discover()
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=headless)
         linkedin_jobs, indeed_jobs = await asyncio.gather(
-            scrape_linkedin(browser),
-            scrape_indeed(browser),
+            linkedin_source.discover(browser),
+            indeed_source.discover(browser),
         )
         await browser.close()
 
+    source_batches = {
+        greenhouse_source.name: greenhouse_jobs,
+        linkedin_source.name: linkedin_jobs,
+        indeed_source.name: indeed_jobs,
+    }
+    for source_name, jobs in source_batches.items():
+        logger.info("[SourceHealth] %s discovered=%d", source_name, len(jobs))
+
     all_jobs = greenhouse_jobs + linkedin_jobs + indeed_jobs
 
-    # Deduplicate by URL within the batch (DB dedup handled by upsert_job)
+    unique = normalize_jobs(all_jobs)
+    logger.info("Total unique jobs this run: %d", len(unique))
+    return unique
+
+
+def normalize_jobs(jobs: list[RawJob]) -> list[RawJob]:
+    """Apply the production source contract and identity deduplication."""
     seen: set[str] = set()
     unique: list[RawJob] = []
-    for job in all_jobs:
-        key = job.url.split("?")[0].rstrip("/")
-        if key and key not in seen:
-            seen.add(key)
-            unique.append(job)
 
-    logger.info("Total unique jobs this run: %d", len(unique))
+    for job in jobs:
+        validation_errors = validate_raw_job(job)
+        if validation_errors:
+            logger.warning(
+                "[SourceContract] dropping invalid %s job: %s",
+                job.source or "unknown",
+                "; ".join(validation_errors),
+            )
+            continue
+
+        identity = build_job_identity(job.url, job.source)
+        if not identity.canonical_url:
+            continue
+
+        if not job.source_job_id:
+            job.source_job_id = identity.source_job_id
+
+        if identity.dedupe_key in seen:
+            continue
+
+        seen.add(identity.dedupe_key)
+
+        # Persist/use the canonical URL so downstream DB deduplication agrees
+        # with the ingestion harness.
+        job.url = identity.canonical_url
+        unique.append(job)
+
     return unique
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     jobs = asyncio.run(scrape_all(headless=False))
-    for j in jobs:
-        print(f"[{j.source}] {j.title} @ {j.company} — {j.location}")
+    for job in jobs:
+        print(f"[{job.source}] {job.title} @ {job.company} — {job.location}")
