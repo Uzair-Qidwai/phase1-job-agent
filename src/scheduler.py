@@ -402,7 +402,7 @@ def _run_pipeline(
             tailored_count = 0
 
             tailorer = tailor_cv
-            if settings.agent_workflow_enabled:
+            if settings.agent_workflow_enabled or settings.cv_review_enabled:
                 from src.agent_workflow import tailor_cv_agentic
                 tailorer = tailor_cv_agentic
 

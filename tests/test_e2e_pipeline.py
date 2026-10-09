@@ -52,7 +52,21 @@ async def test_placeholder_asyncio_plugin_is_available():
     assert True
 
 
-def test_full_pipeline_is_rank_first_and_idempotent(monkeypatch) -> None:
+@pytest.mark.parametrize("review_enabled", [False, True])
+def test_full_pipeline_is_rank_first_and_idempotent(monkeypatch, review_enabled) -> None:
+    from src.settings import get_settings
+    import src.scheduler as scheduler
+    import src.agent_workflow as workflow
+    settings = get_settings().model_copy(update={
+        "cv_review_enabled": review_enabled, "agent_workflow_enabled": False,
+        "ranking_mode": "deterministic",
+    })
+    monkeypatch.setattr(scheduler, "get_settings", lambda: settings)
+
+    def forbidden_model_ranking(**kwargs):
+        raise AssertionError("CV review must not enable model ranking")
+
+    monkeypatch.setattr(workflow, "rank_job_agentic", forbidden_model_ranking)
     strong = scraper.RawJob(
         title="Senior AI Engineer",
         company="Example AI",
@@ -112,7 +126,13 @@ def test_full_pipeline_is_rank_first_and_idempotent(monkeypatch) -> None:
         return True
 
     monkeypatch.setattr(scraper, "scrape_all", fake_scrape_all)
-    monkeypatch.setattr(cv_agent, "tailor_cv", fake_tailor_cv)
+    if review_enabled:
+        def forbidden_single_writer(**kwargs):
+            raise AssertionError("CV review must use the reviewer workflow")
+        monkeypatch.setattr(cv_agent, "tailor_cv", forbidden_single_writer)
+        monkeypatch.setattr(workflow, "tailor_cv_agentic", fake_tailor_cv)
+    else:
+        monkeypatch.setattr(cv_agent, "tailor_cv", fake_tailor_cv)
     monkeypatch.setattr(emailer, "send_digest", fake_send_digest)
 
     first_run_id = run_pipeline(trigger="manual")
