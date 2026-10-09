@@ -81,3 +81,9 @@ unverified model commentary. Two captured real-CV cases passed after a preserved
 failed trial, retaining all 42 source statements with role-specific section order.
 Human usefulness acceptance remains pending; this does not establish free-form
 rewriting quality or unattended readiness. See the CV section-emphasis report.
+
+
+A fresh saved-review pilot completed with three validated, source-preserving CVs
+and a pending snapshot, without sending mail. Matching acceptance remains open:
+high keyword scores did not establish required skill/experience coverage. Keep
+manual qualification review and resolve this gap before unattended delivery.

@@ -183,3 +183,24 @@ preview checks passed. No email or database changes occurred in these quality tr
 This improves section emphasis, not qualification gaps or profile rewriting; human
 usefulness acceptance and broader reliability remain open.
 [Sanitized quality report](../../evals/reports/cv_section_emphasis_checkpoint05.json).
+
+
+## Fresh saved-review pilot — 2026-10-09
+
+A bounded fresh LinkedIn capture returned 12 rows; two missing descriptions were
+rejected. Both previous delivery histories (six notifications) were checked before
+selecting three new candidates. Existing pilot DB backups were saved before and
+after. Production persistence, ranking, writer/reviewer and saved-review preparation
+completed: 22 model requests, three valid CVs, all 42 source statements retained
+in each, no added/omitted passages or revisions. The exact snapshot revalidated
+and remains pending, with no new notifications or delivery attempts.
+
+This exposes a matching-quality gap: high keyword scores coexist with significant
+undocumented skill and experience requirements. Private review notes flag them;
+these are not accepted matches or evidence of production readiness. Next quality
+work should distinguish role relevance from verified qualification coverage.
+
+The capture was bounded outside the scheduler; omitted-source zero counts are not
+live failure evidence. This is not an unmodified end-to-end discovery run. Delivery
+histories remain separate and were both checked. No scheduler, merge or email.
+[Sanitized report](../../evals/reports/saved_review_live_checkpoint05.json).
