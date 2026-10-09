@@ -162,3 +162,24 @@ replace one-off preview/delivery scripts. Changed job/CV/source evidence or reci
 invalidates sending; concurrent attempts and ambiguous delivery remain guarded.
 See [DIGEST_REVIEW.md](DIGEST_REVIEW.md). No new live email or model calls were made
 for this implementation. CV utility, ongoing pilot observation and hosting remain.
+
+
+## Observed CV differences and section emphasis — 2026-10-09
+
+New saved previews and digest summaries describe computed source/output differences,
+with an exact diff available in the review UI. Model-authored summaries, keywords
+and warnings are retained only as unverified audit commentary. Existing version-1
+snapshot approvals preserve their original neutral notice.
+
+Complete sections now move by role family while retaining their wording and employer
+context. The first live trial failed both cases (28 requests); unsupported rewrites
+and evidence mapping errors were blocked, including one mistaken reviewer approval.
+Writer v6 preserves complete source wording; workflow v3 clarifies evidence repair.
+The bounded retry passed both captured engineering/product cases in 10 requests,
+with all 42 source statements retained, no added/omitted passages and zero revisions.
+
+Validation: 232 tests passed in CI for `bb410a8`; lint and fictional browser diff
+preview checks passed. No email or database changes occurred in these quality trials.
+This improves section emphasis, not qualification gaps or profile rewriting; human
+usefulness acceptance and broader reliability remain open.
+[Sanitized quality report](../../evals/reports/cv_section_emphasis_checkpoint05.json).

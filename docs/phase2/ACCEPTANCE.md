@@ -74,3 +74,10 @@ Saved review workflow is now implemented (2026-10-09), with review as the delive
 default and browser/API/CLI approval of exact saved content. This closes the
 one-off-script workflow gap; it does not establish CV tailoring usefulness or
 unattended-production readiness. See DIGEST_REVIEW.md and Checkpoint 5.
+
+
+Observed-summary follow-up: new previews show actual source/output diffs and exclude
+unverified model commentary. Two captured real-CV cases passed after a preserved
+failed trial, retaining all 42 source statements with role-specific section order.
+Human usefulness acceptance remains pending; this does not establish free-form
+rewriting quality or unattended readiness. See the CV section-emphasis report.
