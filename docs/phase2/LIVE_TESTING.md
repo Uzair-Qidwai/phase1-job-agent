@@ -170,3 +170,15 @@ failure when deduplication succeeds. Empty or invalid results still fail.
 
 For the local deployment and one-shot delivery rehearsal, see
 [PILOT_DEPLOYMENT.md](PILOT_DEPLOYMENT.md) and [GMAIL_SETUP.md](GMAIL_SETUP.md).
+
+
+### Independent CV review
+
+Set `CV_REVIEW_ENABLED=true` with `AGENT_WORKFLOW_ENABLED=false` and
+`RANKING_MODE=deterministic` to use the writer/reviewer correction loop without
+promoting model ranking. The default is false; enabling the full agent workflow
+still selects all four roles. Preflight and CV evaluations include the reviewer
+when either control selects it. Model warnings and change summaries remain subject
+to human review; deterministic CV-body checks do not establish their correctness.
+This flag does not suppress email or create an approval queue: supervised tests
+must separately isolate/intercept delivery until explicitly authorized.

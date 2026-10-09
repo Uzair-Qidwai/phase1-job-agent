@@ -8,6 +8,8 @@ from src.settings import Settings, get_settings
 def check(settings: Settings) -> dict:
     from src.cv_agent import MASTER_CV_PATH
     roles = ("researcher", "analyst", "writer", "reviewer") if settings.agent_workflow_enabled else ("analyst", "writer")
+    if settings.cv_review_enabled and "reviewer" not in roles:
+        roles += ("reviewer",)
     issues, models = [], []
     for role in roles:
         try:
@@ -32,6 +34,7 @@ def check(settings: Settings) -> dict:
     if not master_path.is_file():
         issues.append("Master CV is missing")
     return {"mode": "offline_preflight", "agent_workflow_enabled": settings.agent_workflow_enabled,
+            "cv_review_enabled": settings.cv_review_enabled,
             "models": models, "request_limit": settings.pipeline_max_model_calls,
             "spend_stop_usd": settings.model_spend_stop_usd, "issues": issues,
             "ready_for_model_calls": not issues,

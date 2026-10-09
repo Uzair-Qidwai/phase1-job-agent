@@ -78,3 +78,16 @@ def test_preflight_checks_configured_private_cv_instead_of_default(tmp_path):
     assert not report['ready_for_model_calls']
     path.write_text('Fictional candidate evidence')
     assert check(settings)['ready_for_model_calls']
+
+
+def test_cv_only_review_preflight_requires_reviewer_credentials():
+    settings = Settings(_env_file=None, MODEL_PROVIDER='gemini', MODEL_NAME='configured',
+                        GEMINI_API_KEY='test-only', MODEL_INPUT_COST_PER_MTOK=0,
+                        MODEL_OUTPUT_COST_PER_MTOK=0, MODEL_SPEND_STOP_USD=.01,
+                        CV_REVIEW_ENABLED=True, AGENT_MODELS={
+                            'reviewer': {'provider': 'openai', 'model': 'review-model',
+                                         'input_cost_per_mtok': 1, 'output_cost_per_mtok': 1}})
+    report = check(settings)
+    assert {m['role'] for m in report['models']} == {'analyst', 'writer', 'reviewer'}
+    assert not report['ready_for_model_calls']
+    assert any('reviewer: configure OPENAI_API_KEY' in issue for issue in report['issues'])

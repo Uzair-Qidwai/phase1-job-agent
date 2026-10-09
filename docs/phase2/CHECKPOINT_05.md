@@ -96,3 +96,35 @@ CVs remained local and were not attached. Scheduling remains off and PR #1 Draft
 Evidence: [sanitized real-candidate pilot report](../../evals/reports/real_cv_pilot_checkpoint05.json).
 Implementation through `44d696e` passed CI #298, including configured private-CV
 preflight coverage. Final documentation CI is tracked on the draft PR.
+
+## Fresh supervised rehearsal — 2026-10-08
+
+A broad LinkedIn attempt timed out. The narrower two-query capture returned six
+listings: two had empty descriptions, one was previously emailed, and three were
+selected. Greenhouse returned one valid listing below the shortlist threshold.
+Source validation now rejects blank descriptions before deduplication; regression
+coverage proves a complete duplicate can still be retained. CI for `3d07ac2` passed.
+
+The three fresh candidates were fed into the real scheduler/persistence/ranking/CV
+path in a separate local database, with delivery intercepted before any attempt.
+The first single-writer run accepted one CV and withheld two for section-attribution
+and unsupported-claim violations. Those failures remain recorded.
+
+`CV_REVIEW_ENABLED=true` now enables the writer/reviewer loop independently of
+`AGENT_WORKFLOW_ENABLED`, allowing deterministic ranking to remain selected.
+A stage-aware retry accepted the two remaining CVs with no new scraping or ranking.
+CI for `441fcba` passed. Preflight and live evaluators also honor the independent
+reviewer selection. The exercised runs used 21 model requests across seven steps.
+
+All three final CV bodies passed deterministic checks. Two retained the source
+claim set; one omitted a teaching-assistant statement from the profile. Tailoring
+utility remains limited. A model warning incorrectly inferred Python experience;
+CV-body validation does not validate model commentary. Private human-review notes
+flag that inference and proposed digest summaries use observed claim differences.
+No new email, delivery attempt or notification was created. Private previews and a
+database backup are saved; both local database servers are stopped. Hosting remains
+deferred, and no scheduler or model-ranking promotion was enabled.
+
+This is a bounded rehearsal using current-session capture and an intercepted send
+boundary, not proof of an unmodified unattended pipeline. Evidence:
+[fresh supervised report](../../evals/reports/fresh_supervised_checkpoint05.json).

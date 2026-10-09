@@ -54,7 +54,8 @@ not guarantees of semantic truth or exactly-once external delivery.
    handling before unattended operation. Dedicated Mac DB, local restore and
    authenticated reads passed; no persistent service or scheduler is installed.
 5. Resolve Indeed unavailability through approved access or accept reduced coverage.
-6. Review a fresh supervised pipeline run before deciding scheduling and final PR
+6. Review the fresh bounded rehearsal and complete an unmodified target-host run
+   before deciding scheduling and final PR
    approval. The completed pilot reused captured listings and reviewed CV previews;
    it did not prove unattended end-to-end operation. Main remains unmerged.
 
@@ -62,3 +63,8 @@ The user explicitly authorized real CV transmission to Gemini and the single pil
 email. CVs were not attached; private evidence and credentials remain untracked.
 Full evidence: [Checkpoint 5](CHECKPOINT_05.md) and its sanitized reports.
 See also [PILOT_DEPLOYMENT.md](PILOT_DEPLOYMENT.md) and [OPERATIONS.md](OPERATIONS.md).
+
+Fresh rehearsal follow-up: three CV bodies now pass after one recorded failed run
+and a two-job reviewer retry. No new email was sent. Model commentary may still
+infer unsupported skills; private review notes flag the observed example. See
+Checkpoint 5 for scope, source failures and sanitized evidence.

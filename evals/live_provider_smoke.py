@@ -24,6 +24,8 @@ GOLD = Path(__file__).parent / "ranking_gold.json"
 
 def evaluate(settings, budget, steps) -> dict:
     roles = ("researcher", "analyst", "writer", "reviewer") if settings.agent_workflow_enabled else ("analyst", "writer")
+    if settings.cv_review_enabled and "reviewer" not in roles:
+        roles += ("reviewer",)
     for role in roles:
         settings.require_model_key(settings.agent_config(role).provider)
 
@@ -35,6 +37,9 @@ def evaluate(settings, budget, steps) -> dict:
     if settings.agent_workflow_enabled:
         from src.agent_workflow import rank_job_agentic, tailor_cv_agentic
         ranker, tailorer = rank_job_agentic, tailor_cv_agentic
+    elif settings.cv_review_enabled:
+        from src.agent_workflow import tailor_cv_agentic
+        tailorer = tailor_cv_agentic
 
     ranking = ranker(
         title=job["title"],
@@ -55,6 +60,7 @@ def evaluate(settings, budget, steps) -> dict:
     report = {
         "job_id": job["id"],
         "agent_workflow_enabled": settings.agent_workflow_enabled,
+            "cv_review_enabled": settings.cv_review_enabled,
         "agent_steps": ranking.agent_steps + tailored["agent_steps"],
         "semantic_ranking": {
             "score": ranking.total_score,

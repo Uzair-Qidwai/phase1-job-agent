@@ -142,3 +142,13 @@ acceptance remain pending. Automatic agent mode is still disabled.
 human-approved three-job staged digest. Mac database/restore/protected-read checks
 passed. Private CVs and credentials remain untracked. Model ranking failed its
 promotion gate; deterministic ranking remains configured. No scheduler or merge.
+
+
+## Fresh supervised follow-up
+
+Three current-session candidates traversed isolated persistence and deterministic
+ranking. One single-writer CV passed; two were rejected and then passed a CV-only
+writer/reviewer retry. No repeat scrape/rank or new email occurred. Independent
+`CV_REVIEW_ENABLED` supports this configuration; missing source descriptions are
+now rejected. Raw model warnings/summaries still require review, and final CV
+usefulness remains a release gate. See Checkpoint 5 for preserved failures/limits.

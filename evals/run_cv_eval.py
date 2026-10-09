@@ -11,7 +11,7 @@ def evaluate(settings, budget, steps):
     dataset = json.loads((Path(__file__).parent / "ranking_gold.json").read_text())
     jobs = [j for j in dataset["jobs"] if j["label"] == "strong"][:3]
     results = []
-    tailorer = tailor_cv_agentic if settings.agent_workflow_enabled else tailor_cv
+    tailorer = tailor_cv_agentic if (settings.agent_workflow_enabled or settings.cv_review_enabled) else tailor_cv
     for job in jobs:
         try:
             result = tailorer(job_title=job["title"], company=job["company"], description=job["description"],
