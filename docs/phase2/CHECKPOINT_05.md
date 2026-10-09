@@ -3,7 +3,7 @@
 Date: 2026-10-08. Branch: `phase2-foundation`. PR #1 remains Draft.
 
 **Status: one human-approved, three-job staged pilot digest sent. Inbox receipt
-is pending. Model ranking failed its promotion gate and remains disabled.
+is confirmed by the user. Model ranking failed its promotion gate and remains disabled.
 Unattended production is not accepted; no merge or scheduler enablement.**
 
 ## Four requested workstreams
@@ -88,7 +88,7 @@ A dedicated loopback PostgreSQL database on the Mac uses a non-superuser app
 role. Repeated migrations, backup/restore and four protected read endpoints passed.
 The user approved one digest after preview review. Gmail acknowledged one email
 covering three jobs; the durable delivery is sent, three notifications are recorded,
-and zero candidates remain for repeat delivery. Inbox confirmation is pending.
+and zero candidates remain for repeat delivery. The user confirmed inbox receipt on 2026-10-08.
 This was a staged pilot using captured listings and reviewed previews, with zero
 new model calls during delivery, not a fresh automated end-to-end pipeline run.
 CVs remained local and were not attached. Scheduling remains off and PR #1 Draft.

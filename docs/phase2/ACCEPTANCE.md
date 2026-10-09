@@ -42,8 +42,8 @@ not guarantees of semantic truth or exactly-once external delivery.
 
 ## Remaining acceptance gates
 
-1. Confirm receipt of the one approved three-job pilot digest. Transport acknowledged
-   it and durable records suppress repeats; this does not itself prove inbox receipt.
+1. Completed: the user confirmed inbox receipt of the one approved three-job
+   pilot digest on 2026-10-08. Transport and durable delivery records also passed.
 2. Review ranking quality and benchmark relevance without changing labels merely
    to obtain a pass. Real-candidate model P@5 0.8/pairwise 0.96 regressed from 1.0/1.0.
    Keep automatic model ranking off.

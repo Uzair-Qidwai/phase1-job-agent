@@ -122,7 +122,7 @@ The ranking promotion gate failed (Precision@5 0.8, pairwise 0.96 versus 1.0/1.0
 model ranking and automatic specialist workflow remain disabled. Three reviewed
 CV previews passed factuality while retaining the source claims unchanged.
 One explicitly approved staged pilot digest was acknowledged by Gmail; inbox
-confirmation is pending. Production still needs quality acceptance, off-host
+receipt was confirmed by the user on 2026-10-08. Production still needs quality acceptance, off-host
 backups, independent alerts, OAuth lifetime handling and a scheduling decision.
 Passing CI does not authorize a merge. See [Checkpoint 5](CHECKPOINT_05.md).
 

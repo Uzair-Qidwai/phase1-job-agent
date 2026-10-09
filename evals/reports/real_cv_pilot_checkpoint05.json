@@ -40,10 +40,11 @@
     "status": "transport_acknowledged",
     "durable_status": "sent",
     "duplicate_candidates_after_send": 0,
-    "inbox_confirmation": "pending",
+    "inbox_confirmation": "confirmed_by_user",
     "fresh_scrape": false,
     "new_model_calls": 0,
-    "cv_attachments": false
+    "cv_attachments": false,
+    "inbox_confirmed_on": "2026-10-08"
   },
   "automatic_model_ranking": false,
   "scheduler_enabled": false,
