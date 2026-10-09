@@ -58,7 +58,8 @@ def _build_html(jobs: list[dict], *, reviewed: bool = False) -> str:
     rows = ""
     for job in jobs:
         score = job.get("match_score") or 0.0
-        changes = escape(str(job.get("changes_made") or "—")[:200], quote=True)
+        full_changes = str(job.get("changes_made") or "—")
+        changes = escape(full_changes[:200], quote=True) + ("…" if len(full_changes) > 200 else "")
         title = escape(str(job.get("title") or ""), quote=True)
         company = escape(str(job.get("company") or ""), quote=True)
         location = escape(str(job.get("location") or "—"), quote=True)
@@ -76,7 +77,7 @@ def _build_html(jobs: list[dict], *, reviewed: bool = False) -> str:
             {_score_badge(score)}
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#475569;font-size:13px;">
-            {changes}…
+            {changes}
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">
             {source}

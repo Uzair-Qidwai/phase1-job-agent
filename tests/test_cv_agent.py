@@ -83,7 +83,7 @@ class TestTailorCV(unittest.TestCase):
             "Build AI systems.",
             client=fake_client(),
         )
-        self.assertEqual(result["prompt_version"], "phase2-cv-v4")
+        self.assertEqual(result["prompt_version"], "phase2-cv-v5")
         self.assertEqual(result["profile_version"], "1")
         self.assertTrue(result["model"])
 
@@ -140,3 +140,15 @@ def test_private_master_cv_override_is_used_without_fallback(monkeypatch, tmp_pa
             _load_master_cv()
     finally:
         get_settings.cache_clear()
+
+
+def test_model_change_claims_and_warnings_are_not_presented_as_verified():
+    payload={**SAMPLE_RESPONSE,'changes_made':'Added proven Python expertise.',
+             'warnings':['Python is evidenced by adjacent project work.'],
+             'keywords_added':['Python']}
+    result=tailor_cv('Unclassified role','Example','Example requirements.',client=fake_client(payload))
+    assert result['changes_made']=='Source CV unchanged.'
+    assert not any('Python' in warning for warning in result['warnings'])
+    assert result['keywords_added']==[]
+    assert result['validation']['unverified_model_commentary']['changes_made']==payload['changes_made']
+    assert result['validation']['observed_changes']['added_or_revised_passages']==0

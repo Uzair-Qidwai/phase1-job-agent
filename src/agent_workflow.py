@@ -118,6 +118,9 @@ def tailor_cv_agentic(*, job_title, company, description, runtime: AgentRuntime 
             "writer", instructions=WRITER_PROMPT, prompt=task, tools=tools,
             output_type=TailoredCVResult, prompt_version=CV_PROMPT_VERSION,
         ).output
+        from src.cv_changes import emphasize_sections
+        arranged, layout = emphasize_sections(draft.tailored_cv, job_title)
+        draft = draft.model_copy(update={"tailored_cv": arranged})
         validation = validate_tailored_cv(draft, master_cv=master_cv, candidate_profile_text=profile_text)
 
         @function_tool
@@ -136,6 +139,7 @@ def tailor_cv_agentic(*, job_title, company, description, runtime: AgentRuntime 
         if review.decision == "approve" and not review.issues and validation.valid:
             payload = assemble_cv_payload(draft, validation, master_cv=master_cv,
                                           profile_version=profile.version, runtime=runtime)
+            payload["validation"]["layout"] = layout
             payload["validation"]["agent_review"] = {
                 "workflow_version": WORKFLOW_VERSION, "revisions": revision, "reviews": reviews,
                 "provider": runtime.steps[-1]["provider"], "model": runtime.steps[-1]["model"],

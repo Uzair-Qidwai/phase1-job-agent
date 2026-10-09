@@ -212,3 +212,28 @@ def test_authenticated_api_review_and_send_flow(monkeypatch):
     assert client.post(path+'/send',headers=headers,json=body).json()=={'jobs_notified':1}
     assert client.post(path+'/send',headers=headers,json=body).status_code==409
     assert sent==[batch['snapshot']]
+
+
+def test_old_neutral_snapshot_remains_sendable_without_regeneration():
+    batch=prepared();snapshot=batch['snapshot'];snapshot['version']=1
+    for job in snapshot['jobs']:
+        job.pop('observed_changes')
+        job['changes_made']='CV preview available for review; qualifications require verification.'
+    # Simulate a persisted version-one preview created before deterministic summaries.
+    digest=review.fingerprint(snapshot)
+    with tracker.get_conn() as conn,conn.cursor() as cur:
+        cur.execute('UPDATE digest_batches SET snapshot=%s,fingerprint=%s WHERE id=%s',
+                    (Json(snapshot),digest,batch['id']))
+    review.approve_batch(str(batch['id']),digest)
+    sent=[]
+    assert review.send_batch(str(batch['id']),digest,
+                             transport=lambda snapshot,**kw:sent.append(snapshot) or True)==1
+    assert sent[0]==snapshot
+
+
+def test_preview_uses_real_diff_instead_of_unverified_stored_summary():
+    batch=prepared();job=batch['snapshot']['jobs'][0]
+    assert batch['snapshot']['version']==2
+    assert job['changes_made']=='Source CV unchanged.'
+    assert job['observed_changes']['diff']==''
+    assert 'UNVERIFIED MODEL COMMENTARY' not in batch['snapshot']['html']

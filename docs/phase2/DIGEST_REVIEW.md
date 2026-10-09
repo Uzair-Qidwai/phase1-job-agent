@@ -23,10 +23,12 @@ There is one open batch at a time. New eligible jobs stay queued for the next
 batch. Cancel a pending/approved batch to select different jobs or regenerate a
 changed preview. Cancellation does not delete jobs or CV history.
 
-Model-generated change summaries and warnings are not factuality-validated, so
-reviewed emails currently use a neutral CV-review notice. Useful, verified change
-summaries remain a separate quality improvement. The CV previews are private
-review material, never email attachments.
+Model-generated change summaries and warnings are not factuality-validated. New
+batches therefore calculate summaries from the actual source/preview differences
+and expose an exact text diff under each CV. Added/revised or omitted/replaced
+passages are counts of text differences, not claims of new verified qualifications.
+Old saved batches retain their original neutral notices and approved contents.
+CV previews remain private review material, never email attachments.
 
 ## Command-line workflow
 

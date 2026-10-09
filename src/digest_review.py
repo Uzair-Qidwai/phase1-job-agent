@@ -43,8 +43,10 @@ def list_batches(limit: int = 20) -> list[dict]:
         return [dict(r) for r in cur.fetchall()]
 
 
-def _current_jobs(job_ids: list[str]) -> list[dict]:
-    source_hash = hashlib.sha256(_load_master_cv().encode()).hexdigest()
+def _current_jobs(job_ids: list[str], *, observed_summaries: bool = True) -> list[dict]:
+    from src.cv_changes import describe_changes
+    source = _load_master_cv()
+    source_hash = hashlib.sha256(source.encode()).hexdigest()
     with tracker.get_conn() as conn, conn.cursor() as cur:
         cur.execute("""SELECT j.id, j.title, j.company, j.location, j.url, j.source,
             j.match_score, j.system_state, j.cv_version_id, j.description,
@@ -61,14 +63,19 @@ def _current_jobs(job_ids: list[str]) -> list[dict]:
                 or row['match_score'] is None or not row['tailored_cv'] or (row['validation'] or {}).get('valid') is not True
                 or row['source_cv_sha256'] != source_hash):
             raise ValueError("Jobs or source CV changed, are unvalidated, or already sent; prepare a new batch")
-        result.append({
+        changes = describe_changes(source, row["tailored_cv"])
+        item = {
             **{k: row[k] for k in ('title', 'company', 'location', 'url', 'source', 'description')},
             'id': job_id, 'match_score': float(row['match_score']),
             'cv_version_id': str(row['cv_version_id']),
             'cv_text': row['tailored_cv'], 'source_cv_sha256': row['source_cv_sha256'],
             # Model commentary is not evidence-validated. Keep it out of reviewed mail.
-            'changes_made': 'CV preview available for review; qualifications require verification.',
-        })
+            'changes_made': (changes['summary'] if observed_summaries else
+                             'CV preview available for review; qualifications require verification.'),
+        }
+        if observed_summaries:
+            item['observed_changes'] = changes
+        result.append(item)
     return result
 
 
@@ -79,7 +86,10 @@ def _validate(batch: dict, expected: str) -> None:
     snap = batch['snapshot']
     if (settings.gmail_sender, settings.digest_recipient) != (snap['sender'], snap['recipient']):
         raise ValueError("Sender or recipient changed; cancel and prepare a new batch")
-    if _current_jobs([j['id'] for j in snap['jobs']]) != snap['jobs']:
+    if snap.get('version') not in {1, 2}:
+        raise ValueError('Unknown preview version; prepare a new batch')
+    if _current_jobs([j['id'] for j in snap['jobs']],
+                     observed_summaries=snap['version'] >= 2) != snap['jobs']:
         raise ValueError("Job or CV preview changed; cancel and prepare a new batch")
 
 
@@ -113,7 +123,7 @@ def _prepare_batch(job_ids: list[str] | None = None, *, limit: int = 5) -> dict 
     if any(c in settings.gmail_sender + settings.digest_recipient for c in '\r\n'):
         raise ValueError("Invalid email address")
     jobs = _current_jobs(job_ids)
-    snapshot = {'version': 1, 'sender': settings.gmail_sender,
+    snapshot = {'version': 2, 'sender': settings.gmail_sender,
                 'recipient': settings.digest_recipient, 'jobs': jobs,
                 'subject': f"📋 Job Digest — {len(jobs)} new match{'es' if len(jobs) != 1 else ''}",
                 'html': _build_html(jobs, reviewed=True)}

@@ -128,3 +128,22 @@ def test_writer_and_reviewer_use_independent_models_and_prices():
     assert result["cost_estimate_complete"] is False
     assert result["agent_steps"][0]["estimated_cost_usd"] == pytest.approx(0.00014)
     assert result["agent_steps"][1]["estimated_cost_usd"] is None
+
+
+def test_reviewer_sees_final_section_emphasis_before_approval(monkeypatch):
+    import json
+    master = ('# Candidate\n\n## Education\nExpected graduation in 2027.\n\n'
+              '## Projects\nBuilt Python systems for financial analytics and reporting.\n')
+    monkeypatch.setattr(workflow, '_load_master_cv', lambda: master)
+    draft = {**DRAFT, 'tailored_cv': master}
+    model = FakeModel([message(draft), message(APPROVE)])
+    runtime = AgentRuntime(settings=Settings(_env_file=None, MODEL_PROVIDER='openai', MODEL_NAME='fake'),
+                           model_factory=lambda _: model)
+    result = tailor(runtime)
+    assert result['validation']['layout']['sections_reordered']
+    assert result['tailored_cv'].index('## Projects') < result['tailored_cv'].index('## Education')
+    reviewer_input = model.inputs[1]
+    if isinstance(reviewer_input, list):
+        reviewer_input = reviewer_input[0]['content']
+    reviewed = json.loads(reviewer_input)
+    assert reviewed['untrusted_draft']['tailored_cv'] == result['tailored_cv']

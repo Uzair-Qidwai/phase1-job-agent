@@ -16,7 +16,7 @@ from src.model_runtime import AgentRuntime
 logger = logging.getLogger(__name__)
 
 MASTER_CV_PATH = Path(__file__).parent.parent / "data" / "master_cv.md"
-CV_PROMPT_VERSION = "phase2-cv-v4"
+CV_PROMPT_VERSION = "phase2-cv-v5"
 
 SYSTEM_PROMPT = """
 You are a CV tailoring assistant.
@@ -44,7 +44,10 @@ Return one JSON object only, with this schema:
 }
 
 Rules:
-1. Reorder complete source statements only WITHIN their original section/role.
+1. Preserve every source heading and its Markdown heading depth. Keep employers,
+   dates and statements together inside their original section/role. The application
+   can reorder complete top-level sections for presentation; do not nest one source
+   section under another. Reorder complete source statements only WITHIN their original section/role.
    Preserve source headings, employer attribution, and the factual word order.
 2. Do not introduce factual terms absent from the supporting source statement.
 3. Do not omit major CV sections.
@@ -137,6 +140,9 @@ Tailor the CV for this role. Respond only with the required JSON object.
         model=model, max_tokens=max_tokens, legacy_client=client,
     )
     result = execution.output
+    from src.cv_changes import emphasize_sections
+    arranged, layout = emphasize_sections(result.tailored_cv, job_title)
+    result = result.model_copy(update={"tailored_cv": arranged})
     validation = validate_tailored_cv(
         result,
         master_cv=master_cv,
@@ -152,14 +158,24 @@ Tailor the CV for this role. Respond only with the required JSON object.
         }
         raise ValueError(f"Tailored CV failed factuality validation: {details}")
 
-    return assemble_cv_payload(result, validation, master_cv=master_cv,
-                               profile_version=profile.version, runtime=runtime)
+    payload = assemble_cv_payload(result, validation, master_cv=master_cv,
+                                  profile_version=profile.version, runtime=runtime)
+    payload["validation"]["layout"] = layout
+    return payload
 
 
 def assemble_cv_payload(result, validation, *, master_cv: str,
                         profile_version: str, runtime: AgentRuntime) -> dict:
     writer_step = next(step for step in reversed(runtime.steps) if step["role"] == "writer")
+    from src.cv_changes import describe_changes
     payload = result.model_dump()
+    changes = describe_changes(master_cv, result.tailored_cv)
+    unverified = {k: payload[k] for k in ('changes_made', 'warnings', 'keywords_added')}
+    payload['changes_made'] = changes['summary']
+    payload['keywords_added'] = []  # Model suggestions are not verified CV additions.
+    payload['warnings'] = ['Job fit and undocumented qualifications require human review.']
+    if changes['omitted_or_replaced_passages']:
+        payload['warnings'].append('Source wording was omitted or replaced; inspect the differences.')
     payload["model"] = writer_step["model"]
     payload["provider"] = writer_step["provider"]
     payload["prompt_version"] = CV_PROMPT_VERSION
@@ -169,7 +185,8 @@ def assemble_cv_payload(result, validation, *, master_cv: str,
     ).hexdigest()
     payload.update(runtime.totals())
     payload["agent_steps"] = list(runtime.steps)
-    payload["validation"] = validation.model_dump()
+    payload["validation"] = {**validation.model_dump(), "observed_changes": changes,
+                             "unverified_model_commentary": unverified}
     return payload
 
 

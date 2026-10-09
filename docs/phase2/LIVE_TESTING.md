@@ -182,3 +182,18 @@ when either control selects it. Model warnings and change summaries remain subje
 to human review; deterministic CV-body checks do not establish their correctness.
 This flag does not suppress email or create an approval queue: supervised tests
 must separately isolate/intercept delivery until explicitly authorized.
+
+
+### Source-preserving presentation and summaries
+
+Writer v5 retains heading depth and employer attribution. The application can
+reorder whole Markdown level-two sections for engineering, product or quantitative
+roles, preserving each section's complete text. Unknown layouts/roles are unchanged.
+This fixed presentation heuristic runs before deterministic validation and reviewer
+inspection; it is not evidence of improved job-fit or permission to add skills.
+
+Public change summaries and warning text are application-generated. The validation
+metadata retains `unverified_model_commentary` separately for diagnosis, plus an
+`observed_changes` report and exact source/preview diff. Model claims about added
+skills are not promoted to the digest. Snapshot version 2 includes observed changes;
+version 1 approvals continue to refer to their original saved email.
