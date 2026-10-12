@@ -278,3 +278,8 @@ The fresh read-only employer-board pass captured 1,627 postings and yielded seve
 Greenhouse discovery now decodes escaped HTML, applies its cap after title filtering and preserves full descriptions so sponsorship restrictions at the end are not dropped. Capco/Zafin boards are included. The attempted word-boundary scoring change reduced synthetic pairwise accuracy (.975 to .945833) and was reverted; original ranking metrics remain intact.
 
 Validation: 260 local tests passed, including sponsorship negatives/conflicts, exact rating precedence, source-tail preservation and an end-to-end hold preventing CV generation/delivery. Lint and offline acceptance passed. See evals/reports/international_selection_checkpoint05.json. Private full results: .local/international-selection/REVIEW.md. Scheduler remains off, PR remains draft, and no merge is authorized. Next: exercise these selection rules in the next supervised pipeline run, broaden reliable board coverage, then complete deployment gates.
+
+
+### Release-candidate discovery coverage — 2026-10-12
+
+The fresh diagnostic returned HTTP 200 from WorkOS, Cohere and MaintainX's public Ashby boards. Normal discovery now includes these three feeds, retaining public listing IDs, full description text and secondary locations while excluding unlisted postings. A live adapter check normalized 112 jobs (22 WorkOS, 56 Cohere, 34 MaintainX). The configured Chainalysis and Alchemy Greenhouse addresses returned 404; those remain coverage gaps. Full regression suite: 262 passed; lint/offline acceptance passed. The native release-candidate pilot began before this adapter addition and its results must be labeled accordingly.

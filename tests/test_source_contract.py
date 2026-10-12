@@ -118,3 +118,42 @@ async def test_greenhouse_preserves_sponsorship_tail_and_filters_before_limit(mo
     assert len(jobs) == 1
     assert jobs[0].description.endswith('We cannot sponsor visas.')
     assert '<p>' not in jobs[0].description
+
+
+@pytest.mark.asyncio
+async def test_ashby_skips_unlisted_and_preserves_secondary_locations(monkeypatch):
+    import httpx
+    import src.scraper as scraper
+    posting = {'id': 'abc', 'title': 'Applied AI Engineer', 'isListed': True,
+               'location': 'New York, NY', 'secondaryLocations': [{'location': 'Toronto, Canada'}],
+               'jobUrl': 'https://jobs.ashbyhq.com/example/abc',
+               'descriptionPlain': 'Build AI. We do sponsor visas.'}
+
+    async def get(self, url):
+        return httpx.Response(200, request=httpx.Request('GET', url),
+                              json={'jobs': [posting, {**posting, 'id': 'hidden', 'isListed': False}]})
+
+    monkeypatch.setattr(httpx.AsyncClient, 'get', get)
+    monkeypatch.setattr(scraper, 'ASHBY_BOARDS', ['example'])
+    jobs = await scraper.AshbySource().discover()
+    assert len(jobs) == 1
+    assert jobs[0].source_job_id == 'abc'
+    assert jobs[0].location == 'New York, NY | Toronto, Canada'
+    assert jobs[0].description.endswith('We do sponsor visas.')
+
+
+@pytest.mark.asyncio
+async def test_ashby_failed_board_does_not_drop_other_board(monkeypatch):
+    import httpx
+    import src.scraper as scraper
+
+    async def get(self, url):
+        if '/bad' in url:
+            raise httpx.ConnectError('unreachable')
+        return httpx.Response(200, request=httpx.Request('GET', url), json={'jobs': [{
+            'id': 'ok', 'title': 'AI Engineer', 'isListed': True, 'location': 'Toronto',
+            'jobUrl': 'https://jobs.ashbyhq.com/good/ok', 'descriptionPlain': 'Build AI'}]})
+
+    monkeypatch.setattr(httpx.AsyncClient, 'get', get)
+    monkeypatch.setattr(scraper, 'ASHBY_BOARDS', ['bad', 'good'])
+    assert len(await scraper.AshbySource().discover()) == 1

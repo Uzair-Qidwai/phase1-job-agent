@@ -24,7 +24,7 @@ from src.job_identity import build_job_identity
 
 logger = logging.getLogger(__name__)
 
-SOURCE_NAMES = ("greenhouse", "linkedin", "indeed")
+SOURCE_NAMES = ("greenhouse", "ashby", "linkedin", "indeed")
 
 
 @dataclass
@@ -318,6 +318,41 @@ async def scrape_greenhouse(max_per_board: int = 20) -> list[RawJob]:
     return jobs
 
 
+ASHBY_BOARDS = ["workos", "cohere", "maintainx"]
+
+
+class AshbySource:
+    name = "ashby"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        jobs = []
+        async with httpx.AsyncClient(timeout=15) as client:
+            for board in ASHBY_BOARDS:
+                try:
+                    response = await client.get(
+                        f"https://api.ashbyhq.com/posting-api/job-board/{board}"
+                    )
+                    response.raise_for_status()
+                    for posting in response.json().get("jobs", []):
+                        if not posting.get("isListed", False):
+                            continue
+                        title = posting.get("title", "")
+                        if not GREENHOUSE_KEYWORDS.search(title):
+                            continue
+                        locations = [posting.get("location", "")]
+                        locations.extend(loc.get("location", "") for loc in
+                                         posting.get("secondaryLocations", []))
+                        jobs.append(RawJob(
+                            title=title, company=board, location=" | ".join(filter(None, locations)),
+                            url=posting.get("jobUrl", ""),
+                            description=posting.get("descriptionPlain", ""),
+                            source=self.name, source_job_id=posting.get("id"),
+                        ))
+                except (httpx.HTTPError, ValueError, TypeError, AttributeError) as exc:
+                    logger.warning("[Ashby] %s failed: %s", board, type(exc).__name__)
+        return jobs
+
+
 class LinkedInSource:
     name = "linkedin"
 
@@ -350,7 +385,10 @@ async def scrape_all(headless: bool = True) -> list[RawJob]:
     linkedin_source = LinkedInSource()
     indeed_source = IndeedSource()
 
-    greenhouse_jobs = await greenhouse_source.discover()
+    ashby_source = AshbySource()
+    greenhouse_jobs, ashby_jobs = await asyncio.gather(
+        greenhouse_source.discover(), ashby_source.discover(),
+    )
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=headless)
@@ -362,13 +400,14 @@ async def scrape_all(headless: bool = True) -> list[RawJob]:
 
     source_batches = {
         greenhouse_source.name: greenhouse_jobs,
+        ashby_source.name: ashby_jobs,
         linkedin_source.name: linkedin_jobs,
         indeed_source.name: indeed_jobs,
     }
     for source_name, jobs in source_batches.items():
         logger.info("[SourceHealth] %s discovered=%d", source_name, len(jobs))
 
-    all_jobs = greenhouse_jobs + linkedin_jobs + indeed_jobs
+    all_jobs = greenhouse_jobs + ashby_jobs + linkedin_jobs + indeed_jobs
 
     unique = normalize_jobs(all_jobs)
     logger.info("Total unique jobs this run: %d", len(unique))
