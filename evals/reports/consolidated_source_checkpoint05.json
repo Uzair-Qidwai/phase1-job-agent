@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-12",
+  "scope": "Consolidated user-provided evidence and confirmed timeline; CV-only regeneration of three previously captured pilot listings",
+  "initial_trial": {
+    "passed": 1,
+    "cases": 3,
+    "requests": 24,
+    "failures": {
+      "reviewer": "ServiceUnavailableError",
+      "writer": "ServiceUnavailableError"
+    }
+  },
+  "bounded_retry": {
+    "passed": 2,
+    "cases": 2,
+    "requests": 20
+  },
+  "combined": {
+    "passed": 3,
+    "cases": 3,
+    "requests": 44,
+    "source_statements_per_cv": 56,
+    "added_or_revised_passages": 0,
+    "omitted_or_replaced_passages": 0,
+    "revisions": 0
+  },
+  "evidence_policy": {
+    "user_confirmed_timeline": true,
+    "compendium_technical_assertions_included": true,
+    "counsellor_illustrative_claims_excluded": true,
+    "unresolved_financial_claims_excluded": true,
+    "independently_verified": false
+  },
+  "activation": {
+    "private_source_activated": true,
+    "prior_cv_versions_retained": true,
+    "old_pending_snapshot_cancelled": true,
+    "new_snapshot_status": "pending",
+    "snapshot_revalidated": true,
+    "backups_before_and_after": true,
+    "emails_sent": 0,
+    "new_delivery_attempts": 0
+  },
+  "limits": [
+    "Previously captured listings; current vacancy availability not checked",
+    "Source-preserving section order, not finished two-page targeted resumes",
+    "Qualification mentions do not certify proficiency or duration",
+    "Matching acceptance and unattended production gates remain open"
+  ],
+  "code_changes": false
+}

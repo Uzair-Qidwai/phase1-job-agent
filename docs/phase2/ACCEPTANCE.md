@@ -92,3 +92,9 @@ Qualification triage now exposes documented mentions and gaps separately from ro
 relevance. It does not certify proficiency or replace matching-quality acceptance.
 Evaluate extraction coverage and human usefulness before considering automatic
 qualification decisions; existing ranking benchmark labels/weights are unchanged.
+
+
+Consolidated-source follow-up: three regenerated CVs pass with all 56 source
+statements retained after bounded provider-failure retries. A replacement digest
+is pending and unsent. Remaining editorial work is a concise role-specific resume
+view; full evidence inventories and skill mentions are not final fit acceptance.

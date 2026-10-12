@@ -212,3 +212,24 @@ Role relevance remains the existing keyword score; required/preferred requiremen
 text, missing skill documentation, source excerpts and duration flags are separate.
 Human qualification review is still required. Captured-pilot replay flags gaps on all
 three jobs without model calls. See Checkpoint 5 and DIGEST_REVIEW.md for limits.
+
+
+## Consolidated evidence pilot — 2026-10-12
+
+The private source now combines user-confirmed timeline corrections with technical
+experience asserted in the supplied compendium. Counsellor examples and unresolved
+financial claims remain excluded. No personal evidence is committed.
+
+CV-only evaluation initially accepted one of three cases (24 requests); two failed
+with provider service-unavailable errors. One bounded retry accepted both remaining
+cases (20 requests). All three final CVs retain 56 source statements, no added or
+omitted passages and zero revisions. Failures remain in the private evidence record.
+
+The consolidated source is active locally. Three new CV versions and a revalidated
+pending digest replace the older pending preview, preserving earlier versions and
+backups before/after. No email or delivery attempt was created; databases stopped.
+This reused captured listings, not a fresh availability check. These are full
+evidence inventories with section ordering, not finished targeted two-page resumes.
+Qualification and human usefulness acceptance remain open. No application code,
+ranking settings, scheduler or hosting changes.
+[Sanitized report](../../evals/reports/consolidated_source_checkpoint05.json).
