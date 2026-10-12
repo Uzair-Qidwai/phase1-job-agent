@@ -233,3 +233,22 @@ evidence inventories with section ordering, not finished targeted two-page resum
 Qualification and human usefulness acceptance remain open. No application code,
 ranking settings, scheduler or hosting changes.
 [Sanitized report](../../evals/reports/consolidated_source_checkpoint05.json).
+
+
+## Bounded editorial delivery — 2026-10-12
+
+Delivered two distinct, two-page resume review drafts (applied AI engineering and
+technical fintech product management), editable text, and a ten-job review with
+primary employer links, evidence, gaps and user ratings. All four PDF pages were
+visually inspected; confirmed dates, degree-in-progress status and exclusion of
+illustrative metrics were checked. The local rating interface was verified.
+
+This is human editorial work, not a change to automatic generation or ranking.
+Paraphrases are not claimed to have passed the conservative CV validator. Ten
+listings were verified in current official employer pages/feeds; stale hits were
+excluded. Editorial assessment is five prioritize, three conditional, two deprioritize.
+The proposed eight-of-ten user acceptance target is not yet measured. One user
+review/correction pass remains, then freeze this version and proceed to the
+end-to-end pilot, retaining manual selection if needed. No fresh model calls,
+email or application submissions. Personal artifacts remain private and untracked.
+[Sanitized report](../../evals/reports/bounded_quality_review_checkpoint05.json).
