@@ -1,0 +1,34 @@
+{
+  "checked_at": "2026-10-12T20:48:42.150066+00:00",
+  "postings": 1627,
+  "source_failures": [
+    {
+      "board": "chainalysis",
+      "error": "HTTPError"
+    },
+    {
+      "board": "alchemy",
+      "error": "HTTPError"
+    },
+    {
+      "board": "workos",
+      "error": "HTTPError"
+    },
+    {
+      "board": "cohere",
+      "error": "HTTPError"
+    },
+    {
+      "board": "maintainx",
+      "error": "HTTPError"
+    }
+  ],
+  "automatically_eligible_at_65": 7,
+  "policy": "2-user-feedback-international",
+  "new_user_acceptance": "not_measured",
+  "model_calls": 0,
+  "sent": 0,
+  "scheduler_enabled": false,
+  "keyword_scoring_experiment": "reverted: synthetic pairwise accuracy fell from .975 to .945833",
+  "remaining": "Broaden source coverage and evaluate quality of automatic selections; deployment gates unchanged."
+}

@@ -111,3 +111,16 @@ from this batch. This does not create company-wide exclusions or alter ranking
 weights, benchmark labels, resume approval, email authorization or applications.
 The older pending digest is unchanged. Refresh the selected vacancies before the
 next pilot. [Sanitized result](../../evals/reports/user_ratings_checkpoint05.json).
+
+
+### 2026-10-12 — Feedback-tuned automatic selection and international scope
+
+The user superseded the manual-selection fallback and requested another automatic-selection pass. Profile v2 preserves all ten exact vacancy decisions, prioritizes applied AI/AI engineering and technical product roles, and holds broader senior/staff product roles as stretch. These are provisional preference rules inferred from a small feedback set, not model training or demonstrated acceptance improvement.
+
+Discovery now includes NYC, San Francisco, Los Angeles and London, UK, alongside existing Canadian scope. The pipeline applies a separate selection gate before CV generation regardless of ranking provider. International roles require explicit sponsorship willingness; an employer's affirmative sponsorship policy with a general per-candidate caveat is eligible but marked offered_with_caveat. Silence, hypothetical offers and conflicting or negative statements remain held. Remote alone does not establish geographic eligibility. Exact Keep ratings cannot bypass sponsorship checks. Selection decisions and exact sponsorship excerpts are recorded in pipeline events.
+
+The fresh read-only employer-board pass captured 1,627 postings and yielded seven candidates at the existing 65-point threshold: Capco and Zafin in Toronto, plus five Anthropic applied-AI roles in London or NYC/SF. All five international candidates have a general sponsorship caveat, not guaranteed individual sponsorship. No qualifying LA result was found. Five board requests failed; coverage is incomplete. No new user acceptance score is claimed, and none of these roles was sent or applied to. The older pending digest remains unchanged.
+
+Greenhouse discovery now decodes escaped HTML, applies its cap after title filtering and preserves full descriptions so sponsorship restrictions at the end are not dropped. Capco/Zafin boards are included. The attempted word-boundary scoring change reduced synthetic pairwise accuracy (.975 to .945833) and was reverted; original ranking metrics remain intact.
+
+Validation: 260 local tests passed, including sponsorship negatives/conflicts, exact rating precedence, source-tail preservation and an end-to-end hold preventing CV generation/delivery. Lint and offline acceptance passed. See evals/reports/international_selection_checkpoint05.json. Private full results: .local/international-selection/REVIEW.md. Scheduler remains off, PR remains draft, and no merge is authorized. Next: exercise these selection rules in the next supervised pipeline run, broaden reliable board coverage, then complete deployment gates.

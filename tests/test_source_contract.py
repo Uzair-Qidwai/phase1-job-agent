@@ -90,3 +90,31 @@ def test_normalization_rejects_blank_description_without_losing_complete_duplica
     assert len(normalized) == 1
     assert normalized[0].description == 'Build evaluation systems.'
     assert normalized[0].url == 'https://www.linkedin.com/jobs/view/123'
+
+
+@pytest.mark.asyncio
+async def test_greenhouse_preserves_sponsorship_tail_and_filters_before_limit(monkeypatch):
+    import httpx
+    import src.scraper as scraper
+
+    class Response:
+        status_code = 200
+
+        def json(self):
+            return {'jobs': [
+                {'title': 'Office Administrator'},
+                {'title': 'Applied AI Engineer', 'location': {'name': 'London, UK'},
+                 'absolute_url': 'https://example.com/job', 'id': 1,
+                 'content': '&lt;p&gt;' + 'Responsibilities ' * 700 +
+                            '&lt;/p&gt;&lt;p&gt;We cannot sponsor visas.&lt;/p&gt;'},
+            ]}
+
+    async def get(self, url):
+        return Response()
+
+    monkeypatch.setattr(httpx.AsyncClient, 'get', get)
+    monkeypatch.setattr(scraper, 'GREENHOUSE_BOARDS', ['example'])
+    jobs = await scraper.scrape_greenhouse(max_per_board=1)
+    assert len(jobs) == 1
+    assert jobs[0].description.endswith('We cannot sponsor visas.')
+    assert '<p>' not in jobs[0].description

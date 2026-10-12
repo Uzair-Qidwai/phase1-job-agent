@@ -9,6 +9,7 @@ Greenhouse: public job board API for known companies
 from __future__ import annotations
 
 import asyncio
+import html
 import logging
 import re
 from dataclasses import dataclass
@@ -79,7 +80,8 @@ LINKEDIN_SEARCH_TERMS = [
     "Technical Product Manager AI",
 ]
 
-LINKEDIN_LOCATIONS = ["Toronto, Ontario, Canada", "Remote"]
+LINKEDIN_LOCATIONS = ["Toronto, Ontario, Canada", "Remote", "New York, NY",
+                      "San Francisco, CA", "Los Angeles, CA", "London, United Kingdom"]
 
 
 async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
@@ -186,7 +188,7 @@ async def scrape_indeed(browser, max_per_query: int = 10) -> list[RawJob]:
     )
 
     for term in INDEED_SEARCH_TERMS:
-        for location in ["Toronto, ON", "remote"]:
+        for location in LINKEDIN_LOCATIONS:
             url = (
                 f"https://ca.indeed.com/jobs?q={quote_plus(term)}"
                 f"&l={quote_plus(location)}&fromage=1&sort=date"
@@ -256,6 +258,8 @@ async def _fetch_indeed_description(context, job_url: str) -> str:
 
 
 GREENHOUSE_BOARDS = [
+    "capco",
+    "zafinlabsamericasinc",
     "anthropic",
     "openai",
     "cohere",
@@ -284,13 +288,17 @@ async def scrape_greenhouse(max_per_board: int = 20) -> list[RawJob]:
                     continue
 
                 data = resp.json()
-                for job in data.get("jobs", [])[:max_per_board]:
+                matched = 0
+                for job in data.get("jobs", []):
                     title = job.get("title", "")
                     if not GREENHOUSE_KEYWORDS.search(title):
                         continue
 
+                    if matched >= max_per_board:
+                        break
+                    matched += 1
                     content = BeautifulSoup(
-                        job.get("content", ""), "html.parser"
+                        html.unescape(job.get("content", "")), "html.parser"
                     ).get_text(separator="\n")
                     jobs.append(
                         RawJob(
@@ -298,7 +306,7 @@ async def scrape_greenhouse(max_per_board: int = 20) -> list[RawJob]:
                             company=board.title(),
                             location=job.get("location", {}).get("name", "Remote"),
                             url=job.get("absolute_url", ""),
-                            description=content[:8000],
+                            description=content,
                             source="greenhouse",
                             source_job_id=str(job.get("id")) if job.get("id") is not None else None,
                         )

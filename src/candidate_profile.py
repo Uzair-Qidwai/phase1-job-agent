@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -12,6 +13,8 @@ DEFAULT_PROFILE_PATH = Path(__file__).parent.parent / "data" / "candidate_profil
 
 
 class CandidateProfile(BaseModel):
+    vacancy_decisions: dict[str, Literal["Keep", "Stretch", "Pass"]] = Field(default_factory=dict)
+    automatic_selection_policy: bool = False
     version: str
     target_roles: list[str] = Field(default_factory=list)
     role_keywords: list[str] = Field(default_factory=list)

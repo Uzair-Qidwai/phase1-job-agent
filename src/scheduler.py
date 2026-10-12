@@ -311,6 +311,12 @@ def _run_pipeline(
                 record_pipeline_event(run_id, "qualification_review", stage=stage,
                                       payload={"job_id": str(job["id"]), **qualifications})
                 ranking.explanation.append(qualifications["summary"])
+                from src.selection import assess_selection
+                selection = assess_selection(title=job["title"], location=job["location"],
+                                             description=job["description"], profile=profile, url=job["url"])
+                record_pipeline_event(run_id, "selection_review", stage=stage,
+                                      payload={"job_id": str(job["id"]), **selection})
+                ranking.explanation.append(selection["reason"])
                 normalized_score = ranking.total_score / 100.0
                 ranking_usage = ranking.usage or {}
                 if runtime is None or not runtime.steps:
@@ -344,6 +350,7 @@ def _run_pipeline(
 
                 shortlisted = (
                     not ranking.hard_mismatch
+                    and selection["automatic_eligible"]
                     and normalized_score >= settings.shortlist_threshold
                 )
                 update_job_system_state(

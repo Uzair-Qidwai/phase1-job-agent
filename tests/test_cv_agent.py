@@ -84,7 +84,7 @@ class TestTailorCV(unittest.TestCase):
             client=fake_client(),
         )
         self.assertEqual(result["prompt_version"], "phase2-cv-v6")
-        self.assertEqual(result["profile_version"], "1")
+        self.assertEqual(result["profile_version"], "2-user-feedback-international")
         self.assertTrue(result["model"])
 
     def test_unsupported_numeric_claim_is_blocked(self):

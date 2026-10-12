@@ -609,3 +609,24 @@ def test_agent_pipeline_persists_role_audit_and_accounts_rejected_work(monkeypat
                     assert cv["usage"]["input_tokens"] == 200
     finally:
         get_settings.cache_clear()
+
+
+def test_international_sponsorship_hold_prevents_cv_and_delivery(monkeypatch):
+    async def discover(headless=True):
+        return [scraper.RawJob(title='Applied AI Engineer', company='Example',
+            location='New York, NY', url='https://example.com/jobs/no-sponsor',
+            description='AI machine learning Python engineer. We cannot provide visa sponsorship.',
+            source='phase2-e2e', source_job_id='no-sponsor')]
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError('Held job must not reach generation or delivery')
+
+    monkeypatch.setattr(scraper, 'scrape_all', discover)
+    monkeypatch.setattr(cv_agent, 'tailor_cv', forbidden)
+    monkeypatch.setattr(emailer, 'send_digest', forbidden)
+    run = get_pipeline_run(run_pipeline(trigger='manual'))
+    assert run['jobs_shortlisted'] == 0
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT system_state FROM jobs WHERE source = 'phase2-e2e'")
+            assert cur.fetchone()['system_state'] == 'ranked_out'

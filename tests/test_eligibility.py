@@ -12,7 +12,7 @@ FIXTURE = Path(__file__).parent.parent / "evals" / "fixtures" / "eligibility.jso
 
 def test_default_candidate_profile_loads() -> None:
     profile = load_candidate_profile()
-    assert profile.version == "1"
+    assert profile.version == "2-user-feedback-international"
     assert profile.target_roles
 
 

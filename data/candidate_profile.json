@@ -1,5 +1,5 @@
 {
-  "version": "1",
+  "version": "2-user-feedback-international",
   "target_roles": [
     "AI Engineer",
     "Machine Learning Engineer",
@@ -25,7 +25,12 @@
   "preferred_locations": [
     "Toronto",
     "Canada",
-    "Remote"
+    "Remote",
+    "New York",
+    "NYC",
+    "San Francisco",
+    "Los Angeles",
+    "London"
   ],
   "remote_allowed": true,
   "strict_locations": false,
@@ -34,5 +39,18 @@
     "registered nurse",
     "physician",
     "dentist"
-  ]
+  ],
+  "automatic_selection_policy": true,
+  "vacancy_decisions": {
+    "https://job-boards.greenhouse.io/capco/jobs/8258742": "Keep",
+    "https://jobs.ashbyhq.com/workos/5e650527-d8dd-413a-9cfb-d7d68143274b": "Keep",
+    "https://jobs.ashbyhq.com/cohere/3fe03041-347a-479f-8361-6b1f5f81338e": "Keep",
+    "https://job-boards.greenhouse.io/zafinlabsamericasinc/jobs/5189853007": "Keep",
+    "https://job-boards.greenhouse.io/autotradercanada/jobs/8008932003": "Stretch",
+    "https://job-boards.greenhouse.io/opentable/jobs/8737825002": "Pass",
+    "https://jobs.ashbyhq.com/maintainx/aea3772f-8468-481c-a9a4-240f37b06a5e": "Stretch",
+    "https://job-boards.greenhouse.io/tribalscale/jobs/4698838006": "Pass",
+    "https://job-boards.greenhouse.io/webflow/jobs/8054709": "Stretch",
+    "https://jobs.ashbyhq.com/wealthsimple/87df1a4c-b9b9-4080-b1bd-9424c110a2b7": "Stretch"
+  }
 }
