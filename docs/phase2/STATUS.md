@@ -252,3 +252,16 @@ review/correction pass remains, then freeze this version and proceed to the
 end-to-end pilot, retaining manual selection if needed. No fresh model calls,
 email or application submissions. Personal artifacts remain private and untracked.
 [Sanitized report](../../evals/reports/bounded_quality_review_checkpoint05.json).
+
+
+## User ratings received — 2026-10-12
+
+The ten-job editorial sample received four Keep, four Stretch and two Pass ratings.
+The agreed eight-of-ten Keep target was **not met**; Stretch is not counted as Keep.
+Per the bounded-pass agreement, freeze this review and proceed with manual selection
+for the next supervised pilot. Four explicit selections are stored privately; four
+stretch roles require separate selection, and two passed vacancies are excluded
+from this batch. This does not create company-wide exclusions or alter ranking
+weights, benchmark labels, resume approval, email authorization or applications.
+The older pending digest is unchanged. Refresh the selected vacancies before the
+next pilot. [Sanitized result](../../evals/reports/user_ratings_checkpoint05.json).

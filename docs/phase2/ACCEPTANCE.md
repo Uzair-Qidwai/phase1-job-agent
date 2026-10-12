@@ -98,3 +98,16 @@ Consolidated-source follow-up: three regenerated CVs pass with all 56 source
 statements retained after bounded provider-failure retries. A replacement digest
 is pending and unsent. Remaining editorial work is a concise role-specific resume
 view; full evidence inventories and skill mentions are not final fit acceptance.
+
+
+## User ratings received — 2026-10-12
+
+The ten-job editorial sample received four Keep, four Stretch and two Pass ratings.
+The agreed eight-of-ten Keep target was **not met**; Stretch is not counted as Keep.
+Per the bounded-pass agreement, freeze this review and proceed with manual selection
+for the next supervised pilot. Four explicit selections are stored privately; four
+stretch roles require separate selection, and two passed vacancies are excluded
+from this batch. This does not create company-wide exclusions or alter ranking
+weights, benchmark labels, resume approval, email authorization or applications.
+The older pending digest is unchanged. Refresh the selected vacancies before the
+next pilot. [Sanitized result](../../evals/reports/user_ratings_checkpoint05.json).
