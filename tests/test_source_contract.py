@@ -157,3 +157,50 @@ async def test_ashby_failed_board_does_not_drop_other_board(monkeypatch):
     monkeypatch.setattr(httpx.AsyncClient, 'get', get)
     monkeypatch.setattr(scraper, 'ASHBY_BOARDS', ['bad', 'good'])
     assert len(await scraper.AshbySource().discover()) == 1
+
+
+@pytest.mark.asyncio
+async def test_source_deadline_cancels_slow_source_without_losing_healthy_results():
+    import asyncio
+    from src.scraper import discover_with_deadline
+    cancelled = []
+
+    class Slow:
+        name = 'slow'
+
+        async def discover(self, browser=None):
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.append(True)
+
+    class Healthy:
+        name = 'healthy'
+
+        async def discover(self, browser=None):
+            return ['completed']
+
+    result = await asyncio.gather(discover_with_deadline(Slow(), timeout_seconds=.01),
+                                  discover_with_deadline(Healthy(), timeout_seconds=.1))
+    assert result == [[], ['completed']]
+    assert cancelled == [True]
+
+
+@pytest.mark.asyncio
+async def test_browser_failure_retains_public_api_results(monkeypatch):
+    import src.scraper as scraper
+    job = RawJob('AI Engineer', 'Example', 'Toronto', 'https://example.com/job', 'Build AI', 'ashby')
+
+    async def ashby(self, browser=None):
+        return [job]
+
+    async def greenhouse(self, browser=None):
+        return []
+
+    def broken_browser():
+        raise RuntimeError('Browser unavailable')
+
+    monkeypatch.setattr(scraper.AshbySource, 'discover', ashby)
+    monkeypatch.setattr(scraper.GreenhouseSource, 'discover', greenhouse)
+    monkeypatch.setattr(scraper, 'async_playwright', broken_browser)
+    assert await scraper.scrape_all() == [job]

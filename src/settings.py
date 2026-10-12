@@ -81,6 +81,9 @@ class Settings(BaseSettings):
         repr=False,
     )
     api_require_read_auth: bool = Field(default=False, alias="API_REQUIRE_READ_AUTH")
+    discovery_source_timeout_seconds: float = Field(
+        default=180.0, gt=0, le=3600, alias="DISCOVERY_SOURCE_TIMEOUT_SECONDS"
+    )
     pipeline_timezone: str = Field(default="America/Toronto", alias="PIPELINE_TIMEZONE")
     pipeline_hour: int = Field(default=8, ge=0, le=23, alias="PIPELINE_HOUR")
     pipeline_minute: int = Field(default=0, ge=0, le=59, alias="PIPELINE_MINUTE")

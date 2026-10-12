@@ -378,38 +378,41 @@ class GreenhouseSource:
         return await scrape_greenhouse()
 
 
+async def discover_with_deadline(source, *, browser=None, timeout_seconds=180.0):
+    """A failed/slow adapter must not discard other sources' completed results."""
+    try:
+        return await asyncio.wait_for(source.discover(browser), timeout=timeout_seconds)
+    except Exception as exc:
+        logger.warning("[SourceHealth] %s unavailable: %s", source.name, type(exc).__name__)
+        return []
+
+
 async def scrape_all(headless: bool = True) -> list[RawJob]:
-    """Run source adapters and return validated, source-aware unique jobs."""
-
-    greenhouse_source = GreenhouseSource()
-    linkedin_source = LinkedInSource()
-    indeed_source = IndeedSource()
-
-    ashby_source = AshbySource()
+    """Discover independently with a per-source deadline and normalize identities."""
+    from src.settings import get_settings
+    deadline = get_settings().discovery_source_timeout_seconds
     greenhouse_jobs, ashby_jobs = await asyncio.gather(
-        greenhouse_source.discover(), ashby_source.discover(),
+        discover_with_deadline(GreenhouseSource(), timeout_seconds=deadline),
+        discover_with_deadline(AshbySource(), timeout_seconds=deadline),
     )
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=headless)
-        linkedin_jobs, indeed_jobs = await asyncio.gather(
-            linkedin_source.discover(browser),
-            indeed_source.discover(browser),
-        )
-        await browser.close()
-
-    source_batches = {
-        greenhouse_source.name: greenhouse_jobs,
-        ashby_source.name: ashby_jobs,
-        linkedin_source.name: linkedin_jobs,
-        indeed_source.name: indeed_jobs,
-    }
-    for source_name, jobs in source_batches.items():
-        logger.info("[SourceHealth] %s discovered=%d", source_name, len(jobs))
-
-    all_jobs = greenhouse_jobs + ashby_jobs + linkedin_jobs + indeed_jobs
-
-    unique = normalize_jobs(all_jobs)
+    linkedin_jobs, indeed_jobs = [], []
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=headless)
+            try:
+                linkedin_jobs, indeed_jobs = await asyncio.gather(
+                    discover_with_deadline(LinkedInSource(), browser=browser, timeout_seconds=deadline),
+                    discover_with_deadline(IndeedSource(), browser=browser, timeout_seconds=deadline),
+                )
+            finally:
+                await browser.close()
+    except Exception as exc:
+        logger.warning("[SourceHealth] browser discovery unavailable: %s", type(exc).__name__)
+    batches = {"greenhouse": greenhouse_jobs, "ashby": ashby_jobs,
+               "linkedin": linkedin_jobs, "indeed": indeed_jobs}
+    for name, jobs in batches.items():
+        logger.info("[SourceHealth] %s discovered=%d", name, len(jobs))
+    unique = normalize_jobs([job for jobs in batches.values() for job in jobs])
     logger.info("Total unique jobs this run: %d", len(unique))
     return unique
 

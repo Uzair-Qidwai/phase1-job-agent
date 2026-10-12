@@ -283,3 +283,8 @@ Validation: 260 local tests passed, including sponsorship negatives/conflicts, e
 ### Release-candidate discovery coverage — 2026-10-12
 
 The fresh diagnostic returned HTTP 200 from WorkOS, Cohere and MaintainX's public Ashby boards. Normal discovery now includes these three feeds, retaining public listing IDs, full description text and secondary locations while excluding unlisted postings. A live adapter check normalized 112 jobs (22 WorkOS, 56 Cohere, 34 MaintainX). The configured Chainalysis and Alchemy Greenhouse addresses returned 404; those remain coverage gaps. Full regression suite: 262 passed; lint/offline acceptance passed. The native release-candidate pilot began before this adapter addition and its results must be labeled accordingly.
+
+
+### Bounded source discovery — 2026-10-12
+
+The native pilot exposed cumulative browser-source delays despite individual page timeouts. Discovery now has a configurable 180-second deadline per source; a timed-out adapter returns no jobs and emits a source-health warning. Completed independent API-source results survive browser startup failure. Timed-out partial results are discarded, so incomplete coverage is explicit rather than treated as a complete search. Tests prove slow-source cancellation and preservation of healthy results. 264 local tests, lint and offline acceptance passed.
