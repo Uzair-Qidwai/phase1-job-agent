@@ -288,3 +288,12 @@ The fresh diagnostic returned HTTP 200 from WorkOS, Cohere and MaintainX's publi
 ### Bounded source discovery — 2026-10-12
 
 The native pilot exposed cumulative browser-source delays despite individual page timeouts. Discovery now has a configurable 180-second deadline per source; a timed-out adapter returns no jobs and emits a source-health warning. Completed independent API-source results survive browser startup failure. Timed-out partial results are discarded, so incomplete coverage is explicit rather than treated as a complete search. Tests prove slow-source cancellation and preservation of healthy results. 264 local tests, lint and offline acceptance passed.
+
+
+### Release-candidate native pilot passed — 2026-10-12
+
+Native discovery (no injected job shortlist) produced 185 jobs: Greenhouse 73, Ashby 112, LinkedIn/Indeed zero under the source deadline. Automatic selection chose the four previously rated Keep vacancies. Gemini writer/reviewer checks accepted four CVs in 34 requests; all preserve source wording and reorder complete sections. A pending digest was saved in the isolated release_candidate_01 database. No email or delivery attempt occurred. The original pilot pending digest was not replaced.
+
+A controlled replay of those same 185 rows created zero new jobs, CVs, batches, or delivery attempts and preserved the pending fingerprint. Actual pilot backup/restore matched all eight audited application/migration tables. The initial stopped discovery worker was recovered through the supported recovery path, and the retry retained lineage. Disposable operational rehearsal verified backup equality and authenticated/unauthenticated endpoint behavior. 264 local tests passed; CI passed on the adapter/deadline implementation commits.
+
+See evals/reports/release_candidate_checkpoint05.json. Private review package: .local/release-candidate-02/REVIEW.md. This validates technical flow and honors known user selections; it is not a blind international matching evaluation or proof of CV presentation quality. Outstanding production gates are review/send authorization, production host, off-host backups/restore, independent alerts, durable OAuth, and final release/schedule approval. No further tuning cycle is required merely to repeat these completed checks.
