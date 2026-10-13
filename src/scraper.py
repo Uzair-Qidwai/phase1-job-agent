@@ -9,20 +9,23 @@ Greenhouse: public job board API for known companies
 from __future__ import annotations
 
 import asyncio
+import html
 import logging
 import re
-import time
 from dataclasses import dataclass
 from urllib.parse import quote_plus
+from typing import Protocol
 
+import httpx
 from bs4 import BeautifulSoup
 from playwright.async_api import Page, async_playwright
 
+from src.job_identity import build_job_identity
+
 logger = logging.getLogger(__name__)
 
-# ─────────────────────────────────────────────
-# Data model
-# ─────────────────────────────────────────────
+SOURCE_NAMES = ("greenhouse", "ashby", "linkedin", "indeed")
+
 
 @dataclass
 class RawJob:
@@ -32,11 +35,30 @@ class RawJob:
     url: str
     description: str
     source: str
+    source_job_id: str | None = None
 
 
-# ─────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────
+class JobSource(Protocol):
+    name: str
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        ...
+
+
+def validate_raw_job(job: RawJob) -> list[str]:
+    errors: list[str] = []
+    if not job.title.strip():
+        errors.append("title is required")
+    if not job.company.strip():
+        errors.append("company is required")
+    if not job.url.strip():
+        errors.append("url is required")
+    if not job.description.strip():
+        errors.append("description is required")
+    if not job.source.strip():
+        errors.append("source is required")
+    return errors
+
 
 async def _wait_and_text(page: Page, selector: str, timeout: int = 5000) -> str:
     try:
@@ -51,10 +73,6 @@ async def _human_delay(lo: float = 1.5, hi: float = 3.5) -> None:
     await asyncio.sleep(lo + (hi - lo) * __import__("random").random())
 
 
-# ─────────────────────────────────────────────
-# LinkedIn scraper
-# ─────────────────────────────────────────────
-
 LINKEDIN_SEARCH_TERMS = [
     "AI Engineer",
     "DeFi Engineer",
@@ -62,7 +80,8 @@ LINKEDIN_SEARCH_TERMS = [
     "Technical Product Manager AI",
 ]
 
-LINKEDIN_LOCATIONS = ["Toronto, Ontario, Canada", "Remote"]
+LINKEDIN_LOCATIONS = ["Toronto, Ontario, Canada", "Remote", "New York, NY",
+                      "San Francisco, CA", "Los Angeles, CA", "London, United Kingdom"]
 
 
 async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
@@ -80,7 +99,7 @@ async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
             url = (
                 "https://www.linkedin.com/jobs/search/?"
                 f"keywords={quote_plus(term)}&location={quote_plus(loc)}"
-                "&f_TPR=r86400&sortBy=DD"   # last 24 h, most recent
+                "&f_TPR=r86400&sortBy=DD"
             )
             logger.info("[LinkedIn] %s | %s", term, loc)
             page = await context.new_page()
@@ -89,7 +108,6 @@ async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
                 await page.goto(url, timeout=30_000, wait_until="domcontentloaded")
                 await _human_delay()
 
-                # Scroll to trigger lazy-load
                 for _ in range(3):
                     await page.keyboard.press("End")
                     await _human_delay(0.8, 1.5)
@@ -102,7 +120,8 @@ async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
                     link_tag = card.select_one("a.base-card__full-link")
                     if not link_tag:
                         continue
-                    job_url = link_tag.get("href", "").split("?")[0]
+
+                    job_url = link_tag.get("href", "")
                     title_tag = card.select_one("h3.base-search-card__title")
                     company_tag = card.select_one("h4.base-search-card__subtitle")
                     loc_tag = card.select_one("span.job-search-card__location")
@@ -110,7 +129,6 @@ async def scrape_linkedin(browser, max_per_query: int = 10) -> list[RawJob]:
                     if not job_url or not title_tag:
                         continue
 
-                    # Fetch description from job page
                     desc = await _fetch_linkedin_description(context, job_url)
 
                     jobs.append(
@@ -151,10 +169,6 @@ async def _fetch_linkedin_description(context, job_url: str) -> str:
         await page.close()
 
 
-# ─────────────────────────────────────────────
-# Indeed scraper
-# ─────────────────────────────────────────────
-
 INDEED_SEARCH_TERMS = [
     "AI Engineer",
     "DeFi blockchain engineer",
@@ -174,7 +188,7 @@ async def scrape_indeed(browser, max_per_query: int = 10) -> list[RawJob]:
     )
 
     for term in INDEED_SEARCH_TERMS:
-        for location in ["Toronto, ON", "remote"]:
+        for location in LINKEDIN_LOCATIONS:
             url = (
                 f"https://ca.indeed.com/jobs?q={quote_plus(term)}"
                 f"&l={quote_plus(location)}&fromage=1&sort=date"
@@ -188,13 +202,13 @@ async def scrape_indeed(browser, max_per_query: int = 10) -> list[RawJob]:
 
                 html = await page.content()
                 soup = BeautifulSoup(html, "html.parser")
-
-                # Indeed uses data-jk as the job key
                 cards = soup.select("div.job_seen_beacon")[:max_per_query]
+
                 for card in cards:
                     link = card.select_one("a[data-jk]")
                     if not link:
                         continue
+
                     jk = link.get("data-jk", "")
                     job_url = f"https://ca.indeed.com/viewjob?jk={jk}"
                     title_tag = card.select_one("h2.jobTitle span[title]")
@@ -214,6 +228,7 @@ async def scrape_indeed(browser, max_per_query: int = 10) -> list[RawJob]:
                             url=job_url,
                             description=desc,
                             source="indeed",
+                            source_job_id=jk,
                         )
                     )
                     await _human_delay(0.5, 1.5)
@@ -242,13 +257,9 @@ async def _fetch_indeed_description(context, job_url: str) -> str:
         await page.close()
 
 
-# ─────────────────────────────────────────────
-# Greenhouse scraper (API-based, no JS needed)
-# ─────────────────────────────────────────────
-
-import httpx
-
 GREENHOUSE_BOARDS = [
+    "capco",
+    "zafinlabsamericasinc",
     "anthropic",
     "openai",
     "cohere",
@@ -275,13 +286,19 @@ async def scrape_greenhouse(max_per_board: int = 20) -> list[RawJob]:
                 resp = await client.get(url)
                 if resp.status_code != 200:
                     continue
+
                 data = resp.json()
-                for job in data.get("jobs", [])[:max_per_board]:
+                matched = 0
+                for job in data.get("jobs", []):
                     title = job.get("title", "")
                     if not GREENHOUSE_KEYWORDS.search(title):
                         continue
+
+                    if matched >= max_per_board:
+                        break
+                    matched += 1
                     content = BeautifulSoup(
-                        job.get("content", ""), "html.parser"
+                        html.unescape(job.get("content", "")), "html.parser"
                     ).get_text(separator="\n")
                     jobs.append(
                         RawJob(
@@ -289,49 +306,154 @@ async def scrape_greenhouse(max_per_board: int = 20) -> list[RawJob]:
                             company=board.title(),
                             location=job.get("location", {}).get("name", "Remote"),
                             url=job.get("absolute_url", ""),
-                            description=content[:8000],
+                            description=content,
                             source="greenhouse",
+                            source_job_id=str(job.get("id")) if job.get("id") is not None else None,
                         )
                     )
             except Exception as exc:
                 logger.warning("[Greenhouse] %s failed: %s", board, exc)
+
     logger.info("[Greenhouse] Total raw jobs: %d", len(jobs))
     return jobs
 
 
-# ─────────────────────────────────────────────
-# Main entry point
-# ─────────────────────────────────────────────
+ASHBY_BOARDS = ["workos", "cohere", "maintainx"]
+
+
+class AshbySource:
+    name = "ashby"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        jobs = []
+        async with httpx.AsyncClient(timeout=15) as client:
+            for board in ASHBY_BOARDS:
+                try:
+                    response = await client.get(
+                        f"https://api.ashbyhq.com/posting-api/job-board/{board}"
+                    )
+                    response.raise_for_status()
+                    for posting in response.json().get("jobs", []):
+                        if not posting.get("isListed", False):
+                            continue
+                        title = posting.get("title", "")
+                        if not GREENHOUSE_KEYWORDS.search(title):
+                            continue
+                        locations = [posting.get("location", "")]
+                        locations.extend(loc.get("location", "") for loc in
+                                         posting.get("secondaryLocations", []))
+                        jobs.append(RawJob(
+                            title=title, company=board, location=" | ".join(filter(None, locations)),
+                            url=posting.get("jobUrl", ""),
+                            description=posting.get("descriptionPlain", ""),
+                            source=self.name, source_job_id=posting.get("id"),
+                        ))
+                except (httpx.HTTPError, ValueError, TypeError, AttributeError) as exc:
+                    logger.warning("[Ashby] %s failed: %s", board, type(exc).__name__)
+        return jobs
+
+
+class LinkedInSource:
+    name = "linkedin"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        if browser is None:
+            raise ValueError("LinkedInSource requires a browser")
+        return await scrape_linkedin(browser)
+
+
+class IndeedSource:
+    name = "indeed"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        if browser is None:
+            raise ValueError("IndeedSource requires a browser")
+        return await scrape_indeed(browser)
+
+
+class GreenhouseSource:
+    name = "greenhouse"
+
+    async def discover(self, browser=None) -> list[RawJob]:
+        return await scrape_greenhouse()
+
+
+async def discover_with_deadline(source, *, browser=None, timeout_seconds=180.0):
+    """A failed/slow adapter must not discard other sources' completed results."""
+    try:
+        return await asyncio.wait_for(source.discover(browser), timeout=timeout_seconds)
+    except Exception as exc:
+        logger.warning("[SourceHealth] %s unavailable: %s", source.name, type(exc).__name__)
+        return []
+
 
 async def scrape_all(headless: bool = True) -> list[RawJob]:
-    """Run all scrapers and return deduplicated RawJob list."""
-    greenhouse_jobs = await scrape_greenhouse()
+    """Discover independently with a per-source deadline and normalize identities."""
+    from src.settings import get_settings
+    deadline = get_settings().discovery_source_timeout_seconds
+    greenhouse_jobs, ashby_jobs = await asyncio.gather(
+        discover_with_deadline(GreenhouseSource(), timeout_seconds=deadline),
+        discover_with_deadline(AshbySource(), timeout_seconds=deadline),
+    )
+    linkedin_jobs, indeed_jobs = [], []
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=headless)
+            try:
+                linkedin_jobs, indeed_jobs = await asyncio.gather(
+                    discover_with_deadline(LinkedInSource(), browser=browser, timeout_seconds=deadline),
+                    discover_with_deadline(IndeedSource(), browser=browser, timeout_seconds=deadline),
+                )
+            finally:
+                await browser.close()
+    except Exception as exc:
+        logger.warning("[SourceHealth] browser discovery unavailable: %s", type(exc).__name__)
+    batches = {"greenhouse": greenhouse_jobs, "ashby": ashby_jobs,
+               "linkedin": linkedin_jobs, "indeed": indeed_jobs}
+    for name, jobs in batches.items():
+        logger.info("[SourceHealth] %s discovered=%d", name, len(jobs))
+    unique = normalize_jobs([job for jobs in batches.values() for job in jobs])
+    logger.info("Total unique jobs this run: %d", len(unique))
+    return unique
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=headless)
-        linkedin_jobs, indeed_jobs = await asyncio.gather(
-            scrape_linkedin(browser),
-            scrape_indeed(browser),
-        )
-        await browser.close()
 
-    all_jobs = greenhouse_jobs + linkedin_jobs + indeed_jobs
-
-    # Deduplicate by URL within the batch (DB dedup handled by upsert_job)
+def normalize_jobs(jobs: list[RawJob]) -> list[RawJob]:
+    """Apply the production source contract and identity deduplication."""
     seen: set[str] = set()
     unique: list[RawJob] = []
-    for job in all_jobs:
-        key = job.url.split("?")[0].rstrip("/")
-        if key and key not in seen:
-            seen.add(key)
-            unique.append(job)
 
-    logger.info("Total unique jobs this run: %d", len(unique))
+    for job in jobs:
+        validation_errors = validate_raw_job(job)
+        if validation_errors:
+            logger.warning(
+                "[SourceContract] dropping invalid %s job: %s",
+                job.source or "unknown",
+                "; ".join(validation_errors),
+            )
+            continue
+
+        identity = build_job_identity(job.url, job.source)
+        if not identity.canonical_url:
+            continue
+
+        if not job.source_job_id:
+            job.source_job_id = identity.source_job_id
+
+        if identity.dedupe_key in seen:
+            continue
+
+        seen.add(identity.dedupe_key)
+
+        # Persist/use the canonical URL so downstream DB deduplication agrees
+        # with the ingestion harness.
+        job.url = identity.canonical_url
+        unique.append(job)
+
     return unique
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     jobs = asyncio.run(scrape_all(headless=False))
-    for j in jobs:
-        print(f"[{j.source}] {j.title} @ {j.company} — {j.location}")
+    for job in jobs:
+        print(f"[{job.source}] {job.title} @ {job.company} — {job.location}")

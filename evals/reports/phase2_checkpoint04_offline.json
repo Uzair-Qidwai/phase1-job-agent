@@ -1,0 +1,207 @@
+{
+  "cv": {
+    "cases": 26,
+    "outcomes": [
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "target role and combined source facts do not prove output claims",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "invented metric fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "fabricated evidence quote fails",
+        "passed": true
+      },
+      {
+        "actual_valid": true,
+        "expected_valid": true,
+        "name": "copied statement passes",
+        "passed": true
+      },
+      {
+        "actual_valid": true,
+        "expected_valid": true,
+        "name": "conservative shortening with full citation passes",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "valid evidence does not cover invented uncited sentence",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "invented employer with overlapping terms fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "invented skill with overlapping terms fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "responsibility inflation fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "supporting qualifier cannot be dropped",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "expected degree cannot become completed degree",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "applicant qualifier cannot be removed",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "negation cannot be removed",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "truncated evidence cannot erase negation",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "existing number cannot transfer between claims",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "detached evidence claim fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "invented factual heading fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "preferences cannot establish experience",
+        "passed": true
+      },
+      {
+        "actual_valid": true,
+        "expected_valid": true,
+        "name": "multiple source statements with matching output passes",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "single digit tenure cannot be invented",
+        "passed": true
+      },
+      {
+        "actual_valid": true,
+        "expected_valid": true,
+        "name": "cited shortening keeps supported factual terms",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "contracted negation cannot be dropped",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "reversing actor and recipient is rejected",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "copied claims cannot swap employers",
+        "passed": true
+      },
+      {
+        "actual_valid": true,
+        "expected_valid": true,
+        "name": "intact source sections retain attribution",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "section omission requires revision",
+        "passed": true
+      }
+    ],
+    "passed": 26
+  },
+  "cv_prompt_version": "phase2-cv-v3",
+  "dataset_sha256": {
+    "cv_gold.json": "061fd6f1142c8f25a533f59ca596b95b4a9257421cc4562cb1053fd6be0ece35",
+    "ranking_gold.json": "eec1607f2757c50b759e14a1fe9097bfb851d964dbb5cddf0ee1161b3a070b49"
+  },
+  "live_validation": "pending; not performed by this evaluator",
+  "mode": "offline_deterministic",
+  "passed": true,
+  "profile_version": "1",
+  "ranking": {
+    "jobs": 30,
+    "pairwise_accuracy": 1.0,
+    "precision_at_5": 1.0
+  },
+  "checkpoint": "4 offline readiness (live acceptance pending)",
+  "implementation_commit": "1b789ced9cdae4abe8cb7fe5461c666b3037dad1",
+  "ci": {
+    "number": 274,
+    "run_id": 37802434424,
+    "conclusion": "success",
+    "tests_passed": 175
+  },
+  "incremental_ci": [
+    268,
+    270,
+    272,
+    274
+  ],
+  "deployment_rehearsal": {
+    "environment": "disposable local PostgreSQL 16 databases",
+    "backup_restore": "custom-format dump restored into separate DB; migration runner up to date",
+    "legacy_upgrade": "existing legacy job retained; all 3 migrations adopted and repeatable",
+    "production_host": "pending; not changed"
+  },
+  "live_calls_performed": false,
+  "pending": [
+    "selected provider credentials/models/prices/spend threshold",
+    "live model tool/schema and quality evaluation",
+    "live source checks",
+    "explicitly authorized email test",
+    "target-host deployment rehearsal",
+    "human CV and Phase 2 acceptance"
+  ]
+}

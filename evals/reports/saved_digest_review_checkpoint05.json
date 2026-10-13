@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-09",
+  "feature": "Saved digest preview, approval and one-shot send",
+  "tests_passed": 220,
+  "lint_passed": true,
+  "migration": {
+    "version": 4,
+    "applied_and_repeated_on_disposable_database": true
+  },
+  "browser_rehearsal": {
+    "synthetic_only": true,
+    "preview_loaded": true,
+    "send_disabled_before_approval": true,
+    "approve_then_send": true,
+    "send_disabled_after_delivery": true
+  },
+  "real_model_calls": 0,
+  "real_emails_sent": 0,
+  "default_delivery_mode": "review",
+  "remaining": [
+    "Useful verified CV tailoring and summaries",
+    "Repeated supervised live runs",
+    "Production hosting, backups, alerts and OAuth lifetime"
+  ]
+}
