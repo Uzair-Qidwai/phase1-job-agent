@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-08",
+  "scope": "Bounded fresh source capture followed by isolated production-pipeline rehearsal; delivery intercepted",
+  "source_checks": {
+    "broad_linkedin": "timeout",
+    "greenhouse": {
+      "valid_jobs": 1,
+      "above_threshold": 0
+    },
+    "narrow_linkedin": {
+      "raw_jobs": 6,
+      "missing_descriptions": 2,
+      "previously_sent": 1,
+      "selected": 3
+    }
+  },
+  "initial_run": {
+    "tailored": 1,
+    "withheld": 2,
+    "status": "failed",
+    "rejection_reasons": [
+      "source section attribution changed",
+      "unsupported product-strategy claim"
+    ]
+  },
+  "retry": {
+    "status": "completed",
+    "tailored": 2,
+    "fresh_scrape": false,
+    "reranked": false,
+    "cv_review_enabled": true,
+    "agent_workflow_enabled": false,
+    "ranking_mode": "deterministic"
+  },
+  "cv_assessment": [
+    {
+      "valid": true,
+      "added_claim_segments": 0,
+      "removed_claim_segments": 0,
+      "reviewer_used": true
+    },
+    {
+      "valid": true,
+      "added_claim_segments": 0,
+      "removed_claim_segments": 0,
+      "reviewer_used": false
+    },
+    {
+      "valid": true,
+      "added_claim_segments": 0,
+      "removed_claim_segments": 1,
+      "reviewer_used": true
+    }
+  ],
+  "model_requests": 21,
+  "agent_steps": 7,
+  "delivery": {
+    "emails_sent": 0,
+    "attempts": 0,
+    "notifications": 0,
+    "approval": "pending"
+  },
+  "limitations": [
+    "Bounded captured input and intercepted delivery, not an unmodified unattended run",
+    "Two incomplete source descriptions excluded",
+    "Model warnings and summaries can contain unsupported commentary despite CV body validation",
+    "Tailoring remains conservative; one profile statement omitted",
+    "Indeed not retested; hosting deferred"
+  ],
+  "approved_delivery_followup": {
+    "explicitly_authorized": true,
+    "email_messages": 1,
+    "jobs_notified": 3,
+    "status": "transport_acknowledged",
+    "inbox_confirmation": "pending",
+    "duplicate_candidates_after_send": 0,
+    "new_model_calls": 0,
+    "cv_attachments": false
+  }
+}

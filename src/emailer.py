@@ -7,28 +7,36 @@ from __future__ import annotations
 
 import base64
 import logging
-import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from html import escape
+from urllib.parse import urlsplit
 
-from dotenv import load_dotenv
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
-load_dotenv()
+from src.settings import get_settings
+
 logger = logging.getLogger(__name__)
 
-RECIPIENT_EMAIL = os.environ.get("DIGEST_RECIPIENT", "uzair@example.com")
-SENDER_EMAIL = os.environ.get("GMAIL_SENDER", "uzair@example.com")
+
+def _safe_http_url(value: str) -> str:
+    parts = urlsplit(value or "")
+    if parts.scheme.casefold() not in {"http", "https"} or not parts.netloc:
+        return "#"
+    return value
 
 
 def _get_gmail_service():
+    client_id, client_secret, refresh_token, _, _ = (
+        get_settings().require_gmail_credentials()
+    )
     creds = Credentials(
         token=None,
-        refresh_token=os.environ["GMAIL_REFRESH_TOKEN"],
-        client_id=os.environ["GMAIL_CLIENT_ID"],
-        client_secret=os.environ["GMAIL_CLIENT_SECRET"],
+        refresh_token=refresh_token,
+        client_id=client_id,
+        client_secret=client_secret,
         token_uri="https://oauth2.googleapis.com/token",
     )
     creds.refresh(Request())
@@ -43,34 +51,48 @@ def _score_badge(score: float) -> str:
     return f'<span style="background:#94a3b8;color:white;padding:2px 8px;border-radius:999px;font-size:12px;">{score:.0%}</span>'
 
 
-def _build_html(jobs: list[dict]) -> str:
+def _build_html(jobs: list[dict], *, reviewed: bool = False) -> str:
     if not jobs:
-        return "<p>No new high-score jobs found in the last 24 hours.</p>"
+        return "<p>No unsent high-score jobs are waiting for delivery.</p>"
 
     rows = ""
     for job in jobs:
         score = job.get("match_score") or 0.0
-        changes = job.get("changes_made") or "—"
+        full_changes = str(job.get("changes_made") or "—")
+        changes = escape(full_changes[:200], quote=True) + ("…" if len(full_changes) > 200 else "")
+        title = escape(str(job.get("title") or ""), quote=True)
+        company = escape(str(job.get("company") or ""), quote=True)
+        location = escape(str(job.get("location") or "—"), quote=True)
+        source = escape(str(job.get("source") or "").title(), quote=True)
+        safe_url = escape(_safe_http_url(str(job.get("url") or "")), quote=True)
+        qualification_note = escape((job.get('qualifications') or {}).get('summary', ''), quote=True)
+        badge = (f"Role relevance: {score * 100:.0f}/100<br><small>{qualification_note}</small>"
+                 if job.get('qualifications') else _score_badge(score))
         rows += f"""
         <tr>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;">
-            <a href="{job['url']}" style="color:#3b82f6;font-weight:600;text-decoration:none;">
-              {job['title']}
+            <a href="{safe_url}" rel="noopener noreferrer" style="color:#3b82f6;font-weight:600;text-decoration:none;">
+              {title}
             </a><br>
-            <small style="color:#64748b;">{job['company']} · {job.get('location','—')}</small>
+            <small style="color:#64748b;">{company} · {location}</small>
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;text-align:center;">
-            {_score_badge(score)}
+            {badge}
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#475569;font-size:13px;">
-            {changes[:200]}…
+            {changes}
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">
-            {job.get('source','').title()}
+            {source}
           </td>
         </tr>
         """
 
+    footer = (
+        "Scores are search signals, not verified qualifications. CVs are not attached."
+        if reviewed else
+        f'Dashboard → <a href="{escape(_safe_http_url(get_settings().app_base_url.rstrip("/") + "/dashboard"), quote=True)}" style="color:#3b82f6;">Open dashboard</a>'
+    )
     return f"""
     <!DOCTYPE html>
     <html>
@@ -78,7 +100,7 @@ def _build_html(jobs: list[dict]) -> str:
       <div style="max-width:860px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1);">
         <div style="background:#1e293b;color:white;padding:20px 24px;">
           <h2 style="margin:0;">📋 Daily Job Digest</h2>
-          <p style="margin:4px 0 0;color:#94a3b8;font-size:14px;">{len(jobs)} new matches above threshold · sorted by score</p>
+          <p style="margin:4px 0 0;color:#94a3b8;font-size:14px;">{len(jobs)} roles for review · sorted by relevance</p>
         </div>
         <table style="width:100%;border-collapse:collapse;">
           <thead>
@@ -94,7 +116,7 @@ def _build_html(jobs: list[dict]) -> str:
           </tbody>
         </table>
         <div style="padding:16px 24px;color:#94a3b8;font-size:12px;">
-          Dashboard → <a href="http://localhost:8000/dashboard" style="color:#3b82f6;">localhost:8000/dashboard</a>
+          {footer}
         </div>
       </div>
     </body>
@@ -102,29 +124,44 @@ def _build_html(jobs: list[dict]) -> str:
     """
 
 
-def send_digest(jobs: list[dict]) -> bool:
+def send_digest(jobs: list[dict], *, message_id: str | None = None) -> bool:
     """Send the daily digest. Returns True on success."""
     if not jobs:
         logger.info("No jobs to digest — skipping email.")
         return True
 
+    settings = get_settings()
+    _, _, _, sender_email, recipient_email = settings.require_gmail_credentials()
     html_body = _build_html(jobs)
 
+    return send_snapshot({
+        "sender": sender_email, "recipient": recipient_email,
+        "subject": f"📋 Job Digest — {len(jobs)} new match{'es' if len(jobs) != 1 else ''}",
+        "html": html_body,
+    }, message_id=message_id)
+
+
+def send_snapshot(snapshot: dict, *, message_id: str | None = None) -> bool:
+    """Send saved content verbatim; never regenerate an approved email."""
+    _, _, _, sender_email, recipient_email = get_settings().require_gmail_credentials()
+    if (snapshot["sender"], snapshot["recipient"]) != (sender_email, recipient_email):
+        raise ValueError("Sender or recipient changed; prepare a new review batch")
+    for field in ("sender", "recipient", "subject"):
+        if any(c in snapshot[field] for c in "\r\n"):
+            raise ValueError("Invalid email header")
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"📋 Job Digest — {len(jobs)} new match{'es' if len(jobs) != 1 else ''}"
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = RECIPIENT_EMAIL
-    msg.attach(MIMEText(html_body, "html"))
-
+    msg["Subject"] = snapshot["subject"]
+    if message_id:
+        msg["Message-ID"] = message_id
+    msg["From"] = snapshot["sender"]
+    msg["To"] = snapshot["recipient"]
+    msg.attach(MIMEText(snapshot["html"], "html"))
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-
     try:
         service = _get_gmail_service()
-        service.users().messages().send(
-            userId="me", body={"raw": raw}
-        ).execute()
-        logger.info("Digest sent to %s (%d jobs)", RECIPIENT_EMAIL, len(jobs))
+        service.users().messages().send(userId="me", body={"raw": raw}).execute()
+        logger.info("Digest transport acknowledged")
         return True
     except Exception as exc:
-        logger.error("Failed to send digest: %s", exc)
+        logger.error("Failed to send digest (%s)", type(exc).__name__)
         return False

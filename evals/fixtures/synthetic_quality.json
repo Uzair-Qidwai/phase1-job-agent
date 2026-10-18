@@ -1,0 +1,1238 @@
+{
+  "version": "synthetic-quality-1",
+  "scope": "Fictional software candidate only; does not promote real candidate ranking.",
+  "master_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.\n",
+  "profile": {
+    "version": "synthetic-quality-1",
+    "target_roles": [
+      "Software Engineer"
+    ],
+    "role_keywords": [
+      "Python",
+      "SQL",
+      "data",
+      "testing",
+      "financial"
+    ],
+    "preferred_locations": [
+      "Toronto"
+    ],
+    "remote_allowed": true,
+    "strict_locations": true,
+    "excluded_companies": [
+      "Excluded Example"
+    ],
+    "excluded_title_keywords": [
+      "Director"
+    ]
+  },
+  "jobs": [
+    {
+      "id": "syn-01",
+      "label": "strong",
+      "title": "Software Engineer",
+      "company": "Fictional Company 1",
+      "location": "Toronto",
+      "description": "Build Python data pipelines and SQL financial reporting tools with automated testing."
+    },
+    {
+      "id": "syn-02",
+      "label": "strong",
+      "title": "Software Engineer, Data",
+      "company": "Fictional Company 2",
+      "location": "Toronto",
+      "description": "Maintain Python and SQL data services, financial reports and automated testing."
+    },
+    {
+      "id": "syn-03",
+      "label": "strong",
+      "title": "Software Engineer",
+      "company": "Fictional Company 3",
+      "location": "Remote",
+      "description": "Build Python data pipelines for financial reporting; SQL and automated testing required."
+    },
+    {
+      "id": "syn-04",
+      "label": "strong",
+      "title": "Software Engineer, Reporting",
+      "company": "Fictional Company 4",
+      "location": "Toronto",
+      "description": "Develop Python and SQL financial data reports. Maintain automated testing and documentation."
+    },
+    {
+      "id": "syn-05",
+      "label": "strong",
+      "title": "Software Engineer, Analytics",
+      "company": "Fictional Company 5",
+      "location": "Toronto",
+      "description": "Use Python, SQL, data processing and automated testing for financial analytics."
+    },
+    {
+      "id": "syn-06",
+      "label": "strong",
+      "title": "Software Engineer, Quality",
+      "company": "Fictional Company 6",
+      "location": "Remote",
+      "description": "Maintain automated testing for Python and SQL data pipelines and financial reports."
+    },
+    {
+      "id": "syn-07",
+      "label": "strong",
+      "title": "Software Engineer, Backend",
+      "company": "Fictional Company 7",
+      "location": "Toronto",
+      "description": "Build SQL reporting and Python data workflows; document financial systems and automated testing."
+    },
+    {
+      "id": "syn-08",
+      "label": "strong",
+      "title": "Software Engineer, Platform",
+      "company": "Fictional Company 8",
+      "location": "Remote",
+      "description": "Support Python and SQL data pipelines, financial reporting, automated testing and documentation."
+    },
+    {
+      "id": "syn-09",
+      "label": "partial",
+      "title": "Data Engineer",
+      "company": "Fictional Company 9",
+      "location": "Toronto",
+      "description": "Build Python and SQL pipelines; experience with Spark and Kafka required."
+    },
+    {
+      "id": "syn-10",
+      "label": "partial",
+      "title": "Data Analyst",
+      "company": "Fictional Company 10",
+      "location": "Toronto",
+      "description": "Write SQL financial reports and present findings; advanced Tableau required."
+    },
+    {
+      "id": "syn-11",
+      "label": "partial",
+      "title": "QA Engineer",
+      "company": "Fictional Company 11",
+      "location": "Toronto",
+      "description": "Maintain automated testing in Python; mobile device testing experience required."
+    },
+    {
+      "id": "syn-12",
+      "label": "partial",
+      "title": "Backend Developer",
+      "company": "Fictional Company 12",
+      "location": "Remote",
+      "description": "Build Python APIs; production Kubernetes administration required."
+    },
+    {
+      "id": "syn-13",
+      "label": "partial",
+      "title": "Database Developer",
+      "company": "Fictional Company 13",
+      "location": "Toronto",
+      "description": "Maintain PostgreSQL reporting; advanced database tuning required."
+    },
+    {
+      "id": "syn-14",
+      "label": "partial",
+      "title": "Technical Writer",
+      "company": "Fictional Company 14",
+      "location": "Toronto",
+      "description": "Document software data workflows; professional technical writing portfolio required."
+    },
+    {
+      "id": "syn-15",
+      "label": "partial",
+      "title": "Business Analyst",
+      "company": "Fictional Company 15",
+      "location": "Toronto",
+      "description": "Analyze financial reporting requirements; stakeholder facilitation required."
+    },
+    {
+      "id": "syn-16",
+      "label": "partial",
+      "title": "Reporting Developer",
+      "company": "Fictional Company 16",
+      "location": "Remote",
+      "description": "Build SQL reports; Power BI expertise required."
+    },
+    {
+      "id": "syn-17",
+      "label": "weak",
+      "title": "Nurse",
+      "company": "Fictional Company 17",
+      "location": "Toronto",
+      "description": "Provide licensed clinical care. Nursing registration required."
+    },
+    {
+      "id": "syn-18",
+      "label": "weak",
+      "title": "Account Executive",
+      "company": "Fictional Company 18",
+      "location": "Toronto",
+      "description": "Meet sales quotas and manage prospect relationships."
+    },
+    {
+      "id": "syn-19",
+      "label": "weak",
+      "title": "Graphic Designer",
+      "company": "Fictional Company 19",
+      "location": "Remote",
+      "description": "Create brand illustrations using Adobe Illustrator."
+    },
+    {
+      "id": "syn-20",
+      "label": "weak",
+      "title": "Civil Engineer",
+      "company": "Fictional Company 20",
+      "location": "Toronto",
+      "description": "Design bridges and inspect construction sites; civil engineering license required."
+    },
+    {
+      "id": "syn-21",
+      "label": "weak",
+      "title": "Chef",
+      "company": "Fictional Company 21",
+      "location": "Toronto",
+      "description": "Manage restaurant menus and prepare meals."
+    },
+    {
+      "id": "syn-22",
+      "label": "weak",
+      "title": "Lawyer",
+      "company": "Fictional Company 22",
+      "location": "Toronto",
+      "description": "Provide legal representation; bar admission required."
+    },
+    {
+      "id": "syn-23",
+      "label": "weak",
+      "title": "Dentist",
+      "company": "Fictional Company 23",
+      "location": "Toronto",
+      "description": "Provide dental treatment; dentistry license required."
+    },
+    {
+      "id": "syn-24",
+      "label": "weak",
+      "title": "Recruiter",
+      "company": "Fictional Company 24",
+      "location": "Remote",
+      "description": "Source candidates and conduct recruiting interviews."
+    },
+    {
+      "id": "syn-25",
+      "label": "excluded",
+      "title": "Software Engineer",
+      "company": "Fictional Company 25",
+      "location": "Vancouver",
+      "description": "Build Python and SQL financial data pipelines with automated testing."
+    },
+    {
+      "id": "syn-26",
+      "label": "excluded",
+      "title": "Software Engineer",
+      "company": "Fictional Company 26",
+      "location": "London",
+      "description": "Build Python and SQL financial data pipelines with automated testing."
+    },
+    {
+      "id": "syn-27",
+      "label": "excluded",
+      "title": "Director of Software Engineering",
+      "company": "Fictional Company 27",
+      "location": "Toronto",
+      "description": "Lead Python and SQL financial data teams and automated testing."
+    },
+    {
+      "id": "syn-28",
+      "label": "excluded",
+      "title": "Software Engineer",
+      "company": "Excluded Example",
+      "location": "Toronto",
+      "description": "Build Python and SQL financial data pipelines with automated testing."
+    },
+    {
+      "id": "syn-29",
+      "label": "excluded",
+      "title": "Software Engineer",
+      "company": "Fictional Company 29",
+      "location": "New York",
+      "description": "Build Python and SQL financial data pipelines with automated testing."
+    },
+    {
+      "id": "syn-30",
+      "label": "excluded",
+      "title": "Director of Data",
+      "company": "Fictional Company 30",
+      "location": "Remote",
+      "description": "Manage Python and SQL financial data pipelines and automated testing."
+    }
+  ],
+  "preferred_pairs": [
+    [
+      "syn-01",
+      "syn-09"
+    ],
+    [
+      "syn-01",
+      "syn-10"
+    ],
+    [
+      "syn-01",
+      "syn-11"
+    ],
+    [
+      "syn-01",
+      "syn-12"
+    ],
+    [
+      "syn-01",
+      "syn-13"
+    ],
+    [
+      "syn-01",
+      "syn-14"
+    ],
+    [
+      "syn-01",
+      "syn-15"
+    ],
+    [
+      "syn-01",
+      "syn-16"
+    ],
+    [
+      "syn-01",
+      "syn-17"
+    ],
+    [
+      "syn-01",
+      "syn-18"
+    ],
+    [
+      "syn-01",
+      "syn-19"
+    ],
+    [
+      "syn-01",
+      "syn-20"
+    ],
+    [
+      "syn-01",
+      "syn-21"
+    ],
+    [
+      "syn-01",
+      "syn-22"
+    ],
+    [
+      "syn-01",
+      "syn-23"
+    ],
+    [
+      "syn-01",
+      "syn-24"
+    ],
+    [
+      "syn-01",
+      "syn-25"
+    ],
+    [
+      "syn-01",
+      "syn-26"
+    ],
+    [
+      "syn-01",
+      "syn-27"
+    ],
+    [
+      "syn-01",
+      "syn-28"
+    ],
+    [
+      "syn-01",
+      "syn-29"
+    ],
+    [
+      "syn-01",
+      "syn-30"
+    ],
+    [
+      "syn-02",
+      "syn-09"
+    ],
+    [
+      "syn-02",
+      "syn-10"
+    ],
+    [
+      "syn-02",
+      "syn-11"
+    ],
+    [
+      "syn-02",
+      "syn-12"
+    ],
+    [
+      "syn-02",
+      "syn-13"
+    ],
+    [
+      "syn-02",
+      "syn-14"
+    ],
+    [
+      "syn-02",
+      "syn-15"
+    ],
+    [
+      "syn-02",
+      "syn-16"
+    ],
+    [
+      "syn-02",
+      "syn-17"
+    ],
+    [
+      "syn-02",
+      "syn-18"
+    ],
+    [
+      "syn-02",
+      "syn-19"
+    ],
+    [
+      "syn-02",
+      "syn-20"
+    ],
+    [
+      "syn-02",
+      "syn-21"
+    ],
+    [
+      "syn-02",
+      "syn-22"
+    ],
+    [
+      "syn-02",
+      "syn-23"
+    ],
+    [
+      "syn-02",
+      "syn-24"
+    ],
+    [
+      "syn-02",
+      "syn-25"
+    ],
+    [
+      "syn-02",
+      "syn-26"
+    ],
+    [
+      "syn-02",
+      "syn-27"
+    ],
+    [
+      "syn-02",
+      "syn-28"
+    ],
+    [
+      "syn-02",
+      "syn-29"
+    ],
+    [
+      "syn-02",
+      "syn-30"
+    ],
+    [
+      "syn-03",
+      "syn-09"
+    ],
+    [
+      "syn-03",
+      "syn-10"
+    ],
+    [
+      "syn-03",
+      "syn-11"
+    ],
+    [
+      "syn-03",
+      "syn-12"
+    ],
+    [
+      "syn-03",
+      "syn-13"
+    ],
+    [
+      "syn-03",
+      "syn-14"
+    ],
+    [
+      "syn-03",
+      "syn-15"
+    ],
+    [
+      "syn-03",
+      "syn-16"
+    ],
+    [
+      "syn-03",
+      "syn-17"
+    ],
+    [
+      "syn-03",
+      "syn-18"
+    ],
+    [
+      "syn-03",
+      "syn-19"
+    ],
+    [
+      "syn-03",
+      "syn-20"
+    ],
+    [
+      "syn-03",
+      "syn-21"
+    ],
+    [
+      "syn-03",
+      "syn-22"
+    ],
+    [
+      "syn-03",
+      "syn-23"
+    ],
+    [
+      "syn-03",
+      "syn-24"
+    ],
+    [
+      "syn-03",
+      "syn-25"
+    ],
+    [
+      "syn-03",
+      "syn-26"
+    ],
+    [
+      "syn-03",
+      "syn-27"
+    ],
+    [
+      "syn-03",
+      "syn-28"
+    ],
+    [
+      "syn-03",
+      "syn-29"
+    ],
+    [
+      "syn-03",
+      "syn-30"
+    ],
+    [
+      "syn-04",
+      "syn-09"
+    ],
+    [
+      "syn-04",
+      "syn-10"
+    ],
+    [
+      "syn-04",
+      "syn-11"
+    ],
+    [
+      "syn-04",
+      "syn-12"
+    ],
+    [
+      "syn-04",
+      "syn-13"
+    ],
+    [
+      "syn-04",
+      "syn-14"
+    ],
+    [
+      "syn-04",
+      "syn-15"
+    ],
+    [
+      "syn-04",
+      "syn-16"
+    ],
+    [
+      "syn-04",
+      "syn-17"
+    ],
+    [
+      "syn-04",
+      "syn-18"
+    ],
+    [
+      "syn-04",
+      "syn-19"
+    ],
+    [
+      "syn-04",
+      "syn-20"
+    ],
+    [
+      "syn-04",
+      "syn-21"
+    ],
+    [
+      "syn-04",
+      "syn-22"
+    ],
+    [
+      "syn-04",
+      "syn-23"
+    ],
+    [
+      "syn-04",
+      "syn-24"
+    ],
+    [
+      "syn-04",
+      "syn-25"
+    ],
+    [
+      "syn-04",
+      "syn-26"
+    ],
+    [
+      "syn-04",
+      "syn-27"
+    ],
+    [
+      "syn-04",
+      "syn-28"
+    ],
+    [
+      "syn-04",
+      "syn-29"
+    ],
+    [
+      "syn-04",
+      "syn-30"
+    ],
+    [
+      "syn-05",
+      "syn-09"
+    ],
+    [
+      "syn-05",
+      "syn-10"
+    ],
+    [
+      "syn-05",
+      "syn-11"
+    ],
+    [
+      "syn-05",
+      "syn-12"
+    ],
+    [
+      "syn-05",
+      "syn-13"
+    ],
+    [
+      "syn-05",
+      "syn-14"
+    ],
+    [
+      "syn-05",
+      "syn-15"
+    ],
+    [
+      "syn-05",
+      "syn-16"
+    ],
+    [
+      "syn-05",
+      "syn-17"
+    ],
+    [
+      "syn-05",
+      "syn-18"
+    ],
+    [
+      "syn-05",
+      "syn-19"
+    ],
+    [
+      "syn-05",
+      "syn-20"
+    ],
+    [
+      "syn-05",
+      "syn-21"
+    ],
+    [
+      "syn-05",
+      "syn-22"
+    ],
+    [
+      "syn-05",
+      "syn-23"
+    ],
+    [
+      "syn-05",
+      "syn-24"
+    ],
+    [
+      "syn-05",
+      "syn-25"
+    ],
+    [
+      "syn-05",
+      "syn-26"
+    ],
+    [
+      "syn-05",
+      "syn-27"
+    ],
+    [
+      "syn-05",
+      "syn-28"
+    ],
+    [
+      "syn-05",
+      "syn-29"
+    ],
+    [
+      "syn-05",
+      "syn-30"
+    ],
+    [
+      "syn-06",
+      "syn-09"
+    ],
+    [
+      "syn-06",
+      "syn-10"
+    ],
+    [
+      "syn-06",
+      "syn-11"
+    ],
+    [
+      "syn-06",
+      "syn-12"
+    ],
+    [
+      "syn-06",
+      "syn-13"
+    ],
+    [
+      "syn-06",
+      "syn-14"
+    ],
+    [
+      "syn-06",
+      "syn-15"
+    ],
+    [
+      "syn-06",
+      "syn-16"
+    ],
+    [
+      "syn-06",
+      "syn-17"
+    ],
+    [
+      "syn-06",
+      "syn-18"
+    ],
+    [
+      "syn-06",
+      "syn-19"
+    ],
+    [
+      "syn-06",
+      "syn-20"
+    ],
+    [
+      "syn-06",
+      "syn-21"
+    ],
+    [
+      "syn-06",
+      "syn-22"
+    ],
+    [
+      "syn-06",
+      "syn-23"
+    ],
+    [
+      "syn-06",
+      "syn-24"
+    ],
+    [
+      "syn-06",
+      "syn-25"
+    ],
+    [
+      "syn-06",
+      "syn-26"
+    ],
+    [
+      "syn-06",
+      "syn-27"
+    ],
+    [
+      "syn-06",
+      "syn-28"
+    ],
+    [
+      "syn-06",
+      "syn-29"
+    ],
+    [
+      "syn-06",
+      "syn-30"
+    ],
+    [
+      "syn-07",
+      "syn-09"
+    ],
+    [
+      "syn-07",
+      "syn-10"
+    ],
+    [
+      "syn-07",
+      "syn-11"
+    ],
+    [
+      "syn-07",
+      "syn-12"
+    ],
+    [
+      "syn-07",
+      "syn-13"
+    ],
+    [
+      "syn-07",
+      "syn-14"
+    ],
+    [
+      "syn-07",
+      "syn-15"
+    ],
+    [
+      "syn-07",
+      "syn-16"
+    ],
+    [
+      "syn-07",
+      "syn-17"
+    ],
+    [
+      "syn-07",
+      "syn-18"
+    ],
+    [
+      "syn-07",
+      "syn-19"
+    ],
+    [
+      "syn-07",
+      "syn-20"
+    ],
+    [
+      "syn-07",
+      "syn-21"
+    ],
+    [
+      "syn-07",
+      "syn-22"
+    ],
+    [
+      "syn-07",
+      "syn-23"
+    ],
+    [
+      "syn-07",
+      "syn-24"
+    ],
+    [
+      "syn-07",
+      "syn-25"
+    ],
+    [
+      "syn-07",
+      "syn-26"
+    ],
+    [
+      "syn-07",
+      "syn-27"
+    ],
+    [
+      "syn-07",
+      "syn-28"
+    ],
+    [
+      "syn-07",
+      "syn-29"
+    ],
+    [
+      "syn-07",
+      "syn-30"
+    ],
+    [
+      "syn-08",
+      "syn-09"
+    ],
+    [
+      "syn-08",
+      "syn-10"
+    ],
+    [
+      "syn-08",
+      "syn-11"
+    ],
+    [
+      "syn-08",
+      "syn-12"
+    ],
+    [
+      "syn-08",
+      "syn-13"
+    ],
+    [
+      "syn-08",
+      "syn-14"
+    ],
+    [
+      "syn-08",
+      "syn-15"
+    ],
+    [
+      "syn-08",
+      "syn-16"
+    ],
+    [
+      "syn-08",
+      "syn-17"
+    ],
+    [
+      "syn-08",
+      "syn-18"
+    ],
+    [
+      "syn-08",
+      "syn-19"
+    ],
+    [
+      "syn-08",
+      "syn-20"
+    ],
+    [
+      "syn-08",
+      "syn-21"
+    ],
+    [
+      "syn-08",
+      "syn-22"
+    ],
+    [
+      "syn-08",
+      "syn-23"
+    ],
+    [
+      "syn-08",
+      "syn-24"
+    ],
+    [
+      "syn-08",
+      "syn-25"
+    ],
+    [
+      "syn-08",
+      "syn-26"
+    ],
+    [
+      "syn-08",
+      "syn-27"
+    ],
+    [
+      "syn-08",
+      "syn-28"
+    ],
+    [
+      "syn-08",
+      "syn-29"
+    ],
+    [
+      "syn-08",
+      "syn-30"
+    ],
+    [
+      "syn-09",
+      "syn-17"
+    ],
+    [
+      "syn-09",
+      "syn-18"
+    ],
+    [
+      "syn-09",
+      "syn-19"
+    ],
+    [
+      "syn-09",
+      "syn-20"
+    ],
+    [
+      "syn-09",
+      "syn-21"
+    ],
+    [
+      "syn-09",
+      "syn-22"
+    ],
+    [
+      "syn-09",
+      "syn-23"
+    ],
+    [
+      "syn-09",
+      "syn-24"
+    ],
+    [
+      "syn-10",
+      "syn-17"
+    ],
+    [
+      "syn-10",
+      "syn-18"
+    ],
+    [
+      "syn-10",
+      "syn-19"
+    ],
+    [
+      "syn-10",
+      "syn-20"
+    ],
+    [
+      "syn-10",
+      "syn-21"
+    ],
+    [
+      "syn-10",
+      "syn-22"
+    ],
+    [
+      "syn-10",
+      "syn-23"
+    ],
+    [
+      "syn-10",
+      "syn-24"
+    ],
+    [
+      "syn-11",
+      "syn-17"
+    ],
+    [
+      "syn-11",
+      "syn-18"
+    ],
+    [
+      "syn-11",
+      "syn-19"
+    ],
+    [
+      "syn-11",
+      "syn-20"
+    ],
+    [
+      "syn-11",
+      "syn-21"
+    ],
+    [
+      "syn-11",
+      "syn-22"
+    ],
+    [
+      "syn-11",
+      "syn-23"
+    ],
+    [
+      "syn-11",
+      "syn-24"
+    ],
+    [
+      "syn-12",
+      "syn-17"
+    ],
+    [
+      "syn-12",
+      "syn-18"
+    ],
+    [
+      "syn-12",
+      "syn-19"
+    ],
+    [
+      "syn-12",
+      "syn-20"
+    ],
+    [
+      "syn-12",
+      "syn-21"
+    ],
+    [
+      "syn-12",
+      "syn-22"
+    ],
+    [
+      "syn-12",
+      "syn-23"
+    ],
+    [
+      "syn-12",
+      "syn-24"
+    ],
+    [
+      "syn-13",
+      "syn-17"
+    ],
+    [
+      "syn-13",
+      "syn-18"
+    ],
+    [
+      "syn-13",
+      "syn-19"
+    ],
+    [
+      "syn-13",
+      "syn-20"
+    ],
+    [
+      "syn-13",
+      "syn-21"
+    ],
+    [
+      "syn-13",
+      "syn-22"
+    ],
+    [
+      "syn-13",
+      "syn-23"
+    ],
+    [
+      "syn-13",
+      "syn-24"
+    ],
+    [
+      "syn-14",
+      "syn-17"
+    ],
+    [
+      "syn-14",
+      "syn-18"
+    ],
+    [
+      "syn-14",
+      "syn-19"
+    ],
+    [
+      "syn-14",
+      "syn-20"
+    ],
+    [
+      "syn-14",
+      "syn-21"
+    ],
+    [
+      "syn-14",
+      "syn-22"
+    ],
+    [
+      "syn-14",
+      "syn-23"
+    ],
+    [
+      "syn-14",
+      "syn-24"
+    ],
+    [
+      "syn-15",
+      "syn-17"
+    ],
+    [
+      "syn-15",
+      "syn-18"
+    ],
+    [
+      "syn-15",
+      "syn-19"
+    ],
+    [
+      "syn-15",
+      "syn-20"
+    ],
+    [
+      "syn-15",
+      "syn-21"
+    ],
+    [
+      "syn-15",
+      "syn-22"
+    ],
+    [
+      "syn-15",
+      "syn-23"
+    ],
+    [
+      "syn-15",
+      "syn-24"
+    ],
+    [
+      "syn-16",
+      "syn-17"
+    ],
+    [
+      "syn-16",
+      "syn-18"
+    ],
+    [
+      "syn-16",
+      "syn-19"
+    ],
+    [
+      "syn-16",
+      "syn-20"
+    ],
+    [
+      "syn-16",
+      "syn-21"
+    ],
+    [
+      "syn-16",
+      "syn-22"
+    ],
+    [
+      "syn-16",
+      "syn-23"
+    ],
+    [
+      "syn-16",
+      "syn-24"
+    ]
+  ],
+  "cv_job_ids": [
+    "syn-01",
+    "syn-09",
+    "syn-13"
+  ]
+}

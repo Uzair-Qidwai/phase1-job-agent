@@ -1,0 +1,1022 @@
+{
+  "date": "2026-10-08",
+  "status": "pre-pilot gates incomplete",
+  "branch": "phase2-foundation",
+  "merge_authorized": false,
+  "pilot_started": false,
+  "personal_cv_sent_to_provider": false,
+  "ranking": {
+    "phase": "ranking",
+    "model": "gemini-3.1-flash-lite",
+    "passed": true,
+    "scope": "Fictional software candidate only; does not promote real candidate ranking.",
+    "personal_data_sent": false,
+    "fixture_sha256": "83a01165feda53912028b57b1d12654bdd42e03e726f90ce9a383d7dba57e966",
+    "request_cap": 160,
+    "human_acceptance": "pending",
+    "promotion_authorized": false,
+    "model_requests": 105,
+    "baseline": {
+      "precision_at_5": 1.0,
+      "pairwise_accuracy": 0.975
+    },
+    "candidate": {
+      "precision_at_5": 1.0,
+      "pairwise_accuracy": 1.0
+    },
+    "synthetic_quality_gate_passed": true,
+    "elapsed_seconds": 598.76,
+    "input_tokens": 58597,
+    "output_tokens": 8222,
+    "cases": [
+      {
+        "job_id": "syn-01",
+        "passed": true,
+        "error_type": null,
+        "score": 88.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-02",
+        "passed": true,
+        "error_type": null,
+        "score": 88.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-03",
+        "passed": true,
+        "error_type": null,
+        "score": 99.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-04",
+        "passed": true,
+        "error_type": null,
+        "score": 90.75,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-05",
+        "passed": true,
+        "error_type": null,
+        "score": 88.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-06",
+        "passed": true,
+        "error_type": null,
+        "score": 94.75,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-07",
+        "passed": true,
+        "error_type": null,
+        "score": 84.25,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-08",
+        "passed": true,
+        "error_type": null,
+        "score": 96.75,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-09",
+        "passed": true,
+        "error_type": null,
+        "score": 56.5,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-10",
+        "passed": true,
+        "error_type": null,
+        "score": 70.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-11",
+        "passed": true,
+        "error_type": null,
+        "score": 48.5,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-12",
+        "passed": true,
+        "error_type": null,
+        "score": 55.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-13",
+        "passed": true,
+        "error_type": null,
+        "score": 66.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-14",
+        "passed": true,
+        "error_type": null,
+        "score": 51.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-15",
+        "passed": true,
+        "error_type": null,
+        "score": 66.5,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-16",
+        "passed": true,
+        "error_type": null,
+        "score": 68.5,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-17",
+        "passed": true,
+        "error_type": null,
+        "score": 10.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-18",
+        "passed": true,
+        "error_type": null,
+        "score": 13.75,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-19",
+        "passed": true,
+        "error_type": null,
+        "score": 10.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-20",
+        "passed": true,
+        "error_type": null,
+        "score": 10.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-21",
+        "passed": true,
+        "error_type": null,
+        "score": 11.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-22",
+        "passed": true,
+        "error_type": null,
+        "score": 10.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-23",
+        "passed": true,
+        "error_type": null,
+        "score": 10.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-24",
+        "passed": true,
+        "error_type": null,
+        "score": 16.25,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-25",
+        "passed": true,
+        "error_type": null,
+        "score": 0.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-26",
+        "passed": true,
+        "error_type": null,
+        "score": 0.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-27",
+        "passed": true,
+        "error_type": null,
+        "score": 0.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-28",
+        "passed": true,
+        "error_type": null,
+        "score": 0.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-29",
+        "passed": true,
+        "error_type": null,
+        "score": 0.0,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-30",
+        "passed": true,
+        "error_type": null,
+        "score": 0.0,
+        "revisions": null
+      }
+    ]
+  },
+  "cv": {
+    "phase": "cv",
+    "model": "gemini-3.1-flash-lite",
+    "passed": false,
+    "scope": "Fictional software candidate only; does not promote real candidate ranking.",
+    "personal_data_sent": false,
+    "fixture_sha256": "83a01165feda53912028b57b1d12654bdd42e03e726f90ce9a383d7dba57e966",
+    "request_cap": 60,
+    "human_acceptance": "pending",
+    "promotion_authorized": false,
+    "model_requests": 41,
+    "elapsed_seconds": 209.23,
+    "input_tokens": 41917,
+    "output_tokens": 2677,
+    "cases": [
+      {
+        "job_id": "syn-01",
+        "passed": true,
+        "error_type": null,
+        "score": null,
+        "revisions": 0
+      },
+      {
+        "job_id": "syn-09",
+        "passed": false,
+        "error_type": "WorkflowRejected",
+        "score": null,
+        "revisions": null
+      },
+      {
+        "job_id": "syn-13",
+        "passed": false,
+        "error_type": "WorkflowRejected",
+        "score": null,
+        "revisions": null
+      }
+    ],
+    "false_rejection_assessment": "Diagnostic of syn-09 confirmed unsupported summary/title claims; no proven false rejection there. Original syn-13 draft outputs were not retained, so its precise rejection cause is unverified."
+  },
+  "sources": {
+    "greenhouse": {
+      "source": "greenhouse",
+      "jobs": 1,
+      "invalid_rows": [],
+      "duplicate_identities": 0,
+      "missing_descriptions": 0,
+      "passed": true
+    },
+    "linkedin": {
+      "source": "linkedin",
+      "unique_jobs": 4,
+      "dedupe_passed": true,
+      "jobs": 4,
+      "invalid_rows": [],
+      "duplicate_identities": 0,
+      "missing_descriptions": 0,
+      "passed": true
+    },
+    "indeed": {
+      "source": "indeed",
+      "jobs": 0,
+      "invalid_rows": [],
+      "duplicate_identities": 0,
+      "missing_descriptions": 0,
+      "passed": false,
+      "access_diagnostic": {
+        "http_status": 403,
+        "title": "Blocked - Indeed.com",
+        "job_cards": 0
+      }
+    }
+  },
+  "deployment": {
+    "passed": true,
+    "scope": "Local disposable databases only",
+    "scheduler_started": false,
+    "backup_restore_equal": true,
+    "retained_jobs": 1,
+    "http_reads": {
+      "/jobs": {
+        "unauthenticated": 401,
+        "authenticated": 200
+      },
+      "/pipeline/runs": {
+        "unauthenticated": 401,
+        "authenticated": 200
+      },
+      "/sources/health": {
+        "unauthenticated": 401,
+        "authenticated": 200
+      },
+      "/deliveries": {
+        "unauthenticated": 401,
+        "authenticated": 200
+      }
+    }
+  },
+  "delivery": {
+    "simulation_passed": true,
+    "real_send": "passed; Gmail acknowledged one synthetic digest",
+    "inbox_confirmation": "confirmed by user-supplied screenshot on 2026-10-08",
+    "notifications_recorded": 1,
+    "prior_failure": "Gmail API initially disabled; rejection reconciled before controlled retry"
+  },
+  "implementation_ci": {
+    "commit": "a6a22e5",
+    "run_number": 291,
+    "run_id": 37833873476,
+    "tests": 189,
+    "cv_gold_cases": 30,
+    "conclusion": "success"
+  },
+  "cv_diagnostic": {
+    "phase": "cv",
+    "model": "gemini-3.1-flash-lite",
+    "passed": false,
+    "scope": "Fictional software candidate only; does not promote real candidate ranking.",
+    "personal_data_sent": false,
+    "fixture_sha256": "83a01165feda53912028b57b1d12654bdd42e03e726f90ce9a383d7dba57e966",
+    "request_cap": 24,
+    "cases": [
+      {
+        "job_id": "syn-09",
+        "label": "partial",
+        "passed": false,
+        "synthetic_outputs": [
+          {
+            "role": "writer",
+            "output": {
+              "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting. Experienced in developing data pipelines and automated reporting workflows.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+              "changes_made": "I emphasized the existing data pipeline and SQL reporting experience to better align with the data engineering focus of the role. The structure was preserved while highlighting relevant terminology.",
+              "evidence_used": [
+                {
+                  "claim": "Built Python data pipelines and SQL reporting tools for finance teams.",
+                  "source": "master_cv",
+                  "source_text": "Built Python data pipelines and SQL reporting tools for finance teams."
+                }
+              ],
+              "keywords_added": [
+                "data pipelines",
+                "data workflows"
+              ],
+              "warnings": [
+                "The candidate's master CV does not list experience with Spark or Kafka, which were specified as requirements in the job description."
+              ]
+            },
+            "validation": {
+              "valid": false,
+              "validation_version": "deterministic-cv-v3",
+              "output_claims_checked": 8,
+              "context_errors": [],
+              "unsupported_claims": [
+                "experienced in developing data pipelines and automated reporting workflows"
+              ],
+              "evidence_items_checked": 1,
+              "invalid_evidence": [],
+              "unsupported_numeric_claims": []
+            }
+          },
+          {
+            "role": "reviewer",
+            "output": {
+              "decision": "revise",
+              "issues": [
+                "The candidate claims experience in 'developing data pipelines and automated reporting workflows' in the summary section, which is unsupported by the master CV.",
+                "The CV fails to address the mandatory requirements for Spark and Kafka experience specified in the job description."
+              ],
+              "reason": "The deterministic validation failed due to an unsupported claim in the summary section. Additionally, the draft does not address the core requirements for Spark and Kafka, which are explicitly stated as required in the job description for the Data Engineer role."
+            }
+          },
+          {
+            "role": "writer",
+            "output": {
+              "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nData Engineer experienced in building Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+              "changes_made": "I updated the summary to align the candidate's core expertise in Python and SQL with the Data Engineer role title. No other structural changes were made to ensure factual integrity.",
+              "evidence_used": [
+                {
+                  "claim": "Data Engineer experienced in building Python and SQL analytics systems for financial reporting.",
+                  "source": "master_cv",
+                  "source_text": "Built Python and SQL analytics systems for financial reporting."
+                }
+              ],
+              "keywords_added": [
+                "Data Engineer"
+              ],
+              "warnings": [
+                "The candidate does not possess the Spark and Kafka experience explicitly required by the job description.",
+                "The candidate's title remains Software Engineer as per the master CV; it is only adjusted in the summary for relevance."
+              ]
+            },
+            "validation": {
+              "valid": false,
+              "validation_version": "deterministic-cv-v3",
+              "output_claims_checked": 7,
+              "context_errors": [],
+              "unsupported_claims": [
+                "data engineer experienced in building python and sql analytics systems for financial reporting"
+              ],
+              "evidence_items_checked": 1,
+              "invalid_evidence": [
+                "Evidence is not relevant or does not support all facts: 'Data Engineer experienced in building Python and SQL analytics systems for financial reporting.'"
+              ],
+              "unsupported_numeric_claims": []
+            }
+          },
+          {
+            "role": "reviewer",
+            "output": {
+              "decision": "revise",
+              "issues": [
+                "The claim 'Data Engineer' in the summary is not supported by the candidate's professional title history in the master CV, which is 'Software Engineer'.",
+                "The draft fails to address the mandatory requirements for Spark and Kafka mentioned in the job description.",
+                "The current CV structure incorrectly labels the candidate as a 'Data Engineer' in the summary, creating a factual discrepancy with the 'Software Engineer' experience entry."
+              ],
+              "reason": "The draft attempts to force a job title ('Data Engineer') that is not supported by the master CV evidence. Additionally, the draft is missing essential skills (Spark and Kafka) requested by the job description, which renders the application unsuitable for the target role as it stands. Please revise to accurately reflect the candidate's actual job history and clarify technical proficiencies."
+            }
+          }
+        ],
+        "error_type": "WorkflowRejected"
+      }
+    ],
+    "human_acceptance": "pending",
+    "promotion_authorized": false,
+    "selected_cv_job": "syn-09",
+    "model_requests": 14,
+    "elapsed_seconds": 67.5,
+    "assessment": "Two observed unsupported drafts were correctly rejected; reviewer also conflated job suitability with factual review. Writer/reviewer prompts corrected in a6a22e5; original failures retained."
+  },
+  "cv_after_prompt_fix": {
+    "phase": "cv",
+    "model": "gemini-3.1-flash-lite",
+    "passed": true,
+    "scope": "Fictional software candidate only; does not promote real candidate ranking.",
+    "personal_data_sent": false,
+    "fixture_sha256": "83a01165feda53912028b57b1d12654bdd42e03e726f90ce9a383d7dba57e966",
+    "request_cap": 60,
+    "cases": [
+      {
+        "job_id": "syn-01",
+        "label": "strong",
+        "passed": true,
+        "synthetic_outputs": [
+          {
+            "role": "writer",
+            "output": {
+              "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams. Maintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+              "changes_made": "I rearranged the experience section to emphasize Python data pipelines, SQL financial reporting tools, and automated testing capabilities to align with the provided role requirements. All factual claims are strictly derived from the original master CV.",
+              "evidence_used": [
+                {
+                  "claim": "Built Python data pipelines and SQL reporting tools for finance teams.",
+                  "source": "master_cv",
+                  "source_text": "Built Python data pipelines and SQL reporting tools for finance teams."
+                },
+                {
+                  "claim": "Maintained automated tests and documented production data workflows.",
+                  "source": "master_cv",
+                  "source_text": "Maintained automated tests and documented production data workflows."
+                }
+              ],
+              "keywords_added": [
+                "Python data pipelines",
+                "SQL financial reporting tools",
+                "automated testing"
+              ],
+              "warnings": [
+                "The candidate's experience is documented in the source CV; ensure that the specific technology stack matches the internal needs of the hiring team as the candidate profile is general."
+              ]
+            },
+            "validation": {
+              "valid": true,
+              "validation_version": "deterministic-cv-v3",
+              "output_claims_checked": 7,
+              "context_errors": [],
+              "unsupported_claims": [],
+              "evidence_items_checked": 2,
+              "invalid_evidence": [],
+              "unsupported_numeric_claims": []
+            }
+          },
+          {
+            "role": "reviewer",
+            "output": {
+              "decision": "approve",
+              "issues": [],
+              "reason": "The draft is fully supported by the candidate's master CV and passes the deterministic evidence check. The tailoring is accurate and strictly adheres to factual claims."
+            }
+          }
+        ],
+        "result": {
+          "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams. Maintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+          "changes_made": "I rearranged the experience section to emphasize Python data pipelines, SQL financial reporting tools, and automated testing capabilities to align with the provided role requirements. All factual claims are strictly derived from the original master CV.",
+          "evidence_used": [
+            {
+              "claim": "Built Python data pipelines and SQL reporting tools for finance teams.",
+              "source": "master_cv",
+              "source_text": "Built Python data pipelines and SQL reporting tools for finance teams."
+            },
+            {
+              "claim": "Maintained automated tests and documented production data workflows.",
+              "source": "master_cv",
+              "source_text": "Maintained automated tests and documented production data workflows."
+            }
+          ],
+          "keywords_added": [
+            "Python data pipelines",
+            "SQL financial reporting tools",
+            "automated testing"
+          ],
+          "warnings": [
+            "The candidate's experience is documented in the source CV; ensure that the specific technology stack matches the internal needs of the hiring team as the candidate profile is general."
+          ],
+          "model": "gemini-3.1-flash-lite",
+          "provider": "gemini",
+          "prompt_version": "phase2-cv-v4",
+          "profile_version": "synthetic-quality-1",
+          "source_cv_sha256": "6d06dec36ecd8ee176ca456ff6ef43808023cefae4cad33bc143a55a7e44fff0",
+          "usage": {
+            "input_tokens": 7309,
+            "output_tokens": 459
+          },
+          "estimated_cost_usd": 0,
+          "cost_estimate_complete": true,
+          "agent_steps": [
+            {
+              "execution_id": "89389996-c7c5-4a0b-944d-5fe70cf29e56",
+              "sequence": 1,
+              "role": "writer",
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite",
+              "prompt_version": "phase2-cv-v4",
+              "status": "completed",
+              "model_requests": 4,
+              "input_tokens": 4538,
+              "output_tokens": 382,
+              "usage_complete": true,
+              "estimated_cost_usd": 0.0,
+              "latency_seconds": 16.548,
+              "tool_calls": [
+                "read_candidate_evidence",
+                "read_captured_job",
+                "read_search_preferences"
+              ]
+            },
+            {
+              "execution_id": "89389996-c7c5-4a0b-944d-5fe70cf29e56",
+              "sequence": 2,
+              "role": "reviewer",
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite",
+              "prompt_version": "specialists-v2",
+              "status": "completed",
+              "model_requests": 3,
+              "input_tokens": 2771,
+              "output_tokens": 77,
+              "usage_complete": true,
+              "estimated_cost_usd": 0.0,
+              "latency_seconds": 14.544,
+              "tool_calls": [
+                "read_candidate_evidence",
+                "check_draft_evidence"
+              ]
+            }
+          ],
+          "validation": {
+            "valid": true,
+            "validation_version": "deterministic-cv-v3",
+            "output_claims_checked": 7,
+            "context_errors": [],
+            "unsupported_claims": [],
+            "evidence_items_checked": 2,
+            "invalid_evidence": [],
+            "unsupported_numeric_claims": [],
+            "agent_review": {
+              "workflow_version": "specialists-v2",
+              "revisions": 0,
+              "reviews": [
+                {
+                  "decision": "approve",
+                  "issues": [],
+                  "reason": "The draft is fully supported by the candidate's master CV and passes the deterministic evidence check. The tailoring is accurate and strictly adheres to factual claims."
+                }
+              ],
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite"
+            }
+          }
+        }
+      },
+      {
+        "job_id": "syn-09",
+        "label": "partial",
+        "passed": true,
+        "synthetic_outputs": [
+          {
+            "role": "writer",
+            "output": {
+              "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+              "changes_made": "The CV was reviewed for alignment with the Data Engineer role description. The content remains focused on Python and SQL data pipeline experience, preserving the original factual statements.",
+              "evidence_used": [
+                {
+                  "claim": "Built Python data pipelines and SQL reporting tools for finance teams.",
+                  "source": "master_cv",
+                  "source_text": "Built Python data pipelines and SQL reporting tools for finance teams."
+                }
+              ],
+              "keywords_added": [
+                "Python",
+                "SQL",
+                "data pipelines"
+              ],
+              "warnings": [
+                "The job description requires experience with Spark and Kafka, which are not documented in the source CV."
+              ]
+            },
+            "validation": {
+              "valid": true,
+              "validation_version": "deterministic-cv-v3",
+              "output_claims_checked": 7,
+              "context_errors": [],
+              "unsupported_claims": [],
+              "evidence_items_checked": 1,
+              "invalid_evidence": [],
+              "unsupported_numeric_claims": []
+            }
+          },
+          {
+            "role": "reviewer",
+            "output": {
+              "decision": "approve",
+              "issues": [],
+              "reason": "The draft accurately reflects the candidate's documented experience in Python and SQL data pipelines. The warning regarding the lack of Spark and Kafka experience is present and necessary, as the master CV does not contain this information. The draft maintains factual integrity to the master CV."
+            }
+          }
+        ],
+        "result": {
+          "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+          "changes_made": "The CV was reviewed for alignment with the Data Engineer role description. The content remains focused on Python and SQL data pipeline experience, preserving the original factual statements.",
+          "evidence_used": [
+            {
+              "claim": "Built Python data pipelines and SQL reporting tools for finance teams.",
+              "source": "master_cv",
+              "source_text": "Built Python data pipelines and SQL reporting tools for finance teams."
+            }
+          ],
+          "keywords_added": [
+            "Python",
+            "SQL",
+            "data pipelines"
+          ],
+          "warnings": [
+            "The job description requires experience with Spark and Kafka, which are not documented in the source CV."
+          ],
+          "model": "gemini-3.1-flash-lite",
+          "provider": "gemini",
+          "prompt_version": "phase2-cv-v4",
+          "profile_version": "synthetic-quality-1",
+          "source_cv_sha256": "6d06dec36ecd8ee176ca456ff6ef43808023cefae4cad33bc143a55a7e44fff0",
+          "usage": {
+            "input_tokens": 7004,
+            "output_tokens": 412
+          },
+          "estimated_cost_usd": 0,
+          "cost_estimate_complete": true,
+          "agent_steps": [
+            {
+              "execution_id": "e6e17797-3d84-4b53-a290-00f28134f997",
+              "sequence": 1,
+              "role": "writer",
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite",
+              "prompt_version": "phase2-cv-v4",
+              "status": "completed",
+              "model_requests": 2,
+              "input_tokens": 2266,
+              "output_tokens": 289,
+              "usage_complete": true,
+              "estimated_cost_usd": 0.0,
+              "latency_seconds": 10.479,
+              "tool_calls": [
+                "read_captured_job",
+                "read_candidate_evidence",
+                "read_search_preferences"
+              ]
+            },
+            {
+              "execution_id": "e6e17797-3d84-4b53-a290-00f28134f997",
+              "sequence": 2,
+              "role": "reviewer",
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite",
+              "prompt_version": "specialists-v2",
+              "status": "completed",
+              "model_requests": 5,
+              "input_tokens": 4738,
+              "output_tokens": 123,
+              "usage_complete": true,
+              "estimated_cost_usd": 0.0,
+              "latency_seconds": 25.109,
+              "tool_calls": [
+                "read_candidate_evidence",
+                "check_draft_evidence",
+                "read_search_preferences",
+                "read_captured_job"
+              ]
+            }
+          ],
+          "validation": {
+            "valid": true,
+            "validation_version": "deterministic-cv-v3",
+            "output_claims_checked": 7,
+            "context_errors": [],
+            "unsupported_claims": [],
+            "evidence_items_checked": 1,
+            "invalid_evidence": [],
+            "unsupported_numeric_claims": [],
+            "agent_review": {
+              "workflow_version": "specialists-v2",
+              "revisions": 0,
+              "reviews": [
+                {
+                  "decision": "approve",
+                  "issues": [],
+                  "reason": "The draft accurately reflects the candidate's documented experience in Python and SQL data pipelines. The warning regarding the lack of Spark and Kafka experience is present and necessary, as the master CV does not contain this information. The draft maintains factual integrity to the master CV."
+                }
+              ],
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite"
+            }
+          }
+        }
+      },
+      {
+        "job_id": "syn-13",
+        "label": "partial",
+        "passed": true,
+        "synthetic_outputs": [
+          {
+            "role": "writer",
+            "output": {
+              "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting, with experience maintaining PostgreSQL reporting and database environments.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+              "changes_made": "Updated the summary to explicitly mention experience with PostgreSQL reporting to better align with the job requirements. Retained all original experience and technical skill documentation.",
+              "evidence_used": [
+                {
+                  "claim": "Built Python and SQL analytics systems for financial reporting, with experience maintaining PostgreSQL reporting and database environments.",
+                  "source": "master_cv",
+                  "source_text": "Built Python and SQL analytics systems for financial reporting."
+                },
+                {
+                  "claim": "PostgreSQL",
+                  "source": "master_cv",
+                  "source_text": "Python, SQL, PostgreSQL, automated testing."
+                }
+              ],
+              "keywords_added": [
+                "PostgreSQL reporting"
+              ],
+              "warnings": [
+                "The candidate has PostgreSQL experience listed in their Technical Skills section, but no specific professional experience with advanced database tuning is documented in the source CV."
+              ]
+            },
+            "validation": {
+              "valid": false,
+              "validation_version": "deterministic-cv-v3",
+              "output_claims_checked": 7,
+              "context_errors": [],
+              "unsupported_claims": [
+                "built python and sql analytics systems for financial reporting, with experience maintaining postgresql reporting and database environments"
+              ],
+              "evidence_items_checked": 2,
+              "invalid_evidence": [
+                "Evidence is not relevant or does not support all facts: 'Built Python and SQL analytics systems for financial reporting, with experience maintaining PostgreSQL reporting and database environments.'",
+                "Evidence claim is not a complete output statement: 'PostgreSQL'"
+              ],
+              "unsupported_numeric_claims": []
+            }
+          },
+          {
+            "role": "reviewer",
+            "output": {
+              "decision": "revise",
+              "issues": [
+                "The summary in the draft claims experience in 'maintaining PostgreSQL reporting and database environments', which is not supported by the evidence in the master CV.",
+                "The deterministic evidence check failed because the summary claim exceeds the scope of the factual experience documented."
+              ],
+              "reason": "The candidate's master CV lists PostgreSQL under technical skills but does not document professional experience maintaining PostgreSQL reporting or database environments. The draft must be revised to remove the unsupported claim from the summary while keeping the factual technical skills."
+            }
+          },
+          {
+            "role": "writer",
+            "output": {
+              "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+              "changes_made": "I reviewed the summary and removed any unsupported claims regarding PostgreSQL maintenance experience. The CV now relies solely on the factual technical skills and professional experience listed in the original master CV.",
+              "evidence_used": [
+                {
+                  "claim": "Built Python and SQL analytics systems for financial reporting.",
+                  "source": "master_cv",
+                  "source_text": "Built Python and SQL analytics systems for financial reporting."
+                }
+              ],
+              "keywords_added": [
+                "PostgreSQL"
+              ],
+              "warnings": [
+                "The master CV lists PostgreSQL in the Technical Skills section but does not provide professional experience regarding PostgreSQL reporting maintenance or database tuning, which were specifically requested by the job description."
+              ]
+            },
+            "validation": {
+              "valid": true,
+              "validation_version": "deterministic-cv-v3",
+              "output_claims_checked": 7,
+              "context_errors": [],
+              "unsupported_claims": [],
+              "evidence_items_checked": 1,
+              "invalid_evidence": [],
+              "unsupported_numeric_claims": []
+            }
+          },
+          {
+            "role": "reviewer",
+            "output": {
+              "decision": "approve",
+              "issues": [],
+              "reason": "The draft accurately reflects the master CV and includes the required warning regarding the lack of specific professional experience in PostgreSQL reporting maintenance or database tuning, despite the candidate possessing PostgreSQL skills."
+            }
+          }
+        ],
+        "result": {
+          "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+          "changes_made": "I reviewed the summary and removed any unsupported claims regarding PostgreSQL maintenance experience. The CV now relies solely on the factual technical skills and professional experience listed in the original master CV.",
+          "evidence_used": [
+            {
+              "claim": "Built Python and SQL analytics systems for financial reporting.",
+              "source": "master_cv",
+              "source_text": "Built Python and SQL analytics systems for financial reporting."
+            }
+          ],
+          "keywords_added": [
+            "PostgreSQL"
+          ],
+          "warnings": [
+            "The master CV lists PostgreSQL in the Technical Skills section but does not provide professional experience regarding PostgreSQL reporting maintenance or database tuning, which were specifically requested by the job description."
+          ],
+          "model": "gemini-3.1-flash-lite",
+          "provider": "gemini",
+          "prompt_version": "phase2-cv-v4",
+          "profile_version": "synthetic-quality-1",
+          "source_cv_sha256": "6d06dec36ecd8ee176ca456ff6ef43808023cefae4cad33bc143a55a7e44fff0",
+          "usage": {
+            "input_tokens": 11967,
+            "output_tokens": 839
+          },
+          "estimated_cost_usd": 0,
+          "cost_estimate_complete": true,
+          "agent_steps": [
+            {
+              "execution_id": "fe137900-cdfa-44f2-a7b3-be67a752636e",
+              "sequence": 1,
+              "role": "writer",
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite",
+              "prompt_version": "phase2-cv-v4",
+              "status": "completed",
+              "model_requests": 1,
+              "input_tokens": 994,
+              "output_tokens": 315,
+              "usage_complete": true,
+              "estimated_cost_usd": 0.0,
+              "latency_seconds": 4.816,
+              "tool_calls": []
+            },
+            {
+              "execution_id": "fe137900-cdfa-44f2-a7b3-be67a752636e",
+              "sequence": 2,
+              "role": "reviewer",
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite",
+              "prompt_version": "specialists-v2",
+              "status": "completed",
+              "model_requests": 3,
+              "input_tokens": 2973,
+              "output_tokens": 147,
+              "usage_complete": true,
+              "estimated_cost_usd": 0.0,
+              "latency_seconds": 14.655,
+              "tool_calls": [
+                "read_candidate_evidence",
+                "check_draft_evidence"
+              ]
+            },
+            {
+              "execution_id": "fe137900-cdfa-44f2-a7b3-be67a752636e",
+              "sequence": 3,
+              "role": "writer",
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite",
+              "prompt_version": "phase2-cv-v4",
+              "status": "completed",
+              "model_requests": 4,
+              "input_tokens": 5412,
+              "output_tokens": 296,
+              "usage_complete": true,
+              "estimated_cost_usd": 0.0,
+              "latency_seconds": 20.439,
+              "tool_calls": [
+                "read_candidate_evidence",
+                "read_captured_job",
+                "read_search_preferences"
+              ]
+            },
+            {
+              "execution_id": "fe137900-cdfa-44f2-a7b3-be67a752636e",
+              "sequence": 4,
+              "role": "reviewer",
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite",
+              "prompt_version": "specialists-v2",
+              "status": "completed",
+              "model_requests": 3,
+              "input_tokens": 2588,
+              "output_tokens": 81,
+              "usage_complete": true,
+              "estimated_cost_usd": 0.0,
+              "latency_seconds": 14.215,
+              "tool_calls": [
+                "read_candidate_evidence",
+                "check_draft_evidence"
+              ]
+            }
+          ],
+          "validation": {
+            "valid": true,
+            "validation_version": "deterministic-cv-v3",
+            "output_claims_checked": 7,
+            "context_errors": [],
+            "unsupported_claims": [],
+            "evidence_items_checked": 1,
+            "invalid_evidence": [],
+            "unsupported_numeric_claims": [],
+            "agent_review": {
+              "workflow_version": "specialists-v2",
+              "revisions": 1,
+              "reviews": [
+                {
+                  "decision": "revise",
+                  "issues": [
+                    "The summary in the draft claims experience in 'maintaining PostgreSQL reporting and database environments', which is not supported by the evidence in the master CV.",
+                    "The deterministic evidence check failed because the summary claim exceeds the scope of the factual experience documented."
+                  ],
+                  "reason": "The candidate's master CV lists PostgreSQL under technical skills but does not document professional experience maintaining PostgreSQL reporting or database environments. The draft must be revised to remove the unsupported claim from the summary while keeping the factual technical skills."
+                },
+                {
+                  "decision": "approve",
+                  "issues": [],
+                  "reason": "The draft accurately reflects the master CV and includes the required warning regarding the lack of specific professional experience in PostgreSQL reporting maintenance or database tuning, despite the candidate possessing PostgreSQL skills."
+                }
+              ],
+              "provider": "gemini",
+              "model": "gemini-3.1-flash-lite"
+            }
+          }
+        }
+      }
+    ],
+    "human_acceptance": "pending",
+    "promotion_authorized": false,
+    "selected_cv_job": null,
+    "model_requests": 25,
+    "elapsed_seconds": 120.83,
+    "input_tokens": 26280,
+    "output_tokens": 1710,
+    "assistant_review": "All three final CVs preserve the fictional source statements and attribution. Missing job skills remain warnings. The third case required one correction of an invented PostgreSQL experience claim. Tailoring is conservative and mostly preserves source wording; human acceptance of real CV quality is pending."
+  },
+  "remaining": [
+    "Actual-candidate model/data-use choice and evaluation/human acceptance",
+    "Pilot host confirmation and production configuration",
+    "Indeed blocked: acknowledge reduced coverage or approved alternative",
+    "Pilot and final merge/scheduling decisions"
+  ]
+}
