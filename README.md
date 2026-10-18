@@ -7,7 +7,7 @@ It does not submit job applications.
 
 ## Current status
 
-**Release-candidate pilot passed; cloud deployment is next.**
+**Release-candidate pilot and cloud packaging checks passed; cloud provisioning is next.**
 
 - Development branch: `phase2-foundation`.
 - [Draft PR #1](https://github.com/Uzair-Qidwai/phase1-job-agent/pull/1) remains open;
@@ -16,12 +16,13 @@ It does not submit job applications.
   **four**, and produced **four evidence-validated CVs** using **34 Gemini requests**.
 - Replaying the same discovered rows created no duplicate jobs, CVs, batches or
   delivery attempts. Stopped-worker recovery and actual pilot backup restoration passed.
-- **264 local tests passed**, along with CI on the release-candidate checkpoint.
+- **266 tests passed in CI**, along with Linux container deployment checks.
 - The pilot digest remains pending. No email was sent during this pilot.
 - Cloud hosting was selected on October 13; provider selection and provisioning
   remain outstanding. The service is not deployed to production.
 
-See [Checkpoint 5](docs/phase2/CHECKPOINT_05.md),
+See [Checkpoint 6](docs/phase2/CHECKPOINT_06.md) for deployment packaging,
+[Checkpoint 5](docs/phase2/CHECKPOINT_05.md) for the live pilot,
 [acceptance evidence](docs/phase2/ACCEPTANCE.md), and the
 [sanitized pilot report](evals/reports/release_candidate_checkpoint05.json).
 Private CVs, credentials, database dumps and digest previews are not committed.
@@ -84,7 +85,8 @@ playwright install chromium
 ```
 
 Linux deployments must also install Playwright's operating-system dependencies.
-Cloud packaging and persistent service configuration are still to be completed.
+The tested container package includes these dependencies and persistent service
+configuration; see [deployment instructions](deploy/README.md).
 
 ### 2. Configure private settings
 
@@ -247,7 +249,7 @@ separate app/scheduler/database services and backups stored outside the VM.
 Provider, region, budget and dashboard access method are not selected yet.
 
 1. Choose provider, region, spending ceiling, access method and daily schedule.
-2. Package a reproducible build, browser dependencies and persistent services.
+2. **Complete:** package locked dependencies, browser runtime and persistent services; Linux CI verifies authentication, migrations, browser launch, persistence and scheduler guard.
 3. Provision the host, private database networking, restricted access and HTTPS where needed.
 4. Install secrets and private evidence files outside Git and application images.
 5. Resolve Gmail OAuth longevity and verify token refresh from the cloud.
