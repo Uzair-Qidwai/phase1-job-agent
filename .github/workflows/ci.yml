@@ -81,3 +81,13 @@ jobs:
 
       - name: Offline acceptance metrics
         run: python -m evals.run_offline_eval
+
+  deployment-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Compose
+        run: docker compose -f deploy/compose.yaml config --quiet
+      - name: Build and exercise disposable deployment
+        run: bash deploy/smoke.sh

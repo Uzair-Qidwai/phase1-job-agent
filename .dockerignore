@@ -1,0 +1,15 @@
+# Allowlist: personal data and credentials never enter the build context.
+**
+!Dockerfile
+!src/
+!src/**
+!migrations/
+!migrations/*.sql
+!data/
+!data/candidate_profile.json
+!deploy/
+!deploy/requirements.lock
+!deploy/entrypoint.py
+!deploy/healthcheck.py
+**/__pycache__/**
+**/*.pyc
