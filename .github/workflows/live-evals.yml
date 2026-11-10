@@ -1,0 +1,58 @@
+name: Live AI Evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      ranking_model:
+        description: "Candidate model identifier"
+        required: true
+        default: "claude-sonnet-4-5"
+        type: string
+      run_full_promotion:
+        description: "Also run the full 30-job semantic promotion benchmark"
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  live-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_INPUT_COST_PER_MTOK: ${{ secrets.ANTHROPIC_INPUT_COST_PER_MTOK || '0' }}
+      ANTHROPIC_OUTPUT_COST_PER_MTOK: ${{ secrets.ANTHROPIC_OUTPUT_COST_PER_MTOK || '0' }}
+      RANKING_MODEL: ${{ inputs.ranking_model }}
+      RANKING_MODE: deterministic
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Require provider credential
+        run: |
+          python - <<'PY'
+          import os
+          if not os.getenv("ANTHROPIC_API_KEY"):
+              raise SystemExit(
+                  "ANTHROPIC_API_KEY GitHub Actions secret is required for live evaluation"
+              )
+          PY
+
+      - name: Controlled provider smoke
+        run: python -m evals.live_provider_smoke
+
+      - name: Semantic candidate vs deterministic baseline
+        if: ${{ inputs.run_full_promotion }}
+        run: python -m evals.run_semantic_eval

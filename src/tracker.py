@@ -1,32 +1,57 @@
-"""
-tracker.py — PostgreSQL CRUD for job records and CV versions.
-All DB interaction goes through this module.
-"""
+"""PostgreSQL repositories for jobs, CV versions, and pipeline execution."""
 
 from __future__ import annotations
 
 import logging
-import os
 import uuid
 from contextlib import contextmanager
 from typing import Any, Generator
 
 import psycopg2
 import psycopg2.extras
-from dotenv import load_dotenv
 
-load_dotenv()
+from src.settings import get_settings
+
 logger = logging.getLogger(__name__)
 
-POSTGRES_URL = os.environ["POSTGRES_URL"]
-
-# Use dict cursor so rows come back as dicts everywhere
 psycopg2.extras.register_uuid()
+
+VALID_SYSTEM_STATES = {
+    "legacy",
+    "discovered",
+    "filtered_out",
+    "ranked_out",
+    "shortlisted",
+    "tailored",
+    "notified",
+}
+
+VALID_PIPELINE_TRIGGERS = {"scheduled", "manual", "retry"}
+VALID_PIPELINE_STATUSES = {
+    "created",
+    "scraping",
+    "persisting",
+    "filtering",
+    "ranking",
+    "tailoring",
+    "notifying",
+    "resuming",
+    "completed",
+    "failed",
+}
+
+
+class PipelineAlreadyRunning(RuntimeError):
+    """Raised when a second process attempts to start an active pipeline."""
 
 
 @contextmanager
 def get_conn() -> Generator[psycopg2.extensions.connection, None, None]:
-    conn = psycopg2.connect(POSTGRES_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    postgres_url = get_settings().require_postgres_url()
+    conn = psycopg2.connect(
+        postgres_url,
+        cursor_factory=psycopg2.extras.RealDictCursor,
+    )
     try:
         yield conn
         conn.commit()
@@ -37,10 +62,6 @@ def get_conn() -> Generator[psycopg2.extensions.connection, None, None]:
         conn.close()
 
 
-# ─────────────────────────────────────────────
-# Jobs
-# ─────────────────────────────────────────────
-
 def upsert_job(
     title: str,
     company: str,
@@ -48,43 +69,142 @@ def upsert_job(
     url: str,
     description: str,
     source: str,
+    source_job_id: str | None = None,
 ) -> tuple[str, bool]:
-    """
-    Insert a job if url is new. Returns (job_id, is_new).
-    On conflict (duplicate URL) returns existing id with is_new=False.
-    """
+    """Insert a job using source identity first and canonical URL as fallback."""
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO jobs (title, company, location, url, description, source)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                ON CONFLICT (url) DO NOTHING
+                INSERT INTO jobs (
+                    title,
+                    company,
+                    location,
+                    url,
+                    description,
+                    source,
+                    source_job_id
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT DO NOTHING
                 RETURNING id
                 """,
-                (title, company, location, url, description, source),
+                (
+                    title,
+                    company,
+                    location,
+                    url,
+                    description,
+                    source,
+                    source_job_id,
+                ),
             )
             row = cur.fetchone()
             if row:
                 return str(row["id"]), True
 
-            # Already existed — fetch the existing id
-            cur.execute("SELECT id FROM jobs WHERE url = %s", (url,))
-            existing = cur.fetchone()
+            existing = None
+            if source_job_id:
+                cur.execute(
+                    """
+                    SELECT id, source_job_id
+                    FROM jobs
+                    WHERE source = %s AND source_job_id = %s
+                    LIMIT 1
+                    """,
+                    (source, source_job_id),
+                )
+                existing = cur.fetchone()
+
+            if not existing:
+                cur.execute(
+                    "SELECT id, source_job_id FROM jobs WHERE url = %s LIMIT 1",
+                    (url,),
+                )
+                existing = cur.fetchone()
+
+            if not existing:
+                raise RuntimeError("Job insert conflicted but no existing job could be resolved")
+
+            if source_job_id and not existing.get("source_job_id"):
+                cur.execute(
+                    """
+                    UPDATE jobs
+                    SET source_job_id = %s
+                    WHERE id = %s AND source_job_id IS NULL
+                    """,
+                    (source_job_id, existing["id"]),
+                )
+
             return str(existing["id"]), False
 
 
+def update_job_score(job_id: str, match_score: float) -> None:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE jobs SET match_score = %s WHERE id = %s",
+                (match_score, uuid.UUID(job_id)),
+            )
+
+
+def attach_cv_version(job_id: str, cv_version_id: str) -> None:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE jobs SET cv_version_id = %s WHERE id = %s",
+                (uuid.UUID(cv_version_id), uuid.UUID(job_id)),
+            )
+
+
 def update_job_score_and_cv(job_id: str, match_score: float, cv_version_id: str) -> None:
+    """Compatibility wrapper for Phase 1 callers; new code should separate ranking and CV."""
+    update_job_score(job_id, match_score)
+    attach_cv_version(job_id, cv_version_id)
+
+
+
+
+def update_job_system_state(job_id: str, system_state: str) -> None:
+    if system_state not in VALID_SYSTEM_STATES:
+        raise ValueError(
+            f"Invalid system_state '{system_state}'. Must be one of {VALID_SYSTEM_STATES}"
+        )
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE jobs SET system_state = %s WHERE id = %s",
+                (system_state, uuid.UUID(job_id)),
+            )
+
+
+def get_jobs_by_system_states(
+    states: list[str],
+    *,
+    limit: int = 500,
+) -> list[dict[str, Any]]:
+    invalid = set(states) - VALID_SYSTEM_STATES
+    if invalid:
+        raise ValueError(f"Invalid system states: {sorted(invalid)}")
+    if not states:
+        return []
+
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                UPDATE jobs
-                SET match_score = %s, cv_version_id = %s
-                WHERE id = %s
+                SELECT id, title, company, location, url, description,
+                       match_score, source, source_job_id, status, system_state,
+                       found_at, updated_at
+                FROM jobs
+                WHERE system_state = ANY(%s)
+                ORDER BY found_at ASC
+                LIMIT %s
                 """,
-                (match_score, uuid.UUID(cv_version_id), uuid.UUID(job_id)),
+                (states, limit),
             )
+            return [dict(row) for row in cur.fetchall()]
 
 
 def update_job_status(job_id: str, status: str) -> dict[str, Any] | None:
@@ -114,32 +234,37 @@ def get_jobs(
         with conn.cursor() as cur:
             query = """
                 SELECT j.id, j.title, j.company, j.location, j.url,
-                       j.match_score, j.source, j.status, j.found_at,
+                       j.match_score, j.source, j.source_job_id, j.status,
+                       j.system_state, j.found_at,
                        j.notes, j.updated_at, cv.changes_made
                 FROM jobs j
                 LEFT JOIN cv_versions cv ON cv.id = j.cv_version_id
                 WHERE (%s IS NULL OR j.status = %s)
-                  AND (j.match_score IS NULL OR j.match_score >= %s)
+                  AND (%s <= 0 OR j.match_score >= %s)
                 ORDER BY j.match_score DESC NULLS LAST, j.found_at DESC
                 LIMIT %s
             """
-            cur.execute(query, (status, status, min_score, limit))
+            cur.execute(query, (status, status, min_score, min_score, limit))
             return [dict(r) for r in cur.fetchall()]
 
 
 def get_new_jobs_for_digest(min_score: float = 0.6) -> list[dict[str, Any]]:
-    """Jobs found in the last 24 h with score >= min_score."""
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT j.id, j.title, j.company, j.location, j.url,
-                       j.match_score, j.source, j.status, j.found_at,
+                       j.match_score, j.source, j.status, j.system_state, j.found_at,
                        cv.changes_made
                 FROM jobs j
                 LEFT JOIN cv_versions cv ON cv.id = j.cv_version_id
-                WHERE j.found_at >= NOW() - INTERVAL '24 hours'
-                  AND j.match_score >= %s
+                LEFT JOIN notifications n
+                  ON n.job_id = j.id
+                 AND n.channel = 'email'
+                 AND n.status = 'sent'
+                WHERE j.match_score >= %s
+                  AND j.system_state = 'tailored'
+                  AND n.id IS NULL
                 ORDER BY j.match_score DESC
                 """,
                 (min_score,),
@@ -163,29 +288,596 @@ def get_job_by_id(job_id: str) -> dict[str, Any] | None:
             return dict(row) if row else None
 
 
-def add_note(job_id: str, note: str) -> None:
+def add_note(job_id: str, note: str) -> bool:
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "UPDATE jobs SET notes = %s WHERE id = %s",
+                "UPDATE jobs SET notes = %s WHERE id = %s RETURNING id",
                 (note, uuid.UUID(job_id)),
             )
+            return cur.fetchone() is not None
 
 
-# ─────────────────────────────────────────────
-# CV Versions
-# ─────────────────────────────────────────────
+def save_ranking_result(
+    *,
+    job_id: str,
+    run_id: str | None,
+    total_score: float,
+    hard_mismatch: bool,
+    component_scores: dict[str, float],
+    explanation: list[str],
+    profile_version: str,
+    ranking_version: str,
+    model: str | None = None,
+    usage: dict[str, Any] | None = None,
+    estimated_cost_usd: float = 0.0,
+) -> int:
+    if not 0.0 <= total_score <= 100.0:
+        raise ValueError("total_score must be between 0 and 100")
+    if estimated_cost_usd < 0:
+        raise ValueError("estimated_cost_usd must be non-negative")
 
-def save_cv_version(job_id: str, tailored_cv: str, changes_made: str) -> str:
-    """Insert a cv_version row and return its id."""
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO cv_versions (job_id, tailored_cv, changes_made)
-                VALUES (%s, %s, %s)
+                INSERT INTO ranking_results (
+                    job_id,
+                    run_id,
+                    total_score,
+                    hard_mismatch,
+                    component_scores,
+                    explanation,
+                    profile_version,
+                    ranking_version,
+                    model,
+                    usage,
+                    estimated_cost_usd
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
-                (uuid.UUID(job_id), tailored_cv, changes_made),
+                (
+                    uuid.UUID(job_id),
+                    uuid.UUID(run_id) if run_id else None,
+                    total_score,
+                    hard_mismatch,
+                    psycopg2.extras.Json(component_scores),
+                    psycopg2.extras.Json(explanation),
+                    profile_version,
+                    ranking_version,
+                    model,
+                    psycopg2.extras.Json(usage or {}),
+                    estimated_cost_usd,
+                ),
+            )
+            return int(cur.fetchone()["id"])
+
+
+def save_cv_version(
+    job_id: str,
+    tailored_cv: str,
+    changes_made: str,
+    *,
+    model: str | None = None,
+    prompt_version: str | None = None,
+    profile_version: str | None = None,
+    source_cv_sha256: str | None = None,
+    evidence: list[dict[str, Any]] | None = None,
+    validation: dict[str, Any] | None = None,
+    usage: dict[str, Any] | None = None,
+    estimated_cost_usd: float = 0.0,
+) -> str:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO cv_versions (
+                    job_id,
+                    tailored_cv,
+                    changes_made,
+                    model,
+                    prompt_version,
+                    profile_version,
+                    source_cv_sha256,
+                    evidence,
+                    validation,
+                    usage,
+                    estimated_cost_usd
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    uuid.UUID(job_id),
+                    tailored_cv,
+                    changes_made,
+                    model,
+                    prompt_version,
+                    profile_version,
+                    source_cv_sha256,
+                    psycopg2.extras.Json(evidence or []),
+                    psycopg2.extras.Json(validation or {}),
+                    psycopg2.extras.Json(usage or {}),
+                    estimated_cost_usd,
+                ),
             )
             return str(cur.fetchone()["id"])
+
+
+def start_pipeline_run(
+    trigger: str,
+    *,
+    retry_of_run_id: str | None = None,
+) -> str:
+    """Create a run and atomically acquire the cross-process active-run slot."""
+    if trigger not in VALID_PIPELINE_TRIGGERS:
+        raise ValueError(
+            f"Invalid pipeline trigger '{trigger}'. Must be one of "
+            f"{sorted(VALID_PIPELINE_TRIGGERS)}"
+        )
+
+    if trigger != "retry" and retry_of_run_id is not None:
+        raise ValueError("retry_of_run_id is only valid for retry runs")
+
+    retry_uuid = uuid.UUID(retry_of_run_id) if retry_of_run_id else None
+
+    if retry_uuid is not None:
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT status FROM pipeline_runs WHERE id = %s",
+                    (retry_uuid,),
+                )
+                parent = cur.fetchone()
+                if not parent:
+                    raise ValueError("Retry parent run does not exist")
+                if parent["status"] != "failed":
+                    raise ValueError("Retry parent run must be failed")
+
+    try:
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO pipeline_runs (
+                        trigger,
+                        status,
+                        current_stage,
+                        retry_of_run_id
+                    )
+                    VALUES (%s, 'created', 'created', %s)
+                    RETURNING id
+                    """,
+                    (trigger, retry_uuid),
+                )
+                run_id = str(cur.fetchone()["id"])
+                cur.execute(
+                    """
+                    INSERT INTO pipeline_events (run_id, stage, event_type, payload)
+                    VALUES (%s, 'created', 'run_started', %s)
+                    """,
+                    (
+                        uuid.UUID(run_id),
+                        psycopg2.extras.Json(
+                            {
+                                "trigger": trigger,
+                                "retry_of_run_id": retry_of_run_id,
+                            }
+                        ),
+                    ),
+                )
+                return run_id
+    except psycopg2.errors.UniqueViolation as exc:
+        if exc.diag.constraint_name == "uq_pipeline_runs_single_active":
+            raise PipelineAlreadyRunning("A pipeline run is already active") from exc
+        raise
+
+
+def update_pipeline_run(
+    run_id: str,
+    *,
+    status: str | None = None,
+    current_stage: str | None = None,
+    jobs_discovered: int | None = None,
+    jobs_inserted: int | None = None,
+    jobs_ranked: int | None = None,
+    jobs_shortlisted: int | None = None,
+    jobs_tailored: int | None = None,
+    jobs_notified: int | None = None,
+    model_input_tokens: int | None = None,
+    model_output_tokens: int | None = None,
+    estimated_model_cost_usd: float | None = None,
+) -> None:
+    if status is not None and status not in VALID_PIPELINE_STATUSES:
+        raise ValueError(
+            f"Invalid pipeline status '{status}'. Must be one of "
+            f"{sorted(VALID_PIPELINE_STATUSES)}"
+        )
+
+    counters = {
+        "jobs_discovered": jobs_discovered,
+        "jobs_inserted": jobs_inserted,
+        "jobs_ranked": jobs_ranked,
+        "jobs_shortlisted": jobs_shortlisted,
+        "jobs_tailored": jobs_tailored,
+        "jobs_notified": jobs_notified,
+        "model_input_tokens": model_input_tokens,
+        "model_output_tokens": model_output_tokens,
+        "estimated_model_cost_usd": estimated_model_cost_usd,
+    }
+    negative = [name for name, value in counters.items() if value is not None and value < 0]
+    if negative:
+        raise ValueError(
+            "Pipeline counters/cost must be non-negative: " + ", ".join(sorted(negative))
+        )
+
+    fields: list[str] = []
+    values: list[Any] = []
+
+    for column, value in (
+        ("status", status),
+        ("current_stage", current_stage),
+        ("jobs_discovered", jobs_discovered),
+        ("jobs_inserted", jobs_inserted),
+        ("jobs_ranked", jobs_ranked),
+        ("jobs_shortlisted", jobs_shortlisted),
+        ("jobs_tailored", jobs_tailored),
+        ("jobs_notified", jobs_notified),
+        ("model_input_tokens", model_input_tokens),
+        ("model_output_tokens", model_output_tokens),
+        ("estimated_model_cost_usd", estimated_model_cost_usd),
+    ):
+        if value is not None:
+            fields.append(f"{column} = %s")
+            values.append(value)
+
+    if not fields:
+        return
+
+    values.append(uuid.UUID(run_id))
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"UPDATE pipeline_runs SET {', '.join(fields)} WHERE id = %s",
+                values,
+            )
+
+
+def record_pipeline_event(
+    run_id: str,
+    event_type: str,
+    *,
+    stage: str | None = None,
+    level: str = "info",
+    payload: dict[str, Any] | None = None,
+) -> None:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO pipeline_events (run_id, stage, level, event_type, payload)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (
+                    uuid.UUID(run_id),
+                    stage,
+                    level,
+                    event_type,
+                    psycopg2.extras.Json(payload or {}),
+                ),
+            )
+
+
+def complete_pipeline_run(run_id: str, *, jobs_notified: int = 0) -> None:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE pipeline_runs
+                SET status = 'completed',
+                    current_stage = 'completed',
+                    jobs_notified = %s,
+                    finished_at = NOW()
+                WHERE id = %s
+                """,
+                (jobs_notified, uuid.UUID(run_id)),
+            )
+            cur.execute(
+                """
+                INSERT INTO pipeline_events (run_id, stage, event_type)
+                VALUES (%s, 'completed', 'run_completed')
+                """,
+                (uuid.UUID(run_id),),
+            )
+
+
+def fail_pipeline_run(run_id: str, stage: str, exc: Exception) -> None:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE pipeline_runs
+                SET status = 'failed',
+                    current_stage = %s,
+                    error_type = %s,
+                    error_message = %s,
+                    finished_at = NOW()
+                WHERE id = %s
+                """,
+                (
+                    stage,
+                    type(exc).__name__,
+                    str(exc)[:2000],
+                    uuid.UUID(run_id),
+                ),
+            )
+            cur.execute(
+                """
+                INSERT INTO pipeline_events (
+                    run_id, stage, level, event_type, payload
+                )
+                VALUES (%s, %s, 'error', 'run_failed', %s)
+                """,
+                (
+                    uuid.UUID(run_id),
+                    stage,
+                    psycopg2.extras.Json(
+                        {
+                            "error_type": type(exc).__name__,
+                            "error_message": str(exc)[:2000],
+                        }
+                    ),
+                ),
+            )
+
+
+def get_pipeline_run(run_id: str) -> dict[str, Any] | None:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM pipeline_runs WHERE id = %s",
+                (uuid.UUID(run_id),),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+
+def mark_jobs_notified(
+    job_ids: list[str],
+    *,
+    run_id: str | None,
+    channel: str = "email",
+) -> int:
+    """Persist successful delivery state; duplicate job/channel pairs are ignored."""
+    if not job_ids:
+        return 0
+
+    inserted = 0
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            for job_id in job_ids:
+                cur.execute(
+                    """
+                    INSERT INTO notifications (job_id, run_id, channel, status)
+                    VALUES (%s, %s, %s, 'sent')
+                    ON CONFLICT (job_id, channel) DO NOTHING
+                    RETURNING id
+                    """,
+                    (
+                        uuid.UUID(job_id),
+                        uuid.UUID(run_id) if run_id else None,
+                        channel,
+                    ),
+                )
+                if cur.fetchone():
+                    inserted += 1
+                    cur.execute(
+                        "UPDATE jobs SET system_state = 'notified' WHERE id = %s",
+                        (uuid.UUID(job_id),),
+                    )
+    return inserted
+
+
+def get_active_pipeline_run() -> dict[str, Any] | None:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT *
+                FROM pipeline_runs
+                WHERE status IN (
+                    'created',
+                    'scraping',
+                    'persisting',
+                    'filtering',
+                    'ranking',
+                    'tailoring',
+                    'notifying',
+                    'resuming'
+                )
+                ORDER BY started_at DESC
+                LIMIT 1
+                """
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+
+def record_source_health(
+    run_id: str,
+    source_counts: dict[str, int],
+) -> None:
+    """Persist per-source discovery counts for operational trend monitoring."""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            for source, count in source_counts.items():
+                cur.execute(
+                    """
+                    INSERT INTO source_health (
+                        run_id, source, jobs_discovered, zero_results
+                    )
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (run_id, source) DO UPDATE
+                    SET jobs_discovered = EXCLUDED.jobs_discovered,
+                        zero_results = EXCLUDED.zero_results
+                    """,
+                    (uuid.UUID(run_id), source, count, count == 0),
+                )
+
+
+def get_source_health(
+    source: str | None = None,
+    *,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    if not 1 <= limit <= 500 or not 0 <= offset <= 100000:
+        raise ValueError("Invalid pagination bounds")
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, run_id, source, jobs_discovered, zero_results, created_at
+                FROM source_health
+                WHERE (%s IS NULL OR source = %s)
+                ORDER BY created_at DESC, id DESC
+                LIMIT %s OFFSET %s
+                """,
+                (source, source, limit, offset),
+            )
+            return [dict(row) for row in cur.fetchall()]
+
+
+def source_has_consecutive_zero_results(
+    source: str,
+    *,
+    runs: int,
+) -> bool:
+    """Return True only when the latest N recorded source runs are all empty."""
+    if runs < 1:
+        raise ValueError("runs must be positive")
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT zero_results
+                FROM source_health
+                WHERE source = %s
+                ORDER BY created_at DESC, id DESC
+                LIMIT %s
+                """,
+                (source, runs),
+            )
+            rows = cur.fetchall()
+
+    return len(rows) == runs and all(row["zero_results"] for row in rows)
+
+
+def claim_admitted_run(run_id: str) -> dict[str, Any]:
+    """Consume an HTTP reservation once; duplicate children cannot execute it."""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE pipeline_runs SET status = 'resuming'
+                WHERE id = %s AND status = 'created'
+                RETURNING *
+                """,
+                (uuid.UUID(run_id),),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise ValueError("Run reservation does not exist or was already claimed")
+            return dict(row)
+
+
+# Deliberately omit exception text, arbitrary metadata and event payloads.
+PIPELINE_RUN_PUBLIC_FIELDS = (
+    "id", "trigger", "status", "current_stage", "started_at", "finished_at",
+    "updated_at", "retry_of_run_id", "jobs_discovered", "jobs_inserted",
+    "jobs_ranked", "jobs_shortlisted", "jobs_tailored", "jobs_notified",
+    "model_input_tokens", "model_output_tokens", "estimated_model_cost_usd",
+)
+
+
+def get_pipeline_runs(*, status: str | None = None, limit: int = 100,
+                      offset: int = 0) -> list[dict[str, Any]]:
+    if status is not None and status not in VALID_PIPELINE_STATUSES:
+        raise ValueError("Invalid pipeline status")
+    if not 1 <= limit <= 500 or not 0 <= offset <= 100000:
+        raise ValueError("Invalid pagination bounds")
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT {', '.join(PIPELINE_RUN_PUBLIC_FIELDS)} FROM pipeline_runs
+                WHERE (%s IS NULL OR status = %s)
+                ORDER BY started_at DESC, id DESC LIMIT %s OFFSET %s
+                """,
+                (status, status, limit, offset),
+            )
+            return [dict(row) for row in cur.fetchall()]
+
+
+# Session lock shared by every worker and manual recovery. The unique active-run
+# index remains the admission guard; this lock proves a healthy worker is alive.
+PIPELINE_EXECUTION_LOCK = 724810292
+
+
+@contextmanager
+def pipeline_execution_lock(*, wait: bool = False):
+    conn = psycopg2.connect(get_settings().require_postgres_url())
+    conn.autocommit = True
+    try:
+        with conn.cursor() as cur:
+            function = "pg_advisory_lock" if wait else "pg_try_advisory_lock"
+            cur.execute(f"SELECT {function}(%s)", (PIPELINE_EXECUTION_LOCK,))
+            acquired = cur.fetchone()[0]
+            if not wait and not acquired:
+                raise PipelineAlreadyRunning("A pipeline worker or recovery operation is active")
+        yield
+    finally:
+        # Closing the session releases the lock, including on exceptions.
+        conn.close()
+
+
+def recover_abandoned_run(run_id: str, *, reason: str, workers_stopped: bool) -> dict[str, Any]:
+    """Mark one stranded run failed, after operator shutdown and lock exclusion.
+
+    Absence of a database session is not proof of process termination (network
+    partitions exist). Confirmation of worker shutdown is therefore mandatory.
+    """
+    if not workers_stopped:
+        raise ValueError("Confirm all pipeline workers have been stopped before recovery")
+    reason = reason.strip()
+    if not 10 <= len(reason) <= 1000:
+        raise ValueError("Recovery reason must contain 10 to 1000 characters")
+    run_uuid = uuid.UUID(run_id)
+    with pipeline_execution_lock():
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE pipeline_runs
+                    SET status = 'failed', finished_at = NOW(),
+                        error_type = 'OperatorRecovery', error_message = %s
+                    WHERE id = %s AND status NOT IN ('completed', 'failed')
+                    RETURNING id, status, current_stage
+                    """,
+                    (reason, run_uuid),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise ValueError("Run does not exist or is already terminal; nothing changed")
+                cur.execute(
+                    """
+                    INSERT INTO pipeline_events (run_id, stage, level, event_type, payload)
+                    VALUES (%s, %s, 'warning', 'operator_recovery', %s)
+                    """,
+                    (run_uuid, row["current_stage"], psycopg2.extras.Json({
+                        "reason": reason, "workers_stopped_confirmed": True,
+                    })),
+                )
+                return dict(row)

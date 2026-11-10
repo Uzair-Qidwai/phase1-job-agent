@@ -1,0 +1,588 @@
+[
+  {
+    "name": "target role and combined source facts do not prove output claims",
+    "master_cv": "Built a protocol that processed $100M in lifetime volume. Python and Solidity.",
+    "candidate_profile": "{\"target_roles\":[\"DeFi Engineer\"]}",
+    "result": {
+      "tailored_cv": "DeFi engineer who built a protocol that processed $100M in lifetime volume using Python and Solidity.",
+      "changes_made": "Front-loaded protocol experience.",
+      "evidence_used": [
+        {
+          "claim": "Processed $100M in lifetime volume",
+          "source": "master_cv",
+          "source_text": "Built a protocol that processed $100M in lifetime volume."
+        }
+      ],
+      "keywords_added": [
+        "DeFi"
+      ],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "invented metric fails",
+    "master_cv": "Built a protocol that processed $100M in lifetime volume.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built a protocol that processed $250M in lifetime volume and led engineering.",
+      "changes_made": "Adjusted impact statement.",
+      "evidence_used": [
+        {
+          "claim": "Built a protocol",
+          "source": "master_cv",
+          "source_text": "Built a protocol that processed $100M in lifetime volume."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "fabricated evidence quote fails",
+    "master_cv": "Built Python systems for analytics.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for analytics and machine learning.",
+      "changes_made": "Added role language.",
+      "evidence_used": [
+        {
+          "claim": "Led a 20 person ML team",
+          "source": "master_cv",
+          "source_text": "Led a 20 person ML team"
+        }
+      ],
+      "keywords_added": [
+        "machine learning"
+      ],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "copied statement passes",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "conservative shortening with full citation passes",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "valid evidence does not cover invented uncited sentence",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting.\nWon the Turing Award.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "invented employer with overlapping terms fails",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting at Google.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting at Google.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "invented skill with overlapping terms fails",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python and Rust systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python and Rust systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "responsibility inflation fails",
+    "master_cv": "Assisted with Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Led Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Led Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Assisted with Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "supporting qualifier cannot be dropped",
+    "master_cv": "Assisted with Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Assisted with Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "expected degree cannot become completed degree",
+    "master_cv": "Master of Applied Science in Computer Science at Example University (expected).",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Master of Applied Science in Computer Science at Example University.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Master of Applied Science in Computer Science at Example University.",
+          "source": "master_cv",
+          "source_text": "Master of Applied Science in Computer Science at Example University (expected)."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "applicant qualifier cannot be removed",
+    "master_cv": "Open Source Fund Applicant at Example Foundation for technical research.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Open Source Fund at Example Foundation for technical research.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Open Source Fund at Example Foundation for technical research.",
+          "source": "master_cv",
+          "source_text": "Open Source Fund Applicant at Example Foundation for technical research."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "negation cannot be removed",
+    "master_cv": "Did not manage engineering teams delivering financial reporting platforms.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Did manage engineering teams delivering financial reporting platforms.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Did manage engineering teams delivering financial reporting platforms.",
+          "source": "master_cv",
+          "source_text": "Did not manage engineering teams delivering financial reporting platforms."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "truncated evidence cannot erase negation",
+    "master_cv": "Did not manage engineering teams delivering financial reporting platforms.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Manage engineering teams delivering financial reporting platforms.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Manage engineering teams delivering financial reporting platforms.",
+          "source": "master_cv",
+          "source_text": "manage engineering teams delivering financial reporting platforms."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "existing number cannot transfer between claims",
+    "master_cv": "Taught 100 students in systems courses. Reached 50 enterprise customers.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Taught 50 students in systems courses for enterprise customers.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Taught 50 students in systems courses for enterprise customers.",
+          "source": "master_cv",
+          "source_text": "Taught 100 students in systems courses. Reached 50 enterprise customers."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "detached evidence claim fails",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Invented disconnected claim",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "invented factual heading fails",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "# Stanford PhD\nBuilt Python systems for financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "preferences cannot establish experience",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{\"target_roles\":[\"Machine Learning Engineer\"]}",
+    "result": {
+      "tailored_cv": "Machine Learning Engineer building financial analytics and reporting.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Machine Learning Engineer building financial analytics and reporting.",
+          "source": "candidate_profile",
+          "source_text": "Machine Learning Engineer"
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "multiple source statements with matching output passes",
+    "master_cv": "Built Python systems for financial analytics. Led reporting platform delivery.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\nBuilt Python systems for financial analytics.\nLed reporting platform delivery.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "single digit tenure cannot be invented",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Built Python systems for financial analytics and reporting for 5 years.",
+      "changes_made": "Prioritized supported candidate facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics and reporting for 5 years.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ],
+      "keywords_added": [],
+      "warnings": []
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "cited shortening keeps supported factual terms",
+    "master_cv": "Built Python systems for financial analytics and reporting.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\nBuilt Python systems for financial analytics.",
+      "changes_made": "Prioritized financial analytics.",
+      "evidence_used": [
+        {
+          "claim": "Built Python systems for financial analytics.",
+          "source": "master_cv",
+          "source_text": "Built Python systems for financial analytics and reporting."
+        }
+      ]
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "contracted negation cannot be dropped",
+    "master_cv": "Did not build reporting platforms. Didn't manage financial analytics teams.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Professional Experience\nManage financial analytics teams.",
+      "changes_made": "Reframed experience.",
+      "evidence_used": [
+        {
+          "claim": "Manage financial analytics teams.",
+          "source": "master_cv",
+          "source_text": "Didn't manage financial analytics teams."
+        }
+      ]
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "reversing actor and recipient is rejected",
+    "master_cv": "Alex mentored Jordan while building production Python analytics systems.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "Jordan mentored Alex while building production Python analytics systems.",
+      "changes_made": "Reordered for relevance.",
+      "evidence_used": [
+        {
+          "claim": "Jordan mentored Alex while building production Python analytics systems.",
+          "source": "master_cv",
+          "source_text": "Alex mentored Jordan while building production Python analytics systems."
+        }
+      ]
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "copied claims cannot swap employers",
+    "master_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\n### Employer Beta\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Alpha\nBuilt reliable SQL reporting systems for finance stakeholders.",
+      "changes_made": "Reordered for relevance.",
+      "evidence_used": [
+        {
+          "claim": "Alex mentored Jordan while building production Python analytics systems.",
+          "source": "master_cv",
+          "source_text": "Alex mentored Jordan while building production Python analytics systems."
+        }
+      ]
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "intact source sections retain attribution",
+    "master_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.",
+      "changes_made": "Reordered for relevance.",
+      "evidence_used": [
+        {
+          "claim": "Alex mentored Jordan while building production Python analytics systems.",
+          "source": "master_cv",
+          "source_text": "Alex mentored Jordan while building production Python analytics systems."
+        }
+      ]
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "section omission requires revision",
+    "master_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.\n## Education\nExpected degree in Computer Science.",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "## Experience\n### Employer Alpha\nAlex mentored Jordan while building production Python analytics systems.\n### Employer Beta\nBuilt reliable SQL reporting systems for finance stakeholders.",
+      "changes_made": "Reordered for relevance.",
+      "evidence_used": [
+        {
+          "claim": "Alex mentored Jordan while building production Python analytics systems.",
+          "source": "master_cv",
+          "source_text": "Alex mentored Jordan while building production Python analytics systems."
+        }
+      ]
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "live Gemini invented skill-employer linkage rejected",
+    "master_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.\n",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows. Worked with PostgreSQL for financial reporting.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+      "changes_made": "I reordered the experience section to highlight the specific Python, SQL, and PostgreSQL tasks mentioned in the job description. The factual content remains strictly derived from the original master CV, ensuring no fabrication of responsibilities or experience.",
+      "evidence_used": [
+        {
+          "claim": "Worked with PostgreSQL for financial reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python and SQL analytics systems for financial reporting."
+        }
+      ],
+      "keywords_added": [
+        "Python",
+        "SQL",
+        "PostgreSQL",
+        "data pipelines",
+        "automated tests"
+      ],
+      "warnings": [
+        "The candidate's master CV did not explicitly state 'PostgreSQL' in the experience bullet points, only in the skills section; I ensured this was framed as a factual skill alignment based on the master CV content."
+      ]
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "live Gemini corrected factual CV accepted",
+    "master_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.\n",
+    "candidate_profile": "{}",
+    "result": {
+      "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.",
+      "changes_made": "Reordered the sections to highlight technical skills relevant to the role after experience. Ensured all content remains strictly aligned with the original master CV facts.",
+      "evidence_used": [
+        {
+          "claim": "Built Python data pipelines and SQL reporting tools for finance teams.",
+          "source": "master_cv",
+          "source_text": "Built Python data pipelines and SQL reporting tools for finance teams."
+        }
+      ],
+      "keywords_added": [
+        "data pipelines",
+        "SQL reporting tools",
+        "automated tests"
+      ],
+      "warnings": [
+        "The candidate does not explicitly state in their experience section that they used PostgreSQL specifically for financial reporting, although it is listed under technical skills."
+      ]
+    },
+    "expected_valid": true
+  },
+  {
+    "name": "live synthetic missing skill revision unsupported claim 1",
+    "master_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.\n",
+    "candidate_profile": "{\"version\": \"synthetic-quality-1\", \"target_roles\": [\"Software Engineer\"], \"role_keywords\": [\"Python\", \"SQL\", \"data\", \"testing\", \"financial\"], \"preferred_locations\": [\"Toronto\"], \"remote_allowed\": true, \"strict_locations\": true, \"excluded_companies\": [\"Excluded Example\"], \"excluded_title_keywords\": [\"Director\"]}",
+    "result": {
+      "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting. Experienced in developing data pipelines and automated reporting workflows.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+      "changes_made": "I emphasized the existing data pipeline and SQL reporting experience to better align with the data engineering focus of the role. The structure was preserved while highlighting relevant terminology.",
+      "evidence_used": [
+        {
+          "claim": "Built Python data pipelines and SQL reporting tools for finance teams.",
+          "source": "master_cv",
+          "source_text": "Built Python data pipelines and SQL reporting tools for finance teams."
+        }
+      ],
+      "keywords_added": [
+        "data pipelines",
+        "data workflows"
+      ],
+      "warnings": [
+        "The candidate's master CV does not list experience with Spark or Kafka, which were specified as requirements in the job description."
+      ]
+    },
+    "expected_valid": false
+  },
+  {
+    "name": "live synthetic missing skill revision unsupported claim 2",
+    "master_cv": "# Synthetic Example Candidate\n\n## Summary\nBuilt Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.\n",
+    "candidate_profile": "{\"version\": \"synthetic-quality-1\", \"target_roles\": [\"Software Engineer\"], \"role_keywords\": [\"Python\", \"SQL\", \"data\", \"testing\", \"financial\"], \"preferred_locations\": [\"Toronto\"], \"remote_allowed\": true, \"strict_locations\": true, \"excluded_companies\": [\"Excluded Example\"], \"excluded_title_keywords\": [\"Director\"]}",
+    "result": {
+      "tailored_cv": "# Synthetic Example Candidate\n\n## Summary\nData Engineer experienced in building Python and SQL analytics systems for financial reporting.\n\n## Experience\n### Software Engineer \u2014 Example Analytics\nBuilt Python data pipelines and SQL reporting tools for finance teams.\nMaintained automated tests and documented production data workflows.\n\n## Education\nCompleted a Bachelor of Science in Computer Science at Example University.\n\n## Technical Skills\nPython, SQL, PostgreSQL, automated testing.",
+      "changes_made": "I updated the summary to align the candidate's core expertise in Python and SQL with the Data Engineer role title. No other structural changes were made to ensure factual integrity.",
+      "evidence_used": [
+        {
+          "claim": "Data Engineer experienced in building Python and SQL analytics systems for financial reporting.",
+          "source": "master_cv",
+          "source_text": "Built Python and SQL analytics systems for financial reporting."
+        }
+      ],
+      "keywords_added": [
+        "Data Engineer"
+      ],
+      "warnings": [
+        "The candidate does not possess the Spark and Kafka experience explicitly required by the job description.",
+        "The candidate's title remains Software Engineer as per the master CV; it is only adjusted in the summary for relevance."
+      ]
+    },
+    "expected_valid": false
+  }
+]

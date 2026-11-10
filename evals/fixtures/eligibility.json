@@ -1,0 +1,38 @@
+[
+  {
+    "name": "target AI role remains eligible",
+    "job": {
+      "title": "Senior AI Engineer",
+      "company": "Example AI",
+      "location": "Toronto, ON"
+    },
+    "expected_eligible": true
+  },
+  {
+    "name": "remote ML role remains eligible",
+    "job": {
+      "title": "Machine Learning Engineer",
+      "company": "Example Labs",
+      "location": "Remote - Canada"
+    },
+    "expected_eligible": true
+  },
+  {
+    "name": "obvious excluded profession is rejected",
+    "job": {
+      "title": "Registered Nurse",
+      "company": "Example Health",
+      "location": "Toronto, ON"
+    },
+    "expected_eligible": false
+  },
+  {
+    "name": "ambiguous product role is preserved for semantic ranking",
+    "job": {
+      "title": "Product Manager",
+      "company": "Example",
+      "location": "New York, NY"
+    },
+    "expected_eligible": true
+  }
+]

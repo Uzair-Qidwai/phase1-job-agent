@@ -1,0 +1,159 @@
+{
+  "checkpoint_scope": "Checkpoint 3 specialist workflow; offline implementation only",
+  "ci_url": "https://github.com/Uzair-Qidwai/phase1-job-agent/actions/runs/37776823038",
+  "cv": {
+    "cases": 22,
+    "outcomes": [
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "target role and combined source facts do not prove output claims",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "invented metric fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "fabricated evidence quote fails",
+        "passed": true
+      },
+      {
+        "actual_valid": true,
+        "expected_valid": true,
+        "name": "copied statement passes",
+        "passed": true
+      },
+      {
+        "actual_valid": true,
+        "expected_valid": true,
+        "name": "conservative shortening with full citation passes",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "valid evidence does not cover invented uncited sentence",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "invented employer with overlapping terms fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "invented skill with overlapping terms fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "responsibility inflation fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "supporting qualifier cannot be dropped",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "expected degree cannot become completed degree",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "applicant qualifier cannot be removed",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "negation cannot be removed",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "truncated evidence cannot erase negation",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "existing number cannot transfer between claims",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "detached evidence claim fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "invented factual heading fails",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "preferences cannot establish experience",
+        "passed": true
+      },
+      {
+        "actual_valid": true,
+        "expected_valid": true,
+        "name": "multiple source statements with matching output passes",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "single digit tenure cannot be invented",
+        "passed": true
+      },
+      {
+        "actual_valid": true,
+        "expected_valid": true,
+        "name": "cited shortening keeps supported factual terms",
+        "passed": true
+      },
+      {
+        "actual_valid": false,
+        "expected_valid": false,
+        "name": "contracted negation cannot be dropped",
+        "passed": true
+      }
+    ],
+    "passed": 22
+  },
+  "cv_prompt_version": "phase2-cv-v2",
+  "dataset_sha256": {
+    "cv_gold.json": "99eba4bedf355993530c5a15e9954a49c587b82057e48012ab096ed361a1fdf8",
+    "ranking_gold.json": "eec1607f2757c50b759e14a1fe9097bfb851d964dbb5cddf0ee1161b3a070b49"
+  },
+  "integration_commit": "addbdb94066bc55948d769c0ad86e7f8dcaba851",
+  "live_validation": "Deferred to Checkpoint 4 at user request",
+  "mode": "offline_deterministic",
+  "passed": true,
+  "profile_version": "1",
+  "provider_validation": "OpenAI/Anthropic/Gemini routing tested with fake responses; no live compatibility claim",
+  "ranking": {
+    "jobs": 30,
+    "pairwise_accuracy": 1.0,
+    "precision_at_5": 1.0
+  },
+  "tests_passed": 150
+}

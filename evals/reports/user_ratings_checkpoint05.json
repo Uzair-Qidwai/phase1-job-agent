@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-12",
+  "sample_size": 10,
+  "user_ratings": {
+    "Keep": 4,
+    "Stretch": 4,
+    "Pass": 2
+  },
+  "acceptance_target": {
+    "keep_required": 8,
+    "keep_actual": 4,
+    "met": false
+  },
+  "decision": "Bounded review frozen; proceed with manual job selection",
+  "scope": "User-rated editorial sample, not an automated ranking benchmark",
+  "pilot_selection": {
+    "keep": 4,
+    "stretch_requires_separate_selection": 4,
+    "excluded_for_this_batch": 2
+  },
+  "resume_approval": "not supplied",
+  "ranking_weights_changed": false,
+  "automatic_ranking_promoted": false,
+  "emails_sent": 0,
+  "applications_submitted": 0,
+  "next": "Refresh selected vacancies and run the supervised end-to-end pilot; no further open-ended tuning"
+}

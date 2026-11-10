@@ -1,0 +1,30 @@
+[
+  {
+    "name": "indeed preserves distinct jk ABC123",
+    "source": "indeed",
+    "url": "https://ca.indeed.com/viewjob?jk=ABC123&utm_source=test",
+    "expected_source_job_id": "ABC123",
+    "expected_canonical_url": "https://ca.indeed.com/viewjob?jk=ABC123"
+  },
+  {
+    "name": "indeed preserves distinct jk XYZ789",
+    "source": "indeed",
+    "url": "https://ca.indeed.com/viewjob?from=serp&jk=XYZ789&utm_campaign=test",
+    "expected_source_job_id": "XYZ789",
+    "expected_canonical_url": "https://ca.indeed.com/viewjob?jk=XYZ789"
+  },
+  {
+    "name": "linkedin strips tracking query",
+    "source": "linkedin",
+    "url": "https://www.linkedin.com/jobs/view/ai-engineer-example-1234567890/?trackingId=abc&utm_source=test",
+    "expected_source_job_id": "1234567890",
+    "expected_canonical_url": "https://www.linkedin.com/jobs/view/ai-engineer-example-1234567890"
+  },
+  {
+    "name": "generic source drops common tracking params",
+    "source": "greenhouse",
+    "url": "https://boards.greenhouse.io/example/jobs/42?utm_source=linkedin&gh_jid=42",
+    "expected_source_job_id": null,
+    "expected_canonical_url": "https://boards.greenhouse.io/example/jobs/42?gh_jid=42"
+  }
+]

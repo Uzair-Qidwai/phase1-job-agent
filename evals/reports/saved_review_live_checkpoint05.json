@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-09",
+  "scope": "Bounded fresh LinkedIn capture fed through production persistence, deterministic ranking, writer/reviewer and native saved-review boundary",
+  "discovery": {
+    "raw": 12,
+    "valid": 10,
+    "missing_descriptions_rejected": 2,
+    "prior_deliveries_checked": 6,
+    "selected_new_jobs": 3,
+    "browser_runtime_initial_failure_retried": true
+  },
+  "pipeline": {
+    "completed": true,
+    "model_requests": 22,
+    "cv_checks": [
+      {
+        "valid": true,
+        "claims_checked": 42,
+        "added": 0,
+        "omitted": 0,
+        "revisions": 0
+      },
+      {
+        "valid": true,
+        "claims_checked": 42,
+        "added": 0,
+        "omitted": 0,
+        "revisions": 0
+      },
+      {
+        "valid": true,
+        "claims_checked": 42,
+        "added": 0,
+        "omitted": 0,
+        "revisions": 0
+      }
+    ],
+    "saved_batch_status": "pending",
+    "snapshot_revalidated": true,
+    "new_notifications": 0,
+    "new_delivery_attempts": 0
+  },
+  "backup_before_and_after": true,
+  "quality_acceptance": "not established",
+  "limits": [
+    "Keyword scores overstate fit where required skill and experience evidence is absent",
+    "Human qualification review pending; no send approval requested",
+    "Discovery was bounded outside the scheduler; not an unmodified end-to-end source run",
+    "Source-health zero counts for excluded sources in this run are not live source failure evidence",
+    "Prior delivery histories remain in two databases; both were checked before selection",
+    "No scheduler, hosting change or merge"
+  ]
+}

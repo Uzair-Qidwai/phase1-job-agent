@@ -1,0 +1,80 @@
+name: job-agent
+
+x-app: &app
+  image: ${JOB_AGENT_IMAGE:-job-agent:local}
+  build:
+    context: ..
+  init: true
+  user: "10001:10001"
+  read_only: true
+  tmpfs:
+    - /tmp:size=512m,mode=1777
+    - /home/app:size=64m,uid=10001,gid=10001
+  shm_size: 512m
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  secrets: [app_env, db_password, master_cv]
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  db:
+    image: postgres:16-bookworm@sha256:0ea6700a3b4f0ae6ce746519073558aed4d88a79d8d07622a9a644946c7319c4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: job_agent
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_admin_password
+    secrets: [db_admin_password, db_password]
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/10-job-agent.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d job_agent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  migrate:
+    <<: *app
+    command: [python, -m, src.migrations]
+    restart: "no"
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    <<: *app
+    restart: unless-stopped
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, /app/deploy/healthcheck.py]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+  scheduler:
+    <<: *app
+    profiles: [scheduled]
+    command: [python, -m, src.scheduler]
+    restart: unless-stopped
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+
+volumes:
+  database:
+
+secrets:
+  app_env:
+    file: ${JOB_AGENT_SECRETS_DIR:-../.local/cloud-secrets}/app.env
+  db_password:
+    file: ${JOB_AGENT_SECRETS_DIR:-../.local/cloud-secrets}/db-password
+  db_admin_password:
+    file: ${JOB_AGENT_SECRETS_DIR:-../.local/cloud-secrets}/db-admin-password
+  master_cv:
+    file: ${JOB_AGENT_SECRETS_DIR:-../.local/cloud-secrets}/master-cv.md

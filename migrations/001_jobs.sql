@@ -27,11 +27,19 @@ CREATE TABLE IF NOT EXISTS jobs (
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add FK now that both tables exist
-ALTER TABLE cv_versions
-    ADD CONSTRAINT fk_cv_job
-    FOREIGN KEY (job_id) REFERENCES jobs(id)
-    ON DELETE SET NULL;
+-- Add FK now that both tables exist, without failing on a repeated migration run.
+DO $phase1fk$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'fk_cv_job'
+    ) THEN
+        ALTER TABLE cv_versions
+            ADD CONSTRAINT fk_cv_job
+            FOREIGN KEY (job_id) REFERENCES jobs(id)
+            ON DELETE SET NULL;
+    END IF;
+END
+$phase1fk$;
 
 CREATE INDEX IF NOT EXISTS idx_jobs_status   ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_found_at ON jobs(found_at DESC);

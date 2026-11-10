@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-12",
+  "passed": true,
+  "scope": "Native bounded discovery, automatic selection, live Gemini writer/reviewer, isolated copy with prior delivery exclusions",
+  "discovered": 185,
+  "ranked": 185,
+  "shortlisted": 4,
+  "validated_cvs": 4,
+  "model_requests": 34,
+  "source_counts": {
+    "greenhouse": 73,
+    "ashby": 112,
+    "linkedin": 0,
+    "indeed": 0
+  },
+  "new_emails": 0,
+  "new_delivery_attempts": 0,
+  "pending_digest": true,
+  "repeat_discovery_scope": "Exact captured native rows replayed; no second external scrape",
+  "repeat_new_jobs": 0,
+  "repeat_new_cvs": 0,
+  "repeat_new_batches": 0,
+  "actual_pilot_backup_restore_equal": true,
+  "stopped_worker_recovery_passed": true,
+  "local_protected_http_rehearsal_passed": true,
+  "known_limits": [
+    "Browser sources returned no jobs under deadline; two old Greenhouse board URLs return 404",
+    "Selected jobs are previously user-rated Keep vacancies, not a blind international relevance evaluation",
+    "CV outputs retain source wording and reorder whole sections; not a demonstrated free-form rewrite quality improvement",
+    "Database and backups are local; no off-host restore or independent alerting deployed",
+    "Durable Gmail authorization and production host remain outstanding"
+  ],
+  "tests": 264,
+  "scheduler_enabled": false,
+  "merged": false
+}
